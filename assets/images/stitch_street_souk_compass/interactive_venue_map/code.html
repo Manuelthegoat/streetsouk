@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Street Souk - Map</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Archivo+Narrow:wght@400;500;700&amp;family=JetBrains+Mono:wght@700&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "on-secondary-container": "#521300",
+                "on-error": "#690005",
+                "on-primary-fixed": "#360f03",
+                "inverse-on-surface": "#313030",
+                "on-primary-fixed-variant": "#6c3928",
+                "on-primary": "#512314",
+                "on-tertiary": "#313030",
+                "tertiary-fixed": "#e5e2e1",
+                "surface-container-highest": "#353534",
+                "secondary-fixed-dim": "#ffb59e",
+                "primary-fixed-dim": "#ffb59e",
+                "on-secondary-fixed": "#3a0b00",
+                "on-surface": "#e5e2e1",
+                "on-error-container": "#ffdad6",
+                "on-tertiary-fixed-variant": "#474646",
+                "on-secondary-fixed-variant": "#852400",
+                "inverse-primary": "#88503d",
+                "surface-variant": "#353534",
+                "inverse-surface": "#e5e2e1",
+                "secondary": "#ffb59e",
+                "secondary-fixed": "#ffdbd0",
+                "error": "#ffb4ab",
+                "on-tertiary-container": "#535252",
+                "surface-container": "#20201f",
+                "primary": "#ffdbd0",
+                "background": "#131313",
+                "outline": "#ad897e",
+                "on-background": "#e5e2e1",
+                "secondary-container": "#ff571a",
+                "surface-container-high": "#2a2a29",
+                "primary-fixed": "#ffdbd0",
+                "tertiary-container": "#c9c6c6",
+                "error-container": "#93000a",
+                "on-tertiary-fixed": "#1c1b1b",
+                "tertiary-fixed-dim": "#c8c6c5",
+                "on-secondary": "#5e1700",
+                "surface-container-lowest": "#0e0e0e",
+                "surface": "#131313",
+                "surface-tint": "#ffb59e",
+                "primary-container": "#ffb59e",
+                "surface-container-low": "#1c1b1b",
+                "surface-dim": "#131313",
+                "surface-bright": "#393939",
+                "on-surface-variant": "#d7c2bc",
+                "outline-variant": "#52433f",
+                "on-primary-container": "#7a4433",
+                "tertiary": "#e5e2e1"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "stack-sm": "8px",
+                "unit": "4px",
+                "margin-mobile": "16px",
+                "gutter": "16px",
+                "stack-md": "16px",
+                "stack-lg": "32px",
+                "margin-desktop": "40px"
+        },
+        "fontFamily": {
+                "headline-lg-mobile": [
+                        "Anton"
+                ],
+                "body-md": [
+                        "Archivo Narrow"
+                ],
+                "headline-md": [
+                        "Anton"
+                ],
+                "display": [
+                        "Anton"
+                ],
+                "body-lg": [
+                        "Archivo Narrow"
+                ],
+                "headline-lg": [
+                        "Anton"
+                ],
+                "label-caps": [
+                        "JetBrains Mono"
+                ]
+        },
+        "fontSize": {
+                "headline-lg-mobile": [
+                        "32px",
+                        {
+                                "lineHeight": "32px",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-md": [
+                        "16px",
+                        {
+                                "lineHeight": "22px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-md": [
+                        "24px",
+                        {
+                                "lineHeight": "24px",
+                                "letterSpacing": "0.04em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "display": [
+                        "80px",
+                        {
+                                "lineHeight": "80px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-lg": [
+                        "18px",
+                        {
+                                "lineHeight": "26px",
+                                "fontWeight": "500"
+                        }
+                ],
+                "headline-lg": [
+                        "48px",
+                        {
+                                "lineHeight": "48px",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "label-caps": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.1em",
+                                "fontWeight": "700"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        .hard-shadow {
+            box-shadow: 4px 4px 0px 0px #00FF00; /* electric green */
+        }
+        .hard-shadow-sm {
+            box-shadow: 2px 2px 0px 0px #00FF00;
+        }
+        .hard-shadow-active:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px 0px #00FF00;
+        }
+        
+        /* Map pulsing dot */
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.8);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+        .pulse-dot::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: #00FF00;
+            border-radius: 50%;
+            z-index: -1;
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col relative overflow-hidden selection:bg-[#00FF00] selection:text-black">
+<!-- Desktop Nav (Hidden on Mobile) -->
+<header class="hidden md:flex fixed top-0 w-full z-50 items-center justify-between px-margin-desktop h-20 bg-background border-b-2 border-outline">
+<div class="flex items-center gap-gutter">
+<span class="material-symbols-outlined text-[#00FF00] text-3xl">map</span>
+<h1 class="font-headline-md text-headline-md text-[#00FF00] tracking-tighter uppercase">STREET SOUK NAVIGATE</h1>
+</div>
+<div class="flex-1 max-w-xl mx-8 relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container-high border-2 border-white text-on-background font-label-caps text-label-caps py-2 pl-10 pr-4 focus:outline-none focus:border-[#00FF00] focus:ring-0 placeholder-on-surface-variant" placeholder="FIND VENDOR OR STAGE" type="text"/>
+</div>
+<div class="flex items-center gap-6">
+<nav class="flex gap-6">
+<a class="font-label-caps text-label-caps text-on-background hover:text-[#00FF00] hover:bg-surface-container px-2 py-1 transition-colors" href="#">HOME</a>
+<a class="font-label-caps text-label-caps text-[#00FF00] border-b-2 border-[#00FF00] pb-1" href="#">MAP</a>
+<a class="font-label-caps text-label-caps text-on-background hover:text-[#00FF00] hover:bg-surface-container px-2 py-1 transition-colors" href="#">SCHEDULE</a>
+<a class="font-label-caps text-label-caps text-on-background hover:text-[#00FF00] hover:bg-surface-container px-2 py-1 transition-colors" href="#">VENDORS</a>
+</nav>
+<div class="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-background">person</span>
+</div>
+</div>
+</header>
+<!-- Mobile Top Search Overlay -->
+<div class="md:hidden fixed top-0 w-full z-40 p-margin-mobile bg-gradient-to-b from-background via-background/90 to-transparent">
+<div class="relative hard-shadow">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-background">search</span>
+<input class="w-full bg-surface border-2 border-white text-on-background font-label-caps text-label-caps py-3 pl-10 pr-4 focus:outline-none focus:border-[#00FF00] focus:ring-0 placeholder-on-surface-variant" placeholder="FIND VENDOR OR STAGE" type="text"/>
+</div>
+</div>
+<!-- Main Map Container -->
+<main class="flex-1 relative w-full h-[884px] bg-surface-dim overflow-hidden touch-none" id="map-container">
+<!-- The Map Image layer -->
+<div class="absolute inset-0 w-full h-full object-cover origin-center transition-transform duration-300 ease-out" id="map-image-layer" style="transform: scale(1) translate(0px, 0px);">
+<div class="w-full h-full bg-cover bg-center opacity-80 mix-blend-screen filter grayscale contrast-125" data-alt="A highly detailed, stylized overhead venue map of a sprawling streetwear festival. The map is designed in a polished brutalist aesthetic, strictly utilizing a dark mode grayscale palette with stark contrasts. Hard-edged geometric shapes represent booths, stages, and structures against a deep black background. Vibrant electric orange accents highlight key pathways and zones. The overall mood is intense, industrial, and highly functional, avoiding any soft gradients or realistic textures." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBzSt6nZLQQEw2mNwDqhamcfStAes3MoalayFaU6YDN6pHjWkWcmnvl8CYDwl1HSRqLnWE6-vwiJp5havbRjtf5auKwzyDflryq-ADX3yICC2A-q9fZW2x5R7sHOQ5uoG0iAFnHsQgEri8yfGriSujNMDztyqCFs70bKZ9pt57iVnpynZ99YuNkHu9T-NrAOcMcL9_41i32eOSWWUTg4mXAaOT7Zg6uq-udw_bl39b4UdQ205PoX3_zJw')"></div>
+</div>
+<!-- Grid Overlay (Brutalist aesthetic) -->
+<div class="absolute inset-0 pointer-events-none opacity-20" style="background-image: linear-gradient(to right, #353535 1px, transparent 1px), linear-gradient(to bottom, #353535 1px, transparent 1px); background-size: 40px 40px;"></div>
+<!-- Map Markers Layer -->
+<div class="absolute inset-0" id="markers-layer" style="transform: scale(1) translate(0px, 0px);">
+<!-- You Are Here -->
+<div class="absolute top-[45%] left-[50%] -translate-x-1/2 -translate-y-1/2 z-30">
+<div class="relative w-4 h-4 rounded-full bg-[#00FF00] pulse-dot shadow-[0_0_10px_#00FF00]"></div>
+<div class="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-surface border-2 border-white px-2 py-1 font-label-caps text-label-caps text-[10px] whitespace-nowrap">YOU ARE HERE</div>
+</div>
+<!-- Stage A -->
+<div class="absolute top-[20%] left-[30%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-20">
+<div class="w-12 h-12 bg-surface border-2 border-[#00FF00] flex items-center justify-center hard-shadow transition-transform group-hover:-translate-y-1 group-active:translate-y-0">
+<span class="material-symbols-outlined text-[#00FF00] text-2xl" style="font-variation-settings: 'FILL' 1;">speaker</span>
+</div>
+<div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-black border-2 border-white px-2 py-1 font-label-caps text-label-caps text-white whitespace-nowrap hidden group-hover:block z-50">MAIN STAGE</div>
+</div>
+<!-- Stage B -->
+<div class="absolute top-[60%] left-[75%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-20">
+<div class="w-10 h-10 bg-surface border-2 border-white flex items-center justify-center shadow-[2px_2px_0px_0px_white] transition-transform group-hover:-translate-y-1">
+<span class="material-symbols-outlined text-white text-xl" style="font-variation-settings: 'FILL' 1;">graphic_eq</span>
+</div>
+<div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-black border-2 border-white px-2 py-1 font-label-caps text-label-caps text-white whitespace-nowrap hidden group-hover:block z-50">SOUND SYSTEM B</div>
+</div>
+<!-- Vendor 1 (Apparel) -->
+<div class="absolute top-[35%] left-[60%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-20">
+<div class="w-8 h-8 bg-surface border-2 border-secondary-fixed-dim flex items-center justify-center transition-colors group-hover:border-[#00FF00] group-hover:bg-[#00FF00]/20">
+<span class="material-symbols-outlined text-secondary-fixed-dim text-sm">apparel</span>
+</div>
+<div class="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-surface-container border border-outline-variant px-1.5 py-0.5 font-label-caps text-[9px] whitespace-nowrap hidden group-hover:block z-50">HYPE BRAND A</div>
+</div>
+<!-- Vendor 2 (Apparel) -->
+<div class="absolute top-[40%] left-[65%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-20">
+<div class="w-8 h-8 bg-surface border-2 border-secondary-fixed-dim flex items-center justify-center transition-colors group-hover:border-[#00FF00] group-hover:bg-[#00FF00]/20">
+<span class="material-symbols-outlined text-secondary-fixed-dim text-sm">apparel</span>
+</div>
+</div>
+<!-- Food 1 -->
+<div class="absolute top-[70%] left-[20%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-20">
+<div class="w-8 h-8 bg-surface border-2 border-tertiary flex items-center justify-center transition-colors group-hover:border-[#00FF00]">
+<span class="material-symbols-outlined text-tertiary text-sm">restaurant</span>
+</div>
+<div class="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-surface-container border border-outline-variant px-1.5 py-0.5 font-label-caps text-[9px] whitespace-nowrap hidden group-hover:block z-50">FOOD COURT ZONE</div>
+</div>
+<!-- Restroom -->
+<div class="absolute top-[80%] left-[50%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-20">
+<div class="w-6 h-6 bg-surface-container-high border border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-[12px]">wc</span>
+</div>
+</div>
+<!-- First Aid -->
+<div class="absolute top-[15%] left-[85%] -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-20">
+<div class="w-8 h-8 bg-surface border-2 border-error flex items-center justify-center">
+<span class="material-symbols-outlined text-error text-sm" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Filter Chips Overlay -->
+<div class="fixed bottom-[80px] md:bottom-6 w-full z-40 px-margin-mobile pointer-events-none">
+<div class="flex gap-3 overflow-x-auto pb-4 pt-2 no-scrollbar pointer-events-auto snap-x">
+<button class="snap-start shrink-0 bg-[#00FF00] text-black border-2 border-black font-label-caps text-label-caps px-4 py-2 hard-shadow-sm active:translate-y-1 active:translate-x-1 active:shadow-none transition-all">ALL</button>
+<button class="snap-start shrink-0 bg-surface border-2 border-white text-on-background font-label-caps text-label-caps px-4 py-2 hover:bg-surface-container-high active:bg-surface-variant transition-colors">STAGES</button>
+<button class="snap-start shrink-0 bg-surface border-2 border-white text-on-background font-label-caps text-label-caps px-4 py-2 hover:bg-surface-container-high active:bg-surface-variant transition-colors">APPAREL</button>
+<button class="snap-start shrink-0 bg-surface border-2 border-white text-on-background font-label-caps text-label-caps px-4 py-2 hover:bg-surface-container-high active:bg-surface-variant transition-colors">FOOD</button>
+<button class="snap-start shrink-0 bg-surface border-2 border-white text-on-background font-label-caps text-label-caps px-4 py-2 hover:bg-surface-container-high active:bg-surface-variant transition-colors">RESTROOMS</button>
+</div>
+</div>
+<!-- Mobile Bottom Navigation (Hidden on md) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center bg-surface px-2 py-3 border-t-2 border-outline">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-secondary-container active:scale-95 transition-transform w-16" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">home</span>
+<span class="font-label-caps text-label-caps text-[10px]">HOME</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#00FF00] text-black p-2 border-2 border-on-background shadow-[4px_4px_0px_0px_#00FF00] active:scale-95 transition-transform w-16 relative -top-2" href="#">
+<span class="material-symbols-outlined text-2xl mb-1" style="font-variation-settings: 'FILL' 1;">map</span>
+<span class="font-label-caps text-label-caps text-[10px]">MAP</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-secondary-container active:scale-95 transition-transform w-16" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">calendar_today</span>
+<span class="font-label-caps text-label-caps text-[10px]">SCHEDULE</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-secondary-container active:scale-95 transition-transform w-16" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">storefront</span>
+<span class="font-label-caps text-label-caps text-[10px]">VENDORS</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-secondary-container active:scale-95 transition-transform w-16" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">notifications</span>
+<span class="font-label-caps text-label-caps text-[10px]">ALERTS</span>
+</a>
+</nav>
+<!-- Corner Accents for Brutalist detail -->
+<div class="fixed top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white pointer-events-none z-[60] m-2 hidden md:block"></div>
+<div class="fixed top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white pointer-events-none z-[60] m-2 hidden md:block"></div>
+<style>
+        /* Hide scrollbar for filter chips */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<script>
+        // Simple pan/zoom logic for the map
+        const container = document.getElementById('map-container');
+        const imgLayer = document.getElementById('map-image-layer');
+        const markersLayer = document.getElementById('markers-layer');
+        
+        let isDragging = false;
+        let startX, startY;
+        let currentX = 0, currentY = 0;
+        let scale = 1;
+
+        // Mouse events
+        container.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX - currentX;
+            startY = e.clientY - currentY;
+            container.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            container.style.cursor = 'default';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            currentX = e.clientX - startX;
+            currentY = e.clientY - startY;
+            updateTransform();
+        });
+
+        // Touch events for mobile panning
+        container.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                startX = e.touches[0].clientX - currentX;
+                startY = e.touches[0].clientY - currentY;
+            }
+        });
+
+        window.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging || e.touches.length !== 1) return;
+            e.preventDefault();
+            currentX = e.touches[0].clientX - startX;
+            currentY = e.touches[0].clientY - startY;
+            updateTransform();
+        });
+
+        // Simple zoom with wheel
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomSensitivity = 0.001;
+            scale -= e.deltaY * zoomSensitivity;
+            // Limit scale
+            scale = Math.min(Math.max(0.5, scale), 3);
+            updateTransform();
+        });
+
+        function updateTransform() {
+            const transformString = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
+            imgLayer.style.transform = transformString;
+            markersLayer.style.transform = transformString;
+        }
+    </script>
+</body></html>

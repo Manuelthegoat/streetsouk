@@ -1,98 +1,28 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { F, Header } from '@/components/street-souk-ui';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const C = { bg: '#101010', panel: '#1d1d1d', paper: '#eee7e4', muted: '#a99591', ink: '#050505', green: '#00ff19', line: '#806d68' };
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+  const router = useRouter();
+  const [seconds, setSeconds] = useState(4 * 3600 + 12 * 60 + 45);
+  useEffect(() => { const timer = setInterval(() => setSeconds((value) => Math.max(0, value - 1)), 1000); return () => clearInterval(timer); }, []);
+  const time = `${String(Math.floor(seconds / 3600)).padStart(2, '0')} : ${String(Math.floor(seconds / 60) % 60).padStart(2, '0')} : ${String(seconds % 60).padStart(2, '0')}`;
+  return <SafeAreaView style={s.safe}>
+    <Header />
+    <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+      <View style={s.hero}><View style={s.bracketTL} /><View style={s.bracketBR} /><Text style={s.heroLabel}>FESTIVAL DATES</Text><Text style={s.date}>DEC 15 - 17</Text><View style={s.dropTag}><Text style={s.dropTagText}>NEXT MAJOR DROP</Text></View><Text style={s.countdown}>{time}</Text><View style={s.clockLabels}><Text style={s.clockText}>HRS</Text><Text style={s.clockText}>MIN</Text><Text style={s.clockText}>SEC</Text></View></View>
+      <View style={s.ticker}><Ionicons name="notifications-outline" size={18} color={C.ink} /><Text style={s.tickerText}>STAGE 1: PERFORMANCE STARTING IN 10 MINS</Text></View>
+      <View style={s.sectionHeading}><Text style={s.sectionTitle}>FEATURED DROPS</Text><View style={s.rule} /></View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.cards}>
+        <View style={s.dropCard}><View style={[s.fakeImage, { backgroundColor: '#393939' }]}><Ionicons name="shirt-outline" size={70} color={C.paper} /><Text style={s.imageStamp}>LIVE DROP</Text></View><View style={s.cardFooter}><Text style={s.cardTitle}>YEEZY X GAP</Text><Text style={s.cardMeta}>Booth 12 / Main Hall</Text></View></View>
+        <View style={s.dropCard}><View style={[s.fakeImage, { backgroundColor: '#292929' }]}><Ionicons name="footsteps-outline" size={70} color={C.muted} /><Text style={s.imageStamp}>COMING SOON</Text></View><View style={s.cardFooter}><Text style={s.cardTitle}>NIKE DUNK LOW</Text><Text style={s.cardMeta}>Sneaker Zone</Text></View></View>
+      </ScrollView>
+      <Pressable onPress={() => router.push('/map')} style={s.mapAction}><Ionicons name="map-outline" size={29} color={C.ink} /><Text style={s.mapActionText}>EXPLORE THE MAP</Text><Ionicons name="arrow-forward" size={24} color={C.ink} /></Pressable>
+    </ScrollView>
+  </SafeAreaView>;
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+const s = StyleSheet.create({ safe: { flex: 1, backgroundColor: C.bg }, header: { height: 72, paddingHorizontal: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 2, borderBottomColor: C.line }, logo: { color: C.paper, fontFamily: F.display, fontSize: 23, letterSpacing: 1 }, profile: { width: 35, height: 35, borderWidth: 2, borderColor: C.green, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }, content: { padding: 16, paddingBottom: 28 }, hero: { height: 300, backgroundColor: C.panel, borderWidth: 2, borderColor: C.green, alignItems: 'center', justifyContent: 'center', position: 'relative', marginTop: 16, marginHorizontal: 4, shadowColor: C.green, shadowOffset: { width: 5, height: 5 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 }, bracketTL: { position: 'absolute', width: 25, height: 25, left: -2, top: -2, borderTopWidth: 4, borderLeftWidth: 4, borderColor: C.paper }, bracketBR: { position: 'absolute', width: 25, height: 25, right: -2, bottom: -2, borderBottomWidth: 4, borderRightWidth: 4, borderColor: C.paper }, heroLabel: { color: C.green, fontFamily: F.display, fontSize: 36 }, date: { color: C.paper, fontFamily: F.display, fontSize: 34 }, dropTag: { backgroundColor: C.paper, borderWidth: 2, borderColor: C.ink, paddingHorizontal: 10, paddingVertical: 7, marginTop: 20 }, dropTagText: { color: C.ink, fontFamily: F.mono, fontSize: 12 }, countdown: { color: C.green, fontFamily: F.display, fontSize: 38, marginTop: 10 }, clockLabels: { flexDirection: 'row', justifyContent: 'space-between', width: 220 }, clockText: { color: C.muted, fontFamily: F.mono, fontSize: 12 }, ticker: { backgroundColor: C.green, padding: 17, marginTop: 27, flexDirection: 'row', alignItems: 'center', gap: 8 }, tickerText: { color: C.ink, fontFamily: F.mono, fontSize: 11, flex: 1 }, sectionHeading: { marginTop: 31 }, sectionTitle: { color: C.paper, fontFamily: F.display, fontSize: 27 }, rule: { height: 2, backgroundColor: C.line, marginTop: 9 }, cards: { gap: 16, paddingTop: 16, paddingBottom: 26 }, dropCard: { width: 275, borderWidth: 2, borderColor: C.paper, backgroundColor: C.bg }, fakeImage: { height: 235, alignItems: 'center', justifyContent: 'center', position: 'relative' }, imageStamp: { position: 'absolute', top: 12, left: 12, backgroundColor: C.paper, color: C.ink, borderWidth: 2, borderColor: C.ink, paddingHorizontal: 8, paddingVertical: 6, fontFamily: F.mono, fontSize: 10 }, cardFooter: { padding: 11, borderTopWidth: 2, borderTopColor: C.paper }, cardTitle: { color: C.green, fontFamily: F.display, fontSize: 22 }, cardMeta: { color: C.paper, fontFamily: F.body, fontSize: 14, marginTop: 3 }, mapAction: { backgroundColor: C.green, borderWidth: 2, borderColor: C.ink, padding: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: C.green, shadowOffset: { width: 7, height: 7 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 }, mapActionText: { color: C.ink, fontFamily: F.display, fontSize: 19 } });

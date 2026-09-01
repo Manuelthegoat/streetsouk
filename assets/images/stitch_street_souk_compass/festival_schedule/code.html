@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Street Souk - Schedule</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Archivo+Narrow:wght@400;500;700&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "on-secondary-container": "#521300",
+                "on-error": "#690005",
+                "on-primary-fixed": "#360f03",
+                "inverse-on-surface": "#313030",
+                "on-primary-fixed-variant": "#6c3928",
+                "on-primary": "#512314",
+                "on-tertiary": "#313030",
+                "tertiary-fixed": "#e5e2e1",
+                "surface-container-highest": "#353534",
+                "secondary-fixed-dim": "#ffb59e",
+                "primary-fixed-dim": "#ffb59e",
+                "on-secondary-fixed": "#3a0b00",
+                "on-surface": "#e5e2e1",
+                "on-error-container": "#ffdad6",
+                "on-tertiary-fixed-variant": "#474646",
+                "on-secondary-fixed-variant": "#852400",
+                "inverse-primary": "#88503d",
+                "surface-variant": "#353534",
+                "inverse-surface": "#e5e2e1",
+                "secondary": "#ffb59e",
+                "secondary-fixed": "#ffdbd0",
+                "error": "#ffb4ab",
+                "on-tertiary-container": "#535252",
+                "surface-container": "#20201f",
+                "primary": "#ffdbd0",
+                "background": "#131313",
+                "outline": "#ad897e",
+                "on-background": "#e5e2e1",
+                "secondary-container": "#ff571a",
+                "surface-container-high": "#2a2a29",
+                "primary-fixed": "#ffdbd0",
+                "tertiary-container": "#c9c6c6",
+                "error-container": "#93000a",
+                "on-tertiary-fixed": "#1c1b1b",
+                "tertiary-fixed-dim": "#c8c6c5",
+                "on-secondary": "#5e1700",
+                "surface-container-lowest": "#0e0e0e",
+                "surface": "#131313",
+                "surface-tint": "#ffb59e",
+                "primary-container": "#ffb59e",
+                "surface-container-low": "#1c1b1b",
+                "surface-dim": "#131313",
+                "surface-bright": "#393939",
+                "on-surface-variant": "#d7c2bc",
+                "outline-variant": "#52433f",
+                "on-primary-container": "#7a4433",
+                "tertiary": "#e5e2e1"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "stack-sm": "8px",
+                "unit": "4px",
+                "margin-mobile": "16px",
+                "gutter": "16px",
+                "stack-md": "16px",
+                "stack-lg": "32px",
+                "margin-desktop": "40px"
+        },
+        "fontFamily": {
+                "headline-lg-mobile": [
+                        "Anton"
+                ],
+                "body-md": [
+                        "Archivo Narrow"
+                ],
+                "headline-md": [
+                        "Anton"
+                ],
+                "display": [
+                        "Anton"
+                ],
+                "body-lg": [
+                        "Archivo Narrow"
+                ],
+                "headline-lg": [
+                        "Anton"
+                ],
+                "label-caps": [
+                        "JetBrains Mono"
+                ]
+        },
+        "fontSize": {
+                "headline-lg-mobile": [
+                        "32px",
+                        {
+                                "lineHeight": "32px",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-md": [
+                        "16px",
+                        {
+                                "lineHeight": "22px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-md": [
+                        "24px",
+                        {
+                                "lineHeight": "24px",
+                                "letterSpacing": "0.04em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "display": [
+                        "80px",
+                        {
+                                "lineHeight": "80px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-lg": [
+                        "18px",
+                        {
+                                "lineHeight": "26px",
+                                "fontWeight": "500"
+                        }
+                ],
+                "headline-lg": [
+                        "48px",
+                        {
+                                "lineHeight": "48px",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "label-caps": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.1em",
+                                "fontWeight": "700"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* Custom scrollbar for brutalist feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #131313;
+            border-left: 2px solid #ad897e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ffb59e;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pt-20 pb-24 overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-margin-mobile h-20 border-b-2 border-outline bg-background">
+<button class="text-primary hover:bg-primary-container hover:text-on-primary-container active:translate-x-1 active:translate-y-1 transition-all p-2 border-2 border-transparent focus:border-outline">
+<span class="material-symbols-outlined">search</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile uppercase text-primary tracking-tighter truncate px-2">STREET SOUK NAVIGATE</h1>
+<button class="text-primary hover:bg-primary-container hover:text-on-primary-container active:translate-x-1 active:translate-y-1 transition-all p-2 border-2 border-transparent focus:border-outline">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="px-margin-mobile flex flex-col gap-stack-lg mt-stack-lg">
+<!-- Header Image Area -->
+<div class="w-full h-48 border-2 border-outline relative bg-surface-container-high overflow-hidden" data-alt="A chaotic, high-contrast digital collage featuring distorted typography, halftone patterns of a massive crowd at a streetwear festival, and glowing orange directional arrows. The aesthetic is raw, industrial, and heavily inspired by 90s underground rave flyers and brutalist graphic design." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCFgS-qMvZAB59MNAJOlyWAkBx716vrNXDhKDjdaZ9PAkJy5hn-K09BpNbX3UPBcMDDttD-Ce0nWjsw_YOkp3Vln3XQ_AVtFNwTGhDgsGHnEDuh07fpXr0MtZp72rczvIIBvi4UVs-0nt-umJZWc2JklgUxOajUXv1Q2NuL3P3yKC0jk036ZO0zQI3Me4DcbnTI1SkzaPp7BPSm_OAmNWIEuYivjL9F4u4zVJW-64JDdntyc9zT8c5r3A')">
+<div class="absolute inset-0 bg-black/50 mix-blend-multiply"></div>
+<div class="absolute bottom-4 left-4">
+<span class="inline-block bg-primary text-on-primary font-label-caps text-label-caps px-2 py-1 border-2 border-on-background shadow-[4px_4px_0px_0px_#131313] mb-2 uppercase">Official</span>
+<h2 class="font-display text-display text-primary leading-none">LINEUP</h2>
+</div>
+</div>
+<!-- Timeline: Day 1 -->
+<section class="flex flex-col border-2 border-[#00FF00] bg-surface relative shadow-[8px_8px_0px_0px_#00FF00] mb-4">
+<!-- Day Header -->
+<div class="bg-[#00FF00] text-black p-4 border-b-2 border-[#00FF00] sticky top-20 z-40">
+<div class="flex justify-between items-end">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile uppercase m-0 leading-none">DAY 1</h2>
+<span class="font-label-caps text-label-caps uppercase">Saturday 24th</span>
+</div>
+</div>
+<!-- Timeline Item 1 -->
+<div class="flex flex-row border-b-2 border-outline p-4 gap-4 bg-surface hover:bg-surface-bright transition-colors group">
+<div class="w-1/4 flex flex-col pt-1">
+<span class="font-label-caps text-label-caps text-primary">14:00</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">15:30</span>
+</div>
+<div class="w-3/4 flex flex-col gap-2">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-md text-headline-md text-on-surface uppercase leading-tight group-hover:text-primary transition-colors">Early Access Drop: Neon Syndicate</h3>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">bolt</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Exclusive first look at the FW capsule collection. Limited sizes available.</p>
+<button class="self-start mt-2 px-3 py-1 border-2 border-[#00FF00] text-[#00FF00] bg-surface-container-high hover:bg-[#00FF00] hover:text-black transition-all flex items-center gap-2 active:translate-x-1 active:translate-y-1 shadow-[2px_2px_0px_0px_#00FF00] hover:shadow-none">
+<span class="material-symbols-outlined" style="font-size: 16px;">location_on</span>
+<span class="font-label-caps text-label-caps">HYPE TENT B</span>
+</button>
+</div>
+</div>
+<!-- Timeline Item 2 -->
+<div class="flex flex-row border-b-2 border-outline p-4 gap-4 bg-surface hover:bg-surface-bright transition-colors group">
+<div class="w-1/4 flex flex-col pt-1">
+<span class="font-label-caps text-label-caps text-primary">16:00</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">17:00</span>
+</div>
+<div class="w-3/4 flex flex-col gap-2">
+<h3 class="font-headline-md text-headline-md text-on-surface uppercase leading-tight group-hover:text-primary transition-colors">Panel: The Future of Footwear</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Industry leaders discuss sustainability vs. hype.</p>
+<div class="flex gap-2 mt-2">
+<img class="w-8 h-8 border-2 border-outline object-cover grayscale" data-alt="A gritty, high-contrast black and white portrait of a streetwear designer wearing a heavy chain and dark sunglasses, set against a concrete wall texture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmXDKDpmfTi31k96ghQeE9X1z1sJFZ5KFV5gHEvZSf4b2UDwOAbm2o5DLQ1-XTnOeFw-d1L7R_wPmwPCGx1psZErxaIEuy93NxTCO3kosrVp7A-6fsk5EhNQXZoA4x6FrjAq3JEhCEEJgVJcR3Lffa9WGjgBoiHTGhdoyWGUfEmxi7d7vlaqCGP0DQqv2AIwSmhVLQKez8cGjEnfmTuvtRt9fHojVdUmisPJGphsY2O0cXDRDhVVpGAQ"/>
+<img class="w-8 h-8 border-2 border-outline object-cover grayscale" data-alt="A close-up, brutalist-style portrait of an urban fashion influencer with bold makeup and a structural metallic jacket, lit by harsh stadium lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpmg_h1_hRg30NCYzUtWmCYqnReTPNCGafYURB1ASdFcpyTq0TteQMYJWggj5kfYhAJdm5AG44Gj6wycyVaOtl1Be87PQkrzKTZAgXIDj4xhskHTnvL984MoUosBwuWgegP8LgMEmULrVNCvnET7gDaOCm0ZtTTMrjoeQ6313S93ptD7h9h_Oht0cR0lK04M6jv5yZy4LBEuIyDnVsmmOkGJ2RmHfW7fD4EZdTgxRMQG6_wc1BBmL6lQ"/>
+</div>
+<button class="self-start mt-2 px-3 py-1 border-2 border-[#00FF00] text-[#00FF00] bg-surface-container-high hover:bg-[#00FF00] hover:text-black transition-all flex items-center gap-2 active:translate-x-1 active:translate-y-1 shadow-[2px_2px_0px_0px_#00FF00] hover:shadow-none">
+<span class="material-symbols-outlined" style="font-size: 16px;">location_on</span>
+<span class="font-label-caps text-label-caps">MAIN STAGE</span>
+</button>
+</div>
+</div>
+<!-- Timeline Item 3 (Active/Live indicator) -->
+<div class="flex flex-row p-4 gap-4 bg-surface-container-high border-l-4 border-l-[#00FF00] group">
+<div class="w-1/4 flex flex-col pt-1 relative">
+<span class="font-label-caps text-label-caps text-[#00FF00] animate-pulse flex items-center gap-1">
+<span class="w-2 h-2 bg-[#00FF00] rounded-full inline-block"></span> LIVE
+                    </span>
+<span class="font-label-caps text-label-caps text-on-surface-variant mt-1">17:30 - 19:00</span>
+</div>
+<div class="w-3/4 flex flex-col gap-2">
+<h3 class="font-headline-md text-headline-md text-[#00FF00] uppercase leading-tight">DJ SET: METRO BOOMIN</h3>
+<p class="font-body-md text-body-md text-on-surface">Surprise guests expected. Main area will reach capacity early.</p>
+<button class="self-start mt-2 px-3 py-1 border-2 border-[#00FF00] bg-[#00FF00] text-black hover:bg-surface-bright hover:text-[#00FF00] transition-all flex items-center gap-2 active:translate-x-1 active:translate-y-1 shadow-[4px_4px_0px_0px_#00FF00]">
+<span class="material-symbols-outlined" style="font-size: 16px;">location_on</span>
+<span class="font-label-caps text-label-caps">SOUND ARENA</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Timeline: Day 2 -->
+<section class="flex flex-col border-2 border-outline bg-surface relative shadow-[8px_8px_0px_0px_#353535]">
+<!-- Day Header -->
+<div class="bg-surface-container-highest text-on-surface p-4 border-b-2 border-outline sticky top-20 z-40">
+<div class="flex justify-between items-end">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile uppercase m-0 leading-none">DAY 2</h2>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Sunday 25th</span>
+</div>
+</div>
+<!-- Timeline Item 1 -->
+<div class="flex flex-row p-4 gap-4 bg-surface hover:bg-surface-bright transition-colors group">
+<div class="w-1/4 flex flex-col pt-1">
+<span class="font-label-caps text-label-caps text-primary">12:00</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">18:00</span>
+</div>
+<div class="w-3/4 flex flex-col gap-2">
+<h3 class="font-headline-md text-headline-md text-on-surface uppercase leading-tight group-hover:text-primary transition-colors">Vintage Market Open</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Over 50 curated stalls featuring archival pieces.</p>
+<button class="self-start mt-2 px-3 py-1 border-2 border-[#00FF00] text-[#00FF00] bg-surface-container-high hover:bg-[#00FF00] hover:text-black transition-all flex items-center gap-2 active:translate-x-1 active:translate-y-1 shadow-[2px_2px_0px_0px_#00FF00] hover:shadow-none">
+<span class="material-symbols-outlined" style="font-size: 16px;">location_on</span>
+<span class="font-label-caps text-label-caps">THE WAREHOUSE</span>
+</button>
+</div>
+</div>
+</section>
+<div class="h-8"></div> <!-- Bottom padding buffer -->
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-2 py-3 border-t-2 border-outline bg-surface">
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-secondary-container active:scale-95 transition-transform w-16">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-caps text-label-caps mt-1">HOME</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-secondary-container active:scale-95 transition-transform w-16">
+<span class="material-symbols-outlined">map</span>
+<span class="font-label-caps text-label-caps mt-1">MAP</span>
+</button>
+<!-- Active Tab: SCHEDULE -->
+<button class="flex flex-col items-center justify-center bg-primary text-on-primary p-2 border-2 border-on-background shadow-[4px_4px_0px_0px_rgba(255,181,158,1)] active:scale-95 transition-transform w-20 transform -translate-y-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<span class="font-label-caps text-label-caps mt-1">SCHEDULE</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-secondary-container active:scale-95 transition-transform w-16">
+<span class="material-symbols-outlined">storefront</span>
+<span class="font-label-caps text-label-caps mt-1">VENDORS</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-secondary-container active:scale-95 transition-transform w-16 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-label-caps text-label-caps mt-1">ALERTS</span>
+<span class="absolute top-1 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+</nav>
+</body></html>
