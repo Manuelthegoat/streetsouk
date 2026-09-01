@@ -1,19 +1,225 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { C, F, Header, PageTitle } from '@/components/street-souk-ui';
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import {
+  ImageBackground,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { C, F, Header } from "@/components/street-souk-ui";
 
-type Event = { time: string; title: string; description: string; location: string; live?: boolean };
-const days: { title: string; date: string; events: Event[] }[] = [
-  { title: 'DAY 1', date: 'SATURDAY 24TH', events: [
-    { time: '14:00\n15:30', title: 'EARLY ACCESS DROP', description: 'NEON SYNDICATE', location: 'HYPE TENT B' },
-    { time: '16:00\n17:00', title: 'PANEL: THE FUTURE OF FOOTWEAR', description: 'Industry leaders discuss sustainability vs. hype.', location: 'MAIN STAGE' },
-    { time: '17:30\n19:00', title: 'DJ SET: METRO BOOMIN', description: 'Surprise guests expected. Main area will reach capacity early.', location: 'SOUND ARENA', live: true },
-  ] },
-  { title: 'DAY 2', date: 'SUNDAY 25TH', events: [{ time: '12:00\n18:00', title: 'VINTAGE MARKET OPEN', description: 'Over 50 curated stalls featuring archival pieces.', location: 'THE WAREHOUSE' }] },
+const EVENTS = [
+  {
+    time: "14:00\n15:30",
+    title: "EARLY ACCESS DROP",
+    detail: "IYOO CARTEL",
+    place: "HYPE TENT B",
+  },
+  {
+    time: "16:00\n17:00",
+    title: "ZAYLEVELTEN PERFORMANCE",
+    detail: "Performance from the talented ZAYLEVELTEN, featuring a mix of original tracks and remixes.",
+    place: "MAIN STAGE",
+  },
+  {
+    time: "17:30\n19:00",
+    title: "DJ SET: SMADA",
+    detail: "Surprise guests expected. Main area will reach capacity early.",
+    place: "SOUND ARENA",
+    live: true,
+  },
 ];
 
 export default function ScheduleScreen() {
-  return <SafeAreaView style={s.safe}><Header /><ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}><PageTitle eyebrow="FESTIVAL SCHEDULE // 15 DEC" title="LINEUP" /><View style={s.banner}><Text style={s.bannerSmall}>OFFICIAL</Text><Text style={s.bannerTitle}>STREET SOUK{`\n`}SCHEDULE</Text><Text style={s.bannerMeta}>LIVE EVENTS / DROPS / TALKS</Text></View>{days.map((day, dayIndex) => <View key={day.title} style={[s.day, dayIndex === 0 && s.dayLive]}><View style={[s.dayHeader, dayIndex === 0 && s.dayHeaderLive]}><Text style={[s.dayTitle, dayIndex === 0 && s.darkText]}>{day.title}</Text><Text style={[s.dayDate, dayIndex === 0 && s.darkText]}>{day.date}</Text></View>{day.events.map((event) => <View key={event.title} style={[s.event, event.live && s.eventLive]}><Text style={s.time}>{event.time}</Text><View style={s.eventBody}>{event.live && <Text style={s.live}>● LIVE</Text>}<Text style={[s.eventTitle, event.live && s.liveTitle]}>{event.title}</Text><Text style={s.description}>{event.description}</Text><Pressable style={s.location}><Ionicons name="location-outline" size={16} color={C.green} /><Text style={s.locationText}>{event.location}</Text></Pressable></View></View>)}</View>)}</ScrollView></SafeAreaView>;
+  const router = useRouter();
+  return (
+    <SafeAreaView style={s.safe}>
+      <Header />
+      <ScrollView
+        contentContainerStyle={s.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <ImageBackground
+          source={require("@/assets/bgss.png")}
+          style={s.heroImage}
+          imageStyle={s.heroImageCrop}
+        >
+          <View style={s.heroOverlay}>
+            <Text style={s.official}>OFFICIAL</Text>
+            <Text style={s.heroTitle}>LINEUP</Text>
+          </View>
+        </ImageBackground>
+        <View style={s.infoStrip}>
+          <Text style={s.infoTitle}>3 DAYS / 24 DROPS</Text>
+          <Text style={s.infoText}>Times shown in local time</Text>
+        </View>
+        <View style={s.day}>
+          <View style={s.dayHeader}>
+            <Text style={s.dayTitle}>DAY 1</Text>
+            <Text style={s.dayDate}>SATURDAY 24TH</Text>
+          </View>
+          {EVENTS.map((event) => (
+            <View
+              key={event.title}
+              style={[s.event, event.live && s.liveEvent]}
+            >
+              <Text style={s.time}>{event.time}</Text>
+              <View style={s.eventInfo}>
+                {event.live && <Text style={s.live}>LIVE NOW</Text>}
+                <Text style={[s.eventTitle, event.live && s.liveTitle]}>
+                  {event.title}
+                </Text>
+                <Text
+                  style={[
+                    s.detail,
+                    event.detail === "NEON SYNDICATE" && s.featureDetail,
+                  ]}
+                >
+                  {event.detail}
+                </Text>
+                <Pressable
+                  onPress={() => router.push("/map")}
+                  style={s.location}
+                >
+                  <Ionicons name="location-outline" size={16} color={C.green} />
+                  <Text style={s.locationText}>{event.place}</Text>
+                </Pressable>
+              </View>
+            </View>
+          ))}
+        </View>
+        <View style={s.nextDay}>
+          <Text style={s.nextDayTitle}>DAY 2</Text>
+          <Text style={s.nextDayDate}>SUNDAY 25TH</Text>
+          <Ionicons name="arrow-forward" size={22} color={C.muted} />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
 
-const s = StyleSheet.create({ safe: { flex: 1, backgroundColor: C.bg }, content: { padding: 24, paddingBottom: 36 }, banner: { borderWidth: 2, borderColor: C.paper, backgroundColor: '#242424', minHeight: 148, padding: 18, justifyContent: 'space-between', marginBottom: 28 }, bannerSmall: { alignSelf: 'flex-start', color: C.ink, backgroundColor: C.paper, fontFamily: F.mono, fontSize: 11, paddingHorizontal: 8, paddingVertical: 5 }, bannerTitle: { color: C.paper, fontFamily: F.display, fontSize: 30, lineHeight: 31 }, bannerMeta: { color: C.green, fontFamily: F.mono, fontSize: 10 }, day: { borderWidth: 2, borderColor: C.line, marginBottom: 28 }, dayLive: { borderColor: C.green, shadowColor: C.green, shadowOffset: { width: 6, height: 6 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 }, dayHeader: { backgroundColor: '#303030', minHeight: 75, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, dayHeaderLive: { backgroundColor: C.green }, dayTitle: { color: C.paper, fontFamily: F.display, fontSize: 32 }, dayDate: { color: C.paper, fontFamily: F.mono, fontSize: 10 }, darkText: { color: C.ink }, event: { flexDirection: 'row', gap: 14, padding: 18, borderTopWidth: 2, borderTopColor: C.line, minHeight: 175 }, eventLive: { backgroundColor: '#292929' }, time: { color: C.paper, fontFamily: F.mono, fontSize: 13, lineHeight: 21, width: 58 }, eventBody: { flex: 1 }, eventTitle: { color: C.paper, fontFamily: F.display, fontSize: 22, lineHeight: 25 }, liveTitle: { color: C.green }, live: { color: C.green, fontFamily: F.mono, fontSize: 10, marginBottom: 7 }, description: { color: C.muted, fontFamily: F.body, fontSize: 15, lineHeight: 21, marginTop: 10 }, location: { alignSelf: 'flex-start', borderWidth: 2, borderColor: C.green, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, marginTop: 14 }, locationText: { color: C.green, fontFamily: F.mono, fontSize: 10 } });
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: C.bg },
+  content: { padding: 24, paddingBottom: 44 },
+  heroImage: {
+    width: "100%",
+    height: 184,
+    marginTop: 18,
+    marginBottom: 22,
+    borderWidth: 2,
+    borderColor: C.line,
+    overflow: "hidden",
+    justifyContent: "flex-end",
+  },
+  heroImageCrop: {
+    width: "130%",
+    height: "130%",
+    marginLeft: -30,
+    marginTop: -16,
+  },
+  heroOverlay: {
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    backgroundColor: "rgba(16,16,16,0.34)",
+    borderTopWidth: 2,
+    borderTopColor: C.line,
+  },
+  official: {
+    color: C.paper,
+    fontFamily: F.mono,
+    fontSize: 12,
+    letterSpacing: 2,
+    marginBottom: 4,
+  },
+  heroTitle: {
+    color: C.green,
+    fontFamily: F.display,
+    fontSize: 40,
+    letterSpacing: 1,
+    lineHeight: 42,
+  },
+  infoStrip: {
+    borderLeftWidth: 4,
+    borderLeftColor: C.green,
+    backgroundColor: C.panel,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 22,
+  },
+  infoTitle: { color: C.green, fontFamily: F.mono, fontSize: 12 },
+  infoText: { color: C.muted, fontFamily: F.body, fontSize: 14, marginTop: 3 },
+  day: { borderWidth: 2, borderColor: C.line, backgroundColor: C.bg },
+  dayHeader: {
+    backgroundColor: C.green,
+    minHeight: 74,
+    paddingHorizontal: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  dayTitle: { color: C.ink, fontFamily: F.display, fontSize: 34 },
+  dayDate: { color: C.ink, fontFamily: F.mono, fontSize: 10 },
+  event: {
+    flexDirection: "row",
+    padding: 18,
+    borderTopWidth: 2,
+    borderTopColor: C.line,
+    minHeight: 172,
+  },
+  liveEvent: { backgroundColor: C.panel },
+  time: {
+    color: C.paper,
+    fontFamily: F.mono,
+    fontSize: 13,
+    lineHeight: 21,
+    width: 60,
+  },
+  eventInfo: { flex: 1 },
+  live: { color: C.green, fontFamily: F.mono, fontSize: 10, marginBottom: 7 },
+  eventTitle: {
+    color: C.paper,
+    fontFamily: F.display,
+    fontSize: 22,
+    lineHeight: 25,
+  },
+  liveTitle: { color: C.green },
+  detail: {
+    color: C.muted,
+    fontFamily: F.body,
+    fontSize: 16,
+    lineHeight: 21,
+    marginTop: 8,
+  },
+  featureDetail: { color: C.paper, fontFamily: F.mono, fontSize: 12 },
+  location: {
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: C.green,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    marginTop: 14,
+  },
+  locationText: { color: C.green, fontFamily: F.mono, fontSize: 10 },
+  nextDay: {
+    borderWidth: 2,
+    borderColor: C.line,
+    padding: 19,
+    marginTop: 26,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  nextDayTitle: {
+    color: C.paper,
+    fontFamily: F.display,
+    fontSize: 30,
+    flex: 1,
+  },
+  nextDayDate: { color: C.muted, fontFamily: F.mono, fontSize: 10 },
+});

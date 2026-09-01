@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 
@@ -6,7 +7,8 @@ export const C = { bg: '#101010', panel: '#1d1d1d', paper: '#eee7e4', muted: '#a
 export const F = { display: 'Anton', body: 'Archivo Narrow', bodyBold: 'Archivo Narrow Bold', mono: 'JetBrains Mono' } as const;
 
 export function Header({ title = 'STREET SOUK' }: { title?: string }) {
-  return <View style={ui.header}><Pressable accessibilityLabel="Search"><Ionicons name="search" size={25} color={C.green} /></Pressable><Image accessibilityLabel={title} source={require('@/assets/images/sslogo.png')} contentFit="contain" style={ui.logoImage} /><Pressable accessibilityLabel="Open profile" style={ui.profile}><Ionicons name="person-outline" size={18} color={C.green} /></Pressable></View>;
+  const router = useRouter();
+  return <View style={ui.header}><Pressable accessibilityLabel="Search vendors" onPress={() => router.push('/(tabs)/vendors')}><Ionicons name="search" size={25} color={C.green} /></Pressable><Image accessibilityLabel={title} source={require('@/assets/images/sslogo.png')} contentFit="contain" style={ui.logoImage} /><Pressable accessibilityLabel="Open settings" onPress={() => router.push('/settings')} style={ui.profile}><Ionicons name="settings-outline" size={18} color={C.green} /></Pressable></View>;
 }
 
 export function PageTitle({ eyebrow, title }: { eyebrow?: string; title: string }) {
