@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 
-export const C = { bg: '#101010', panel: '#1d1d1d', paper: '#eee7e4', muted: '#a99591', ink: '#050505', green: '#00ff19', line: '#806d68' };
+export const C = { bg: '#101010', panel: '#1d1d1d', paper: '#eee7e4', muted: '#a99591', ink: '#050505', green: '#00ff19', line: '#806d68', mapBg: '#171717', mapGrid: '#343434', mapRoad: '#373737', mapZone: '#202020', mapZoneBorder: '#3c3c3c', mapText: '#555555', scrim: 'rgba(8, 10, 10, 0.40)' };
 export const F = { display: 'Anton', body: 'Archivo Narrow', bodyBold: 'Archivo Narrow Bold', mono: 'JetBrains Mono' } as const;
 
 export function Header({ title = 'STREET SOUK' }: { title?: string }) {

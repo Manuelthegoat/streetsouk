@@ -20,7 +20,7 @@ export default function TabLayout() {
       <Tabs.Screen name="map" options={{ title: 'Map', tabBarIcon: ({ color }) => <Ionicons name="map-outline" size={23} color={color} /> }} />
       <Tabs.Screen name="schedule" options={{ title: 'Schedule', tabBarIcon: ({ color }) => <Ionicons name="calendar-outline" size={23} color={color} /> }} />
       <Tabs.Screen name="vendors" options={{ title: 'Vendors', tabBarIcon: ({ color }) => <Ionicons name="storefront-outline" size={23} color={color} /> }} />
-      <Tabs.Screen name="alerts" options={{ title: 'Alerts', tabBarIcon: ({ color }) => <Ionicons name="notifications-outline" size={23} color={color} /> }} />
+      <Tabs.Screen name="feed" options={{ title: 'Live Feed', tabBarIcon: ({ color }) => <Ionicons name="radio-outline" size={23} color={color} /> }} />
     </Tabs>
   );
 }

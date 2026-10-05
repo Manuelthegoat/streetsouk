@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   Image,
+  ImageBackground,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -12,6 +13,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useStreetSoukStore } from "@/context/street-souk-store";
 
 const VENDORS = [
   {
@@ -20,13 +22,16 @@ const VENDORS = [
     booth: "B-12",
     detail: "Exclusive drops, rare deadstock, and custom streetwear polo.",
     image: require("@/assets/brands/bolapsd.png"),
+    campaign: require("@/assets/brands/bolacampaign.jpg"),
   },
   {
     name: "IYOO CARTEL",
     type: "APPAREL",
     booth: "A-04",
-    detail: "MEMBERS ONLY. Streetwear and accessories from the IYOO CARTEL collective.",
+    detail:
+      "MEMBERS ONLY. Streetwear and accessories from the IYOO CARTEL collective.",
     image: require("@/assets/brands/iyoocartel.png"),
+    campaign: require("@/assets/brands/iyoocampaign.jpg"),
   },
   {
     name: "BONFO",
@@ -34,6 +39,7 @@ const VENDORS = [
     booth: "C-22",
     detail: "NEO-AFRICAN FASHION",
     image: require("@/assets/brands/bonfo.png"),
+    campaign: require("@/assets/brands/bonfocampaign.jpg"),
   },
   {
     name: "THE CHROME PILGRIM",
@@ -41,6 +47,7 @@ const VENDORS = [
     booth: "C-22",
     detail: "Chains, pendants, and grills. Heavy metals only.",
     image: require("@/assets/brands/TCP.png"),
+    campaign: require("@/assets/brands/tcpcampaign.png"),
   },
   {
     name: "GREATERTHAN00",
@@ -48,11 +55,13 @@ const VENDORS = [
     booth: "C-22",
     detail: "Chains, pendants, and grills. Heavy metals only.",
     image: require("@/assets/brands/ssx_logo.png"),
+    campaign: require("@/assets/brands/iyoocampaign.jpg"),
   },
 ];
 
 export default function VendorsScreen() {
   const router = useRouter();
+  const { toggleFavorite, isFavorite } = useStreetSoukStore();
   const [query, setQuery] = useState("");
   const visible = useMemo(
     () =>
@@ -83,27 +92,58 @@ export default function VendorsScreen() {
           />
         </View>
         {visible.map((vendor) => (
-          <View key={vendor.name} style={s.vendor}>
-            <View style={s.vendorTop}>
-              <View style={s.vendorIcon}>
-                <Image
-                  source={vendor.image}
-                  style={s.vendorImage}
-                  resizeMode="contain"
-                />
+          <Pressable
+            key={vendor.name}
+            accessibilityRole="button"
+            accessibilityLabel={`Open ${vendor.name}`}
+            onPress={() =>
+              router.push({
+                pathname: "/vendor/[name]",
+                params: { name: vendor.name },
+              })
+            }
+          >
+            <ImageBackground
+              source={vendor.campaign}
+              imageStyle={s.vendorImageBackground}
+              style={s.vendor}
+            >
+              <View style={s.vendorOverlay}>
+                <View style={s.vendorTop}>
+                  <View style={s.vendorIcon}>
+                    <Image
+                      source={vendor.image}
+                      style={s.vendorImage}
+                      resizeMode="contain"
+                    />
+                  </View>
+                  <View style={s.vendorMeta}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`${isFavorite(vendor.name) ? "Remove" : "Save"} ${vendor.name} from favorites`}
+                      onPress={() => toggleFavorite(vendor.name)}
+                      hitSlop={8}
+                      style={s.favorite}
+                    >
+                      <Ionicons
+                        name={isFavorite(vendor.name) ? "heart" : "heart-outline"}
+                        size={18}
+                        color={C.green}
+                      />
+                    </Pressable>
+                    <Text style={s.type}>{vendor.type}</Text>
+                    <Text style={s.booth}>{vendor.booth}</Text>
+                  </View>
+                </View>
+                <Text style={s.name}>{vendor.name}</Text>
+                <Text style={s.detail}>{vendor.detail}</Text>
+                <Pressable onPress={() => router.push("/map")} style={s.show}>
+                  <Text style={s.showText}>SHOW ON MAP</Text>
+                  <Ionicons name="arrow-forward" size={20} color={C.ink} />
+                </Pressable>
               </View>
-              <View style={s.vendorMeta}>
-                <Text style={s.type}>{vendor.type}</Text>
-                <Text style={s.booth}>{vendor.booth}</Text>
-              </View>
-            </View>
-            <Text style={s.name}>{vendor.name}</Text>
-            <Text style={s.detail}>{vendor.detail}</Text>
-            <Pressable onPress={() => router.push("/map")} style={s.show}>
-              <Text style={s.showText}>VIEW LOCATION</Text>
-              <Ionicons name="arrow-forward" size={20} color={C.ink} />
-            </Pressable>
-          </View>
+            </ImageBackground>
+          </Pressable>
         ))}
         {visible.length === 0 && <Text style={s.empty}>NO VENDORS FOUND</Text>}
       </ScrollView>
@@ -138,6 +178,12 @@ const s = StyleSheet.create({
     marginBottom: 22,
     backgroundColor: C.bg,
   },
+  vendorImageBackground: { opacity: 0.72 },
+  vendorOverlay: {
+    backgroundColor: C.scrim,
+    margin: -20,
+    padding: 20,
+  },
   vendorTop: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -155,6 +201,7 @@ const s = StyleSheet.create({
   },
   vendorImage: { width: 88, height: 88 },
   vendorMeta: { alignItems: "flex-end", gap: 9 },
+  favorite: { width: 34, height: 34, borderWidth: 1, borderColor: C.green, alignItems: "center", justifyContent: "center" },
   type: {
     backgroundColor: C.green,
     color: C.ink,

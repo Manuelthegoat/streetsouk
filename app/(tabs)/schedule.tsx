@@ -1,5 +1,7 @@
+import { C, F, Header } from "@/components/street-souk-ui";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useMemo, useState } from "react";
 import {
   ImageBackground,
   Pressable,
@@ -9,7 +11,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { C, F, Header } from "@/components/street-souk-ui";
+import { useStreetSoukStore } from "@/context/street-souk-store";
 
 const EVENTS = [
   {
@@ -17,12 +19,15 @@ const EVENTS = [
     title: "EARLY ACCESS DROP",
     detail: "IYOO CARTEL",
     place: "HYPE TENT B",
+    type: "DROP",
   },
   {
     time: "16:00\n17:00",
     title: "ZAYLEVELTEN PERFORMANCE",
-    detail: "Performance from the talented ZAYLEVELTEN, featuring a mix of original tracks and remixes.",
+    detail:
+      "Performance from the talented ZAYLEVELTEN, featuring a mix of original tracks and remixes.",
     place: "MAIN STAGE",
+    type: "STAGE",
   },
   {
     time: "17:30\n19:00",
@@ -30,11 +35,15 @@ const EVENTS = [
     detail: "Surprise guests expected. Main area will reach capacity early.",
     place: "SOUND ARENA",
     live: true,
+    type: "DJ",
   },
 ];
 
 export default function ScheduleScreen() {
   const router = useRouter();
+  const [filter, setFilter] = useState("ALL");
+  const { toggleSavedEvent, isEventSaved } = useStreetSoukStore();
+  const visibleEvents = useMemo(() => filter === "ALL" ? EVENTS : EVENTS.filter((event) => event.type === filter), [filter]);
   return (
     <SafeAreaView style={s.safe}>
       <Header />
@@ -56,12 +65,19 @@ export default function ScheduleScreen() {
           <Text style={s.infoTitle}>3 DAYS / 24 DROPS</Text>
           <Text style={s.infoText}>Times shown in local time</Text>
         </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.filters}>
+          {["ALL", "DROP", "STAGE", "DJ"].map((item) => (
+            <Pressable key={item} onPress={() => setFilter(item)} style={[s.filter, filter === item && s.filterActive]}>
+              <Text style={[s.filterText, filter === item && s.filterTextActive]}>{item}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
         <View style={s.day}>
           <View style={s.dayHeader}>
             <Text style={s.dayTitle}>DAY 1</Text>
             <Text style={s.dayDate}>SATURDAY 24TH</Text>
           </View>
-          {EVENTS.map((event) => (
+          {visibleEvents.map((event) => (
             <View
               key={event.title}
               style={[s.event, event.live && s.liveEvent]}
@@ -86,6 +102,15 @@ export default function ScheduleScreen() {
                 >
                   <Ionicons name="location-outline" size={16} color={C.green} />
                   <Text style={s.locationText}>{event.place}</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${isEventSaved(event.title) ? "Remove" : "Save"} ${event.title}`}
+                  onPress={() => toggleSavedEvent(event.title)}
+                  style={s.saveEvent}
+                >
+                  <Ionicons name={isEventSaved(event.title) ? "bookmark" : "bookmark-outline"} size={17} color={C.green} />
+                  <Text style={s.saveEventText}>{isEventSaved(event.title) ? "SAVED" : "SAVE"}</Text>
                 </Pressable>
               </View>
             </View>
@@ -123,7 +148,7 @@ const s = StyleSheet.create({
   heroOverlay: {
     paddingHorizontal: 18,
     paddingVertical: 14,
-    backgroundColor: "rgba(16,16,16,0.34)",
+    backgroundColor: C.scrim,
     borderTopWidth: 2,
     borderTopColor: C.line,
   },
@@ -151,6 +176,11 @@ const s = StyleSheet.create({
   },
   infoTitle: { color: C.green, fontFamily: F.mono, fontSize: 12 },
   infoText: { color: C.muted, fontFamily: F.body, fontSize: 14, marginTop: 3 },
+  filters: { gap: 8, paddingBottom: 20 },
+  filter: { borderWidth: 1, borderColor: C.line, paddingHorizontal: 13, paddingVertical: 9 },
+  filterActive: { backgroundColor: C.green, borderColor: C.green },
+  filterText: { color: C.paper, fontFamily: F.mono, fontSize: 10 },
+  filterTextActive: { color: C.ink },
   day: { borderWidth: 2, borderColor: C.line, backgroundColor: C.bg },
   dayHeader: {
     backgroundColor: C.green,
@@ -206,6 +236,8 @@ const s = StyleSheet.create({
     marginTop: 14,
   },
   locationText: { color: C.green, fontFamily: F.mono, fontSize: 10 },
+  saveEvent: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 12 },
+  saveEventText: { color: C.green, fontFamily: F.mono, fontSize: 9 },
   nextDay: {
     borderWidth: 2,
     borderColor: C.line,

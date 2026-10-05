@@ -1,4 +1,4 @@
-import { F, Header } from "@/components/street-souk-ui";
+import { C, F, Header } from "@/components/street-souk-ui";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -11,16 +11,6 @@ import {
   Text,
   View,
 } from "react-native";
-
-const C = {
-  bg: "#101010",
-  panel: "#1d1d1d",
-  paper: "#eee7e4",
-  muted: "#a99591",
-  ink: "#050505",
-  green: "#00ff19",
-  line: "#806d68",
-};
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -102,7 +92,7 @@ export default function HomeScreen() {
           contentContainerStyle={s.cards}
         >
           <View style={s.dropCard}>
-            <View style={[s.fakeImage, { backgroundColor: "#393939" }]}>
+            <View style={[s.fakeImage, { backgroundColor: C.mapRoad }]}> 
               <Image
                 source={require("@/assets/brands/bolapsdpolo.png")}
                 style={s.productImage}
@@ -116,7 +106,7 @@ export default function HomeScreen() {
             </View>
           </View>
           <View style={s.dropCard}>
-            <View style={[s.fakeImage, { backgroundColor: "#292929" }]}>
+            <View style={[s.fakeImage, { backgroundColor: C.mapZone }]}> 
               <Image
                 source={require("@/assets/brands/bonfotrouser.png")}
                 style={s.productImage}
