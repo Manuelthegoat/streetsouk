@@ -1,15 +1,21 @@
-import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Ionicons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LayoutAnimation, Pressable, StyleSheet, Text, View } from "react-native";
-import { C } from "@/components/street-souk-ui";
+import { BottomTabBarProps } from 'expo-router/js-tabs';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  LayoutAnimation,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { C } from '@/components/street-souk-ui';
 
 const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
-  index: "home-outline",
-  map: "map-outline",
-  schedule: "calendar-outline",
-  vendors: "storefront-outline",
-  feed: "radio-outline",
+  index: 'home-outline',
+  map: 'map-outline',
+  schedule: 'calendar-outline',
+  vendors: 'storefront-outline',
+  feed: 'radio-outline',
 };
 
 export function StreetSoukTabBar({
@@ -18,15 +24,18 @@ export function StreetSoukTabBar({
   navigation,
 }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+
   return (
     <View style={[s.bar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
       {state.routes.map((route, index) => {
         const focused = state.index === index;
         const { options } = descriptors[route.key];
+
         const label =
-          typeof options.tabBarLabel === "string"
+          typeof options.tabBarLabel === 'string'
             ? options.tabBarLabel
             : (options.title ?? route.name);
+
         return (
           <Pressable
             key={route.key}
@@ -34,17 +43,25 @@ export function StreetSoukTabBar({
             accessibilityState={{ selected: focused }}
             accessibilityLabel={options.tabBarAccessibilityLabel}
             onPress={() => {
-              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              LayoutAnimation.configureNext(
+                LayoutAnimation.Presets.easeInEaseOut
+              );
               navigation.navigate(route.name);
             }}
-            onLongPress={() => navigation.emit({ type: "tabLongPress", target: route.key })}
+            onLongPress={() =>
+              navigation.emit({
+                type: 'tabLongPress',
+                target: route.key,
+              })
+            }
             style={[s.item, focused && s.active]}
           >
             <Ionicons
-              name={icons[route.name] ?? "ellipse-outline"}
+              name={icons[route.name] ?? 'ellipse-outline'}
               size={23}
               color={focused ? C.ink : C.paper}
             />
+
             <Text style={[s.label, focused && s.activeLabel]}>
               {String(label).toUpperCase()}
             </Text>
@@ -63,19 +80,21 @@ const s = StyleSheet.create({
     backgroundColor: C.bg,
     borderTopWidth: 2,
     borderTopColor: C.line,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-around",
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-around',
     gap: 5,
   },
+
   item: {
     flex: 1,
     minHeight: 62,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 7,
     gap: 5,
   },
+
   active: {
     backgroundColor: C.green,
     borderWidth: 2,
@@ -86,12 +105,16 @@ const s = StyleSheet.create({
     shadowRadius: 0,
     elevation: 5,
   },
+
   label: {
     color: C.paper,
-    fontFamily: "JetBrains Mono",
+    fontFamily: 'JetBrains Mono',
     fontSize: 9,
-    fontWeight: "700",
+    fontWeight: '700',
     letterSpacing: 0,
   },
-  activeLabel: { color: C.ink },
+
+  activeLabel: {
+    color: C.ink,
+  },
 });
