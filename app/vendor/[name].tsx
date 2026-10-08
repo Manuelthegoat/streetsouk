@@ -232,7 +232,7 @@ const s = StyleSheet.create({
   boothLabel: { color: C.muted, fontFamily: F.mono, fontSize: 9 },
   boothValue: { color: C.green, fontFamily: F.display, fontSize: 23, marginTop: 2 },
   mapPreview: { height: 250, borderWidth: 2, borderColor: C.paper, position: "relative", backgroundColor: C.mapBg, overflow: "hidden" },
-  mapGrid: { ...StyleSheet.absoluteFillObject, borderWidth: 1, borderColor: C.mapGrid, opacity: 0.55 },
+  mapGrid: { ...StyleSheet.absoluteFill, borderWidth: 1, borderColor: C.mapGrid, opacity: 0.55 },
   mapRoadA: { position: "absolute", width: "150%", height: 12, backgroundColor: C.mapRoad, transform: [{ rotate: "-28deg" }], top: "48%", left: "-20%" },
   mapRoadB: { position: "absolute", width: "150%", height: 8, backgroundColor: C.mapRoad, transform: [{ rotate: "38deg" }], top: "18%", left: "-20%" },
   mapZone: { position: "absolute", width: "48%", height: "58%", left: "26%", top: "21%", borderWidth: 2, borderColor: C.green },

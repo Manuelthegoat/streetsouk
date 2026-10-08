@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
-  ImageBackground,
+  Image,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -15,27 +15,26 @@ import { useStreetSoukStore } from "@/context/street-souk-store";
 
 const EVENTS = [
   {
-    time: "14:00\n15:30",
+    time: "2:00 PM – 3:30 PM",
     title: "EARLY ACCESS DROP",
-    detail: "IYOO CARTEL",
     place: "HYPE TENT B",
     type: "DROP",
+    image: require("@/assets/brands/iyoocampaign.jpg"),
   },
   {
-    time: "16:00\n17:00",
+    time: "4:00 PM – 5:00 PM",
     title: "ZAYLEVELTEN PERFORMANCE",
-    detail:
-      "Performance from the talented ZAYLEVELTEN, featuring a mix of original tracks and remixes.",
     place: "MAIN STAGE",
     type: "STAGE",
+    image: require("@/assets/brands/bolacampaign.jpg"),
   },
   {
-    time: "17:30\n19:00",
+    time: "5:30 PM – 7:00 PM",
     title: "DJ SET: SMADA",
-    detail: "Surprise guests expected. Main area will reach capacity early.",
     place: "SOUND ARENA",
     live: true,
     type: "DJ",
+    image: require("@/assets/brands/bonfocampaign.jpg"),
   },
 ];
 
@@ -46,25 +45,13 @@ export default function ScheduleScreen() {
   const visibleEvents = useMemo(() => filter === "ALL" ? EVENTS : EVENTS.filter((event) => event.type === filter), [filter]);
   return (
     <SafeAreaView style={s.safe}>
-      <Header />
+      <Header title="SCHEDULE" />
       <ScrollView
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        <ImageBackground
-          source={require("@/assets/bgss.png")}
-          style={s.heroImage}
-          imageStyle={s.heroImageCrop}
-        >
-          <View style={s.heroOverlay}>
-            <Text style={s.official}>OFFICIAL</Text>
-            <Text style={s.heroTitle}>LINEUP</Text>
-          </View>
-        </ImageBackground>
-        <View style={s.infoStrip}>
-          <Text style={s.infoTitle}>3 DAYS / 24 DROPS</Text>
-          <Text style={s.infoText}>Times shown in local time</Text>
-        </View>
+        <Text style={s.pageTitle}>SCHEDULE</Text>
+        <Text style={s.pageSubtitle}>TIMES SHOWN IN LOCAL TIME</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.filters}>
           {["ALL", "DROP", "STAGE", "DJ"].map((item) => (
             <Pressable key={item} onPress={() => setFilter(item)} style={[s.filter, filter === item && s.filterActive]}>
@@ -78,39 +65,26 @@ export default function ScheduleScreen() {
             <Text style={s.dayDate}>SATURDAY 24TH</Text>
           </View>
           {visibleEvents.map((event) => (
-            <View
-              key={event.title}
-              style={[s.event, event.live && s.liveEvent]}
-            >
+            <View key={event.title} style={s.scheduleItem}>
               <Text style={s.time}>{event.time}</Text>
-              <View style={s.eventInfo}>
-                {event.live && <Text style={s.live}>LIVE NOW</Text>}
-                <Text style={[s.eventTitle, event.live && s.liveTitle]}>
-                  {event.title}
-                </Text>
-                <Text
-                  style={[
-                    s.detail,
-                    event.detail === "NEON SYNDICATE" && s.featureDetail,
-                  ]}
-                >
-                  {event.detail}
-                </Text>
-                <Pressable
-                  onPress={() => router.push("/map")}
-                  style={s.location}
-                >
-                  <Ionicons name="location-outline" size={16} color={C.green} />
-                  <Text style={s.locationText}>{event.place}</Text>
-                </Pressable>
+              <View style={[s.eventCard, event.live && s.liveEvent]}>
+                <Image source={event.image} style={s.eventImage} resizeMode="cover" />
+                <View style={s.eventInfo}>
+                  {event.live && <Text style={s.live}>LIVE NOW</Text>}
+                  <Text style={[s.eventTitle, event.live && s.liveTitle]}>{event.title}</Text>
+                  <Pressable onPress={() => router.push("/(tabs)/map")} style={s.location}>
+                    <Ionicons name="location-outline" size={14} color={C.green} />
+                    <Text numberOfLines={1} style={s.locationText}>{event.place}</Text>
+                  </Pressable>
+                </View>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`${isEventSaved(event.title) ? "Remove" : "Save"} ${event.title}`}
+                  accessibilityLabel={`${isEventSaved(event.title) ? "Unsave" : "Save"} ${event.title}`}
+                  accessibilityState={{ selected: isEventSaved(event.title) }}
                   onPress={() => toggleSavedEvent(event.title)}
                   style={s.saveEvent}
                 >
-                  <Ionicons name={isEventSaved(event.title) ? "bookmark" : "bookmark-outline"} size={17} color={C.green} />
-                  <Text style={s.saveEventText}>{isEventSaved(event.title) ? "SAVED" : "SAVE"}</Text>
+                  <Ionicons name={isEventSaved(event.title) ? "star" : "star-outline"} size={21} color={isEventSaved(event.title) ? C.green : C.paper} />
                 </Pressable>
               </View>
             </View>
@@ -128,130 +102,31 @@ export default function ScheduleScreen() {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
-  content: { padding: 24, paddingBottom: 44 },
-  heroImage: {
-    width: "100%",
-    height: 184,
-    marginTop: 18,
-    marginBottom: 22,
-    borderWidth: 2,
-    borderColor: C.line,
-    overflow: "hidden",
-    justifyContent: "flex-end",
-  },
-  heroImageCrop: {
-    width: "130%",
-    height: "130%",
-    marginLeft: -30,
-    marginTop: -16,
-  },
-  heroOverlay: {
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    backgroundColor: C.scrim,
-    borderTopWidth: 2,
-    borderTopColor: C.line,
-  },
-  official: {
-    color: C.paper,
-    fontFamily: F.mono,
-    fontSize: 12,
-    letterSpacing: 2,
-    marginBottom: 4,
-  },
-  heroTitle: {
-    color: C.green,
-    fontFamily: F.display,
-    fontSize: 40,
-    letterSpacing: 1,
-    lineHeight: 42,
-  },
-  infoStrip: {
-    borderLeftWidth: 4,
-    borderLeftColor: C.green,
-    backgroundColor: C.panel,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 22,
-  },
-  infoTitle: { color: C.green, fontFamily: F.mono, fontSize: 12 },
-  infoText: { color: C.muted, fontFamily: F.body, fontSize: 14, marginTop: 3 },
-  filters: { gap: 8, paddingBottom: 20 },
+  content: { padding: 18, paddingBottom: 44 },
+  pageTitle: { color: C.paper, fontFamily: F.display, fontSize: 30, marginTop: 17 },
+  pageSubtitle: { color: C.muted, fontFamily: F.mono, fontSize: 9, marginTop: 4, marginBottom: 18 },
+  filters: { gap: 8, paddingBottom: 17 },
   filter: { borderWidth: 1, borderColor: C.line, paddingHorizontal: 13, paddingVertical: 9 },
   filterActive: { backgroundColor: C.green, borderColor: C.green },
   filterText: { color: C.paper, fontFamily: F.mono, fontSize: 10 },
   filterTextActive: { color: C.ink },
-  day: { borderWidth: 2, borderColor: C.line, backgroundColor: C.bg },
-  dayHeader: {
-    backgroundColor: C.green,
-    minHeight: 74,
-    paddingHorizontal: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  dayTitle: { color: C.ink, fontFamily: F.display, fontSize: 34 },
-  dayDate: { color: C.ink, fontFamily: F.mono, fontSize: 10 },
-  event: {
-    flexDirection: "row",
-    padding: 18,
-    borderTopWidth: 2,
-    borderTopColor: C.line,
-    minHeight: 172,
-  },
-  liveEvent: { backgroundColor: C.panel },
-  time: {
-    color: C.paper,
-    fontFamily: F.mono,
-    fontSize: 13,
-    lineHeight: 21,
-    width: 60,
-  },
-  eventInfo: { flex: 1 },
-  live: { color: C.green, fontFamily: F.mono, fontSize: 10, marginBottom: 7 },
-  eventTitle: {
-    color: C.paper,
-    fontFamily: F.display,
-    fontSize: 22,
-    lineHeight: 25,
-  },
+  day: { backgroundColor: C.bg },
+  dayHeader: { minHeight: 53, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: 1, borderBottomColor: C.line, marginBottom: 16 },
+  dayTitle: { color: C.paper, fontFamily: F.display, fontSize: 24 },
+  dayDate: { color: C.muted, fontFamily: F.mono, fontSize: 9 },
+  scheduleItem: { marginBottom: 17 },
+  time: { color: C.green, fontFamily: F.mono, fontSize: 12, marginBottom: 7, marginLeft: 2 },
+  eventCard: { minHeight: 94, padding: 9, borderWidth: 1, borderColor: C.line, backgroundColor: C.panel, flexDirection: "row", alignItems: "center", gap: 11 },
+  liveEvent: { borderColor: C.green },
+  eventImage: { width: 76, height: 76, backgroundColor: C.bg },
+  eventInfo: { flex: 1, justifyContent: "center" },
+  live: { color: C.green, fontFamily: F.mono, fontSize: 8, marginBottom: 4 },
+  eventTitle: { color: C.paper, fontFamily: F.display, fontSize: 16, lineHeight: 19 },
   liveTitle: { color: C.green },
-  detail: {
-    color: C.muted,
-    fontFamily: F.body,
-    fontSize: 16,
-    lineHeight: 21,
-    marginTop: 8,
-  },
-  featureDetail: { color: C.paper, fontFamily: F.mono, fontSize: 12 },
-  location: {
-    alignSelf: "flex-start",
-    borderWidth: 1,
-    borderColor: C.green,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    marginTop: 14,
-  },
-  locationText: { color: C.green, fontFamily: F.mono, fontSize: 10 },
-  saveEvent: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 12 },
-  saveEventText: { color: C.green, fontFamily: F.mono, fontSize: 9 },
-  nextDay: {
-    borderWidth: 2,
-    borderColor: C.line,
-    padding: 19,
-    marginTop: 26,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-  },
-  nextDayTitle: {
-    color: C.paper,
-    fontFamily: F.display,
-    fontSize: 30,
-    flex: 1,
-  },
-  nextDayDate: { color: C.muted, fontFamily: F.mono, fontSize: 10 },
+  location: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 7 },
+  locationText: { color: C.muted, fontFamily: F.mono, fontSize: 8, flexShrink: 1 },
+  saveEvent: { width: 34, height: 42, alignItems: "center", justifyContent: "center" },
+  nextDay: { borderWidth: 1, borderColor: C.line, padding: 16, marginTop: 13, flexDirection: "row", alignItems: "center", gap: 14 },
+  nextDayTitle: { color: C.paper, fontFamily: F.display, fontSize: 25, flex: 1 },
+  nextDayDate: { color: C.muted, fontFamily: F.mono, fontSize: 9 },
 });

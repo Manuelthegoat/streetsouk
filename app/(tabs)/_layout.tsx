@@ -17,10 +17,14 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
       }}>
       <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color }) => <Ionicons name="home-outline" size={23} color={color} /> }} />
-      <Tabs.Screen name="map" options={{ title: 'Map', tabBarIcon: ({ color }) => <Ionicons name="map-outline" size={23} color={color} /> }} />
-      <Tabs.Screen name="schedule" options={{ title: 'Schedule', tabBarIcon: ({ color }) => <Ionicons name="calendar-outline" size={23} color={color} /> }} />
-      <Tabs.Screen name="vendors" options={{ title: 'Vendors', tabBarIcon: ({ color }) => <Ionicons name="storefront-outline" size={23} color={color} /> }} />
-      <Tabs.Screen name="feed" options={{ title: 'Live Feed', tabBarIcon: ({ color }) => <Ionicons name="radio-outline" size={23} color={color} /> }} />
+      <Tabs.Screen name="shop" options={{ title: 'Shop' }} />
+      <Tabs.Screen name="search" options={{ title: 'Search' }} />
+      <Tabs.Screen name="events" options={{ title: 'Events' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="map" options={{ href: null }} />
+      <Tabs.Screen name="schedule" options={{ href: null }} />
+      <Tabs.Screen name="vendors" options={{ href: null }} />
+      <Tabs.Screen name="feed" options={{ href: null }} />
     </Tabs>
   );
 }

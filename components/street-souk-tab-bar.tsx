@@ -12,11 +12,12 @@ import { C } from '@/components/street-souk-ui';
 
 const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
   index: 'home-outline',
-  map: 'map-outline',
-  schedule: 'calendar-outline',
-  vendors: 'storefront-outline',
-  feed: 'radio-outline',
+  shop: 'bag-outline',
+  search: 'search-outline',
+  events: 'ticket-outline',
+  profile: 'person-outline',
 };
+const visibleTabs = new Set(['index', 'shop', 'search', 'events', 'profile']);
 
 export function StreetSoukTabBar({
   state,
@@ -27,8 +28,8 @@ export function StreetSoukTabBar({
 
   return (
     <View style={[s.bar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-      {state.routes.map((route, index) => {
-        const focused = state.index === index;
+      {state.routes.filter((route) => visibleTabs.has(route.name)).map((route) => {
+        const focused = state.routes[state.index]?.key === route.key;
         const { options } = descriptors[route.key];
 
         const label =

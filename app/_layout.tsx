@@ -1,4 +1,4 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router/react-navigation';
+import { DarkTheme, ThemeProvider } from 'expo-router/react-navigation';
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { Anton_400Regular } from '@expo-google-fonts/anton';
@@ -40,6 +40,13 @@ export default function RootLayout() {
           <Stack.Screen name="feed/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="scan" options={{ headerShown: false }} />
           <Stack.Screen name="vendor/[name]" options={{ headerShown: false }} />
+          <Stack.Screen name="passport" options={{ headerShown: false }} />
+          <Stack.Screen name="passport-scan" options={{ headerShown: false }} />
+          <Stack.Screen name="tickets" options={{ headerShown: false }} />
+          <Stack.Screen name="sessions" options={{ headerShown: false }} />
+          <Stack.Screen name="ss-tv" options={{ headerShown: false }} />
+          <Stack.Screen name="cart" options={{ headerShown: false }} />
+          <Stack.Screen name="events/[id]" options={{ headerShown: false }} />
         </Stack>
       </StreetSoukStore>
       <StatusBar style="light" />
