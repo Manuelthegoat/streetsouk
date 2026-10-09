@@ -54,7 +54,7 @@ export default function AlertsScreen() {
         </View>
         <View style={s.headerStatus}>
           <View style={s.headerStatusDot} />
-          <Ionicons name="notifications" size={17} color={C.green} />
+          <Ionicons name="notifications" size={17} color={C.neon} />
         </View>
       </View>
       <ScrollView contentContainerStyle={s.content}>
@@ -81,7 +81,7 @@ export default function AlertsScreen() {
               <Ionicons
                 name={icon as keyof typeof Ionicons.glyphMap}
                 size={25}
-                color={C.green}
+                color={C.neon}
               />
             </View>
             <View style={s.noticeBody}>
@@ -103,20 +103,20 @@ const s = StyleSheet.create({
   backButton: { width: 40, height: 40, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center" },
   stackTitleWrap: { alignItems: "center", justifyContent: "center" },
   logo: { width: 108, height: 32 },
-  stackTitle: { color: C.green, fontFamily: F.mono, fontSize: 9, letterSpacing: 2, marginTop: 2 },
+  stackTitle: { color: C.neon, fontFamily: F.mono, fontSize: 9, letterSpacing: 2, marginTop: 2 },
   headerStatus: { width: 40, height: 40, alignItems: "center", justifyContent: "center", position: "relative" },
-  headerStatusDot: { position: "absolute", width: 6, height: 6, borderRadius: 3, backgroundColor: C.green, top: 7, right: 7 },
+  headerStatusDot: { position: "absolute", width: 6, height: 6, borderRadius: 3, backgroundColor: C.neon, top: 7, right: 7 },
   content: { padding: 24 },
-  status: { backgroundColor: C.green, padding: 15, flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 24 },
+  status: { backgroundColor: C.neon, padding: 15, flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 24 },
   statusOff: { backgroundColor: C.panel, borderWidth: 2, borderColor: C.line },
   statusDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.ink },
   statusDotOff: { backgroundColor: C.paper },
   statusText: { color: C.ink, fontFamily: F.mono, fontSize: 11, flex: 1 },
   statusTextOff: { color: C.paper },
   notice: { borderWidth: 2, borderColor: C.paper, padding: 16, flexDirection: "row", alignItems: "flex-start", gap: 14, marginBottom: 16 },
-  icon: { width: 46, height: 46, borderWidth: 2, borderColor: C.green, alignItems: "center", justifyContent: "center" },
+  icon: { width: 46, height: 46, borderWidth: 2, borderColor: C.neon, alignItems: "center", justifyContent: "center" },
   noticeBody: { flex: 1 },
-  label: { color: C.green, fontFamily: F.mono, fontSize: 10 },
-  noticeTitle: { color: C.paper, fontFamily: F.display, fontSize: 19, marginTop: 5 },
+  label: { color: C.neon, fontFamily: F.mono, fontSize: 10 },
+  noticeTitle: { color: C.neon, fontFamily: F.display, fontSize: 19, marginTop: 5 },
   detail: { color: C.muted, fontFamily: F.body, fontSize: 14, lineHeight: 20, marginTop: 7 },
 });

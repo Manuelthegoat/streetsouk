@@ -21,10 +21,6 @@ export default function TabLayout() {
       <Tabs.Screen name="search" options={{ title: 'Search' }} />
       <Tabs.Screen name="events" options={{ title: 'Events' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
-      <Tabs.Screen name="map" options={{ href: null }} />
-      <Tabs.Screen name="schedule" options={{ href: null }} />
-      <Tabs.Screen name="vendors" options={{ href: null }} />
-      <Tabs.Screen name="feed" options={{ href: null }} />
     </Tabs>
   );
 }

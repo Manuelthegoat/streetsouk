@@ -97,10 +97,10 @@ const s = StyleSheet.create({
   },
 
   active: {
-    backgroundColor: C.green,
+    backgroundColor: C.neon,
     borderWidth: 2,
     borderColor: C.paper,
-    shadowColor: C.green,
+    shadowColor: C.neon,
     shadowOffset: { width: 5, height: 5 },
     shadowOpacity: 1,
     shadowRadius: 0,

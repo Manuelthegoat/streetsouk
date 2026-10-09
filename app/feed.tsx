@@ -90,7 +90,7 @@ export default function FeedScreen() {
           onPress={() => router.push("/settings")}
           style={s.headerAction}
         >
-          <Ionicons name="menu" size={28} color={C.green} />
+          <Ionicons name="menu" size={28} color={C.neon} />
         </Pressable>
         <Image
           accessibilityLabel="Street Souk"
@@ -102,10 +102,10 @@ export default function FeedScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Search vendors"
-            onPress={() => router.push("/(tabs)/vendors")}
+            onPress={() => router.push("/vendors")}
             style={s.headerAction}
           >
-            <Ionicons name="search" size={25} color={C.green} />
+            <Ionicons name="search" size={25} color={C.neon} />
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -113,7 +113,7 @@ export default function FeedScreen() {
             onPress={() => router.push("/alerts")}
             style={s.headerAction}
           >
-            <Ionicons name="notifications-outline" size={21} color={C.green} />
+            <Ionicons name="notifications-outline" size={21} color={C.neon} />
             <View style={s.alertDot} />
           </Pressable>
         </View>
@@ -218,37 +218,37 @@ const s = StyleSheet.create({
   },
   headerAction: { width: 36, height: 36, justifyContent: "center", position: "relative" },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 2 },
-  alertDot: { position: "absolute", width: 7, height: 7, borderRadius: 4, backgroundColor: C.green, right: 1, top: 3 },
+  alertDot: { position: "absolute", width: 7, height: 7, borderRadius: 4, backgroundColor: C.neon, right: 1, top: 3 },
   logo: { width: 142, height: 48 },
   content: { padding: 20, paddingBottom: 48 },
   titleBlock: { marginTop: 30, marginBottom: 28 },
-  title: { color: C.paper, fontFamily: F.display, fontSize: 48, lineHeight: 52 },
-  subtitle: { color: C.green, fontFamily: F.mono, fontSize: 11, letterSpacing: 1, marginTop: 8 },
+  title: { color: C.neon, fontFamily: F.display, fontSize: 48, lineHeight: 52 },
+  subtitle: { color: C.neon, fontFamily: F.mono, fontSize: 11, letterSpacing: 1, marginTop: 8 },
   filters: { flexDirection: "row", gap: 9 },
   filter: { flex: 1, height: 46, borderWidth: 2, borderColor: C.panel, alignItems: "center", justifyContent: "center" },
-  filterActive: { backgroundColor: C.green, borderColor: C.green },
+  filterActive: { backgroundColor: C.neon, borderColor: C.neon },
   filterText: { color: C.paper, fontFamily: F.mono, fontSize: 10 },
   filterTextActive: { color: C.ink },
-  rule: { height: 5, backgroundColor: C.green, marginTop: 19, marginBottom: 30 },
+  rule: { height: 5, backgroundColor: C.neon, marginTop: 19, marginBottom: 30 },
   feedList: { gap: 16 },
   card: { borderWidth: 2, borderColor: C.paper, backgroundColor: C.panel, padding: 18 },
-  urgentCard: { borderColor: C.green, borderBottomWidth: 8, paddingTop: 64 },
+  urgentCard: { borderColor: C.neon, borderBottomWidth: 8, paddingTop: 64 },
   infoCard: { backgroundColor: C.paper, borderColor: C.paper },
   cardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
   ageRow: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
   age: { color: C.muted, fontFamily: F.mono, fontSize: 10 },
   tag: { borderWidth: 2, borderColor: C.paper, paddingHorizontal: 9, paddingVertical: 8 },
-  urgentTag: { position: "absolute", right: -18, top: -48, backgroundColor: C.green, borderColor: C.green },
+  urgentTag: { position: "absolute", right: -18, top: -48, backgroundColor: C.neon, borderColor: C.neon },
   infoTag: { backgroundColor: C.ink, borderColor: C.ink },
   tagText: { color: C.paper, fontFamily: F.mono, fontSize: 9 },
   infoTagText: { color: C.paper },
-  cardTitle: { color: C.paper, fontFamily: F.display, fontSize: 25, lineHeight: 29, marginTop: 23 },
+  cardTitle: { color: C.neon, fontFamily: F.display, fontSize: 25, lineHeight: 29, marginTop: 23 },
   cardDetail: { color: C.muted, fontFamily: F.body, fontSize: 16, lineHeight: 24, marginTop: 21 },
   infoDetail: { color: C.ink },
   inkText: { color: C.ink },
-  livePill: { alignSelf: "flex-start", backgroundColor: C.green, flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 10, paddingVertical: 8, marginTop: 24 },
+  livePill: { alignSelf: "flex-start", backgroundColor: C.neon, flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 10, paddingVertical: 8, marginTop: 24 },
   liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.ink },
   liveText: { color: C.ink, fontFamily: F.mono, fontSize: 10 },
-  soldPill: { alignSelf: "flex-start", backgroundColor: C.green, paddingHorizontal: 10, paddingVertical: 7, marginTop: 22 },
+  soldPill: { alignSelf: "flex-start", backgroundColor: C.neon, paddingHorizontal: 10, paddingVertical: 7, marginTop: 22 },
   soldText: { color: C.ink, fontFamily: F.mono, fontSize: 10 },
 });

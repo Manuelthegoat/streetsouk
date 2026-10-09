@@ -72,8 +72,8 @@ export default function ScheduleScreen() {
                 <View style={s.eventInfo}>
                   {event.live && <Text style={s.live}>LIVE NOW</Text>}
                   <Text style={[s.eventTitle, event.live && s.liveTitle]}>{event.title}</Text>
-                  <Pressable onPress={() => router.push("/(tabs)/map")} style={s.location}>
-                    <Ionicons name="location-outline" size={14} color={C.green} />
+                  <Pressable onPress={() => router.push("/map")} style={s.location}>
+                    <Ionicons name="location-outline" size={14} color={C.neon} />
                     <Text numberOfLines={1} style={s.locationText}>{event.place}</Text>
                   </Pressable>
                 </View>
@@ -84,7 +84,7 @@ export default function ScheduleScreen() {
                   onPress={() => toggleSavedEvent(event.title)}
                   style={s.saveEvent}
                 >
-                  <Ionicons name={isEventSaved(event.title) ? "star" : "star-outline"} size={21} color={isEventSaved(event.title) ? C.green : C.paper} />
+                  <Ionicons name={isEventSaved(event.title) ? "star" : "star-outline"} size={21} color={isEventSaved(event.title) ? C.neon : C.paper} />
                 </Pressable>
               </View>
             </View>
@@ -103,30 +103,30 @@ export default function ScheduleScreen() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   content: { padding: 18, paddingBottom: 44 },
-  pageTitle: { color: C.paper, fontFamily: F.display, fontSize: 30, marginTop: 17 },
+  pageTitle: { color: C.neon, fontFamily: F.display, fontSize: 30, marginTop: 17 },
   pageSubtitle: { color: C.muted, fontFamily: F.mono, fontSize: 9, marginTop: 4, marginBottom: 18 },
   filters: { gap: 8, paddingBottom: 17 },
   filter: { borderWidth: 1, borderColor: C.line, paddingHorizontal: 13, paddingVertical: 9 },
-  filterActive: { backgroundColor: C.green, borderColor: C.green },
+  filterActive: { backgroundColor: C.neon, borderColor: C.neon },
   filterText: { color: C.paper, fontFamily: F.mono, fontSize: 10 },
   filterTextActive: { color: C.ink },
   day: { backgroundColor: C.bg },
   dayHeader: { minHeight: 53, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: 1, borderBottomColor: C.line, marginBottom: 16 },
-  dayTitle: { color: C.paper, fontFamily: F.display, fontSize: 24 },
+  dayTitle: { color: C.neon, fontFamily: F.display, fontSize: 24 },
   dayDate: { color: C.muted, fontFamily: F.mono, fontSize: 9 },
   scheduleItem: { marginBottom: 17 },
-  time: { color: C.green, fontFamily: F.mono, fontSize: 12, marginBottom: 7, marginLeft: 2 },
+  time: { color: C.neon, fontFamily: F.mono, fontSize: 12, marginBottom: 7, marginLeft: 2 },
   eventCard: { minHeight: 94, padding: 9, borderWidth: 1, borderColor: C.line, backgroundColor: C.panel, flexDirection: "row", alignItems: "center", gap: 11 },
-  liveEvent: { borderColor: C.green },
+  liveEvent: { borderColor: C.neon },
   eventImage: { width: 76, height: 76, backgroundColor: C.bg },
   eventInfo: { flex: 1, justifyContent: "center" },
-  live: { color: C.green, fontFamily: F.mono, fontSize: 8, marginBottom: 4 },
-  eventTitle: { color: C.paper, fontFamily: F.display, fontSize: 16, lineHeight: 19 },
-  liveTitle: { color: C.green },
+  live: { color: C.neon, fontFamily: F.mono, fontSize: 8, marginBottom: 4 },
+  eventTitle: { color: C.neon, fontFamily: F.display, fontSize: 16, lineHeight: 19 },
+  liveTitle: { color: C.neon },
   location: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 7 },
   locationText: { color: C.muted, fontFamily: F.mono, fontSize: 8, flexShrink: 1 },
   saveEvent: { width: 34, height: 42, alignItems: "center", justifyContent: "center" },
   nextDay: { borderWidth: 1, borderColor: C.line, padding: 16, marginTop: 13, flexDirection: "row", alignItems: "center", gap: 14 },
-  nextDayTitle: { color: C.paper, fontFamily: F.display, fontSize: 25, flex: 1 },
+  nextDayTitle: { color: C.neon, fontFamily: F.display, fontSize: 25, flex: 1 },
   nextDayDate: { color: C.muted, fontFamily: F.mono, fontSize: 9 },
 });

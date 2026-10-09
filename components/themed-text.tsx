@@ -44,17 +44,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   title: {
+    color: '#39FF14',
     fontSize: 32,
     fontWeight: 'bold',
     lineHeight: 32,
   },
   subtitle: {
+    color: '#39FF14',
     fontSize: 20,
     fontWeight: 'bold',
   },
   link: {
     lineHeight: 30,
     fontSize: 16,
-    color: '#0a7ea4',
+    color: '#39FF14',
   },
 });

@@ -16,10 +16,10 @@ colors:
   outline: '#ad897e'
   outline-variant: '#52433f'
   surface-tint: '#ffb59e'
-  primary: '#ffdbd0'
-  on-primary: '#5e1700'
-  primary-container: '#ff571a'
-  on-primary-container: '#7a4433'
+  primary: '#39FF14'
+  on-primary: '#050505'
+  primary-container: '#008751'
+  on-primary-container: '#FFFFFF'
   inverse-primary: '#88503d'
   secondary: '#ffb59e'
   on-secondary: '#5e1700'
@@ -105,12 +105,12 @@ This design system embodies a "Polished Brutalist" aesthetic, specifically tailo
 The brand personality is aggressive, urgent, and exclusive. It targets a Gen-Z and Millennial audience familiar with "drop" culture. The UI should feel like a digital fanzine: loud, structured, and unapologetically functional, prioritizing high-impact visuals and clear calls to action over subtle transitions or soft aesthetics.
 
 ## Colors
-The palette is built on a high-contrast foundation of deep charcoal and off-white, punctuated by a vibrant "Fidelity Orange" and a softer "Peach Dust" (Primary). 
+The palette uses black surfaces, neon green headings and active accents, Nigeria green button fills, and white supporting details.
 
-- **Primary (#ffb59e):** Used for key accents, borders, and hero text elements.
-- **Primary Container (#ff571a):** Reserved for high-priority interactive elements like main action buttons.
-- **Surface Tones:** A range of dark greys create subtle depth without breaking the flat, brutalist feel.
-- **Functional Accents:** High-contrast black-on-white labels are used for status badges (e.g., "LIVE DROP") to mimic physical price tags or stickers.
+- **Neon green (#39FF14):** Headings, selected tabs, active filters, status markers, and accent borders.
+- **Nigeria green (#008751):** Primary button backgrounds with black button text.
+- **Black (#050505):** App background and dark contrast surfaces.
+- **White (#FFFFFF):** Supporting copy, icons, and secondary detail.
 
 ## Typography
 The typography strategy uses three distinct voices to establish hierarchy:
@@ -128,7 +128,7 @@ The system uses a fluid 4-column grid for mobile and a 12-column grid for deskto
 ## Elevation & Depth
 Depth is not achieved through shadows or blurs, but through **Hard Shadows** and **Offset Strokes**. 
 
-1.  **Hard Shadows:** Interactive cards and buttons use a solid, 100% opacity offset shadow (e.g., 4px or 8px) in the primary color (#ffb59e).
+1.  **Hard Shadows:** Interactive cards and buttons use a solid, 100% opacity offset shadow (e.g., 4px or 8px) in neon green (#39FF14).
 2.  **Active States:** On click/press, elements should "depress" by translating X and Y coordinates to match the shadow offset, making the shadow disappear and simulating a physical button press.
 3.  **Framing:** Use 2px solid borders for almost all containers. Double-borders or "corner-bracket" overlays (using absolute positioning) add a layer of technical detail without using Z-axis effects.
 
@@ -142,7 +142,7 @@ The shape language is strictly **Sharp (0px roundedness)**. Every container, but
 ## Components
 
 ### Buttons
-- **Primary Action:** Large, Anton font, background in Primary Container (#ff571a), 2px black or primary border, with a heavy 8px hard shadow.
+- **Primary Action:** Large, Anton font, background in Nigeria green (#008751), black text, and a heavy 8px neon shadow.
 - **Secondary/Nav:** JetBrains Mono font, 2px border, no fill, 4px hard shadow.
 
 ### Cards

@@ -95,7 +95,7 @@ export default function VendorDetailScreen() {
           onPress={() => router.push("/map")}
           style={s.mapButton}
         >
-          <Ionicons name="map-outline" size={19} color={C.green} />
+          <Ionicons name="map-outline" size={19} color={C.neon} />
         </Pressable>
         <Pressable
           accessibilityRole="button"
@@ -103,7 +103,7 @@ export default function VendorDetailScreen() {
           onPress={() => toggleFavorite(vendorName)}
           style={s.favorite}
         >
-          <Ionicons name={isFavorite(vendorName) ? "heart" : "heart-outline"} size={19} color={C.green} />
+          <Ionicons name={isFavorite(vendorName) ? "heart" : "heart-outline"} size={19} color={C.neon} />
         </Pressable>
       </View>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -128,7 +128,7 @@ export default function VendorDetailScreen() {
           onPress={() => router.push("/map")}
         >
           <View style={s.directionsIcon}>
-            <Ionicons name="navigate" size={17} color={C.green} />
+            <Ionicons name="navigate" size={17} color={C.neon} />
           </View>
           <View style={s.directionsCopy}>
             <Text style={s.directionsEyebrow}>LOCATE THIS VENDOR</Text>
@@ -195,16 +195,16 @@ const s = StyleSheet.create({
   header: { height: 64, borderBottomWidth: 2, borderBottomColor: C.line, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16 },
   back: { width: 40, height: 40, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center" },
   headerLabel: { color: C.paper, fontFamily: F.mono, fontSize: 10, letterSpacing: 1 },
-  mapButton: { width: 40, height: 40, borderWidth: 1, borderColor: C.green, alignItems: "center", justifyContent: "center" },
-  favorite: { width: 40, height: 40, borderWidth: 1, borderColor: C.green, alignItems: "center", justifyContent: "center" },
+  mapButton: { width: 40, height: 40, borderWidth: 1, borderColor: C.neon, alignItems: "center", justifyContent: "center" },
+  favorite: { width: 40, height: 40, borderWidth: 1, borderColor: C.neon, alignItems: "center", justifyContent: "center" },
   hero: { height: 350, justifyContent: "flex-end", backgroundColor: C.panel },
   heroImage: { opacity: 0.72 },
   heroShade: { minHeight: 190, justifyContent: "flex-end", padding: 18, backgroundColor: C.scrim },
   heroTopline: { position: "absolute", top: 18, left: 18, right: 18, flexDirection: "row", justifyContent: "space-between" },
-  kicker: { color: C.green, fontFamily: F.mono, fontSize: 10, letterSpacing: 1 },
+  kicker: { color: C.neon, fontFamily: F.mono, fontSize: 10, letterSpacing: 1 },
   heroCount: { color: C.paper, fontFamily: F.mono, fontSize: 10 },
   heroLogo: { width: 84, height: 60, marginBottom: 12 },
-  heroTitle: { color: C.paper, fontFamily: F.display, fontSize: 42, lineHeight: 47 },
+  heroTitle: { color: C.neon, fontFamily: F.display, fontSize: 42, lineHeight: 47 },
   directions: { minHeight: 76, backgroundColor: C.green, flexDirection: "row", alignItems: "center", paddingHorizontal: 18, gap: 12 },
   directionsIcon: { width: 34, height: 34, borderWidth: 1, borderColor: C.ink, alignItems: "center", justifyContent: "center" },
   directionsCopy: { flex: 1 },
@@ -213,7 +213,7 @@ const s = StyleSheet.create({
   content: { padding: 18, paddingBottom: 34 },
   sectionHeading: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4, marginBottom: 16 },
   sectionNumber: { color: C.muted, fontFamily: F.mono, fontSize: 11 },
-  sectionTitle: { color: C.green, fontFamily: F.display, fontSize: 20 },
+  sectionTitle: { color: C.neon, fontFamily: F.display, fontSize: 20 },
   about: { color: C.muted, fontFamily: F.body, fontSize: 17, lineHeight: 25, paddingLeft: 21 },
   productHeading: { marginTop: 32 },
   product: { borderWidth: 2, borderColor: C.line, backgroundColor: C.paper },
@@ -222,22 +222,22 @@ const s = StyleSheet.create({
   productStamp: { position: "absolute", right: 11, top: 11, color: C.ink, fontFamily: F.mono, fontSize: 9 },
   productMeta: { backgroundColor: C.panel, padding: 14, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" },
   productEyebrow: { color: C.muted, fontFamily: F.mono, fontSize: 9, marginBottom: 5 },
-  productName: { color: C.paper, fontFamily: F.display, fontSize: 19 },
-  price: { color: C.green, fontFamily: F.mono, fontSize: 12 },
+  productName: { color: C.neon, fontFamily: F.display, fontSize: 19 },
+  price: { color: C.neon, fontFamily: F.mono, fontSize: 12 },
   location: { backgroundColor: C.panel, padding: 18, borderTopWidth: 2, borderTopColor: C.line },
   locationHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 },
   locationEyebrow: { color: C.muted, fontFamily: F.mono, fontSize: 9, marginBottom: 5 },
-  locationTitle: { color: C.paper, fontFamily: F.display, fontSize: 20 },
+  locationTitle: { color: C.neon, fontFamily: F.display, fontSize: 20 },
   boothBadge: { alignItems: "flex-end" },
   boothLabel: { color: C.muted, fontFamily: F.mono, fontSize: 9 },
-  boothValue: { color: C.green, fontFamily: F.display, fontSize: 23, marginTop: 2 },
+  boothValue: { color: C.neon, fontFamily: F.display, fontSize: 23, marginTop: 2 },
   mapPreview: { height: 250, borderWidth: 2, borderColor: C.paper, position: "relative", backgroundColor: C.mapBg, overflow: "hidden" },
   mapGrid: { ...StyleSheet.absoluteFill, borderWidth: 1, borderColor: C.mapGrid, opacity: 0.55 },
   mapRoadA: { position: "absolute", width: "150%", height: 12, backgroundColor: C.mapRoad, transform: [{ rotate: "-28deg" }], top: "48%", left: "-20%" },
   mapRoadB: { position: "absolute", width: "150%", height: 8, backgroundColor: C.mapRoad, transform: [{ rotate: "38deg" }], top: "18%", left: "-20%" },
-  mapZone: { position: "absolute", width: "48%", height: "58%", left: "26%", top: "21%", borderWidth: 2, borderColor: C.green },
-  mapDot: { position: "absolute", width: 15, height: 15, borderRadius: 8, backgroundColor: C.green, left: "48%", top: "46%", borderWidth: 3, borderColor: C.mapBg },
-  mapLabel: { position: "absolute", left: "45%", top: "54%", color: C.green, fontFamily: F.mono, fontSize: 10 },
+  mapZone: { position: "absolute", width: "48%", height: "58%", left: "26%", top: "21%", borderWidth: 2, borderColor: C.neon },
+  mapDot: { position: "absolute", width: 15, height: 15, borderRadius: 8, backgroundColor: C.neon, left: "48%", top: "46%", borderWidth: 3, borderColor: C.mapBg },
+  mapLabel: { position: "absolute", left: "45%", top: "54%", color: C.neon, fontFamily: F.mono, fontSize: 10 },
   mapNorth: { position: "absolute", right: 12, top: 12, color: C.paper, fontFamily: F.mono, fontSize: 11 },
   locationRows: { marginTop: 8 },
   locationMeta: { color: C.muted, fontFamily: F.mono, fontSize: 10, borderBottomWidth: 1, borderBottomColor: C.line, paddingVertical: 12 },

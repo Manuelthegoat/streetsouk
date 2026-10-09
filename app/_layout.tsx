@@ -30,6 +30,10 @@ export default function RootLayout() {
       <StreetSoukStore>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="map" options={{ headerShown: false }} />
+          <Stack.Screen name="schedule" options={{ headerShown: false }} />
+          <Stack.Screen name="vendors" options={{ headerShown: false }} />
+          <Stack.Screen name="feed" options={{ headerShown: false }} />
           <Stack.Screen
             name="modal"
             options={{ presentation: 'modal', title: 'Modal' }}

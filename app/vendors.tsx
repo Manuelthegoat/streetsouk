@@ -128,7 +128,7 @@ export default function VendorsScreen() {
                       <Ionicons
                         name={isFavorite(vendor.name) ? "heart" : "heart-outline"}
                         size={18}
-                        color={C.green}
+                        color={C.neon}
                       />
                     </Pressable>
                     <Text style={s.type}>{vendor.type}</Text>
@@ -201,9 +201,9 @@ const s = StyleSheet.create({
   },
   vendorImage: { width: 88, height: 88 },
   vendorMeta: { alignItems: "flex-end", gap: 9 },
-  favorite: { width: 34, height: 34, borderWidth: 1, borderColor: C.green, alignItems: "center", justifyContent: "center" },
+  favorite: { width: 34, height: 34, borderWidth: 1, borderColor: C.neon, alignItems: "center", justifyContent: "center" },
   type: {
-    backgroundColor: C.green,
+    backgroundColor: C.neon,
     color: C.ink,
     fontFamily: F.mono,
     fontSize: 11,
@@ -212,14 +212,14 @@ const s = StyleSheet.create({
   },
   booth: {
     borderWidth: 1,
-    borderColor: C.green,
-    color: C.green,
+    borderColor: C.neon,
+    color: C.neon,
     fontFamily: F.mono,
     fontSize: 11,
     paddingHorizontal: 9,
     paddingVertical: 7,
   },
-  name: { color: C.paper, fontFamily: F.display, fontSize: 28, marginTop: 22 },
+  name: { color: C.neon, fontFamily: F.display, fontSize: 28, marginTop: 22 },
   detail: {
     color: C.muted,
     fontFamily: F.body,
