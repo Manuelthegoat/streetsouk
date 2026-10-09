@@ -39,7 +39,8 @@ const feedItems: FeedItem[] = [
     category: "SCHEDULE",
     age: "10 MINS AGO",
     title: "DJ OBI SET DELAYED",
-    detail: "Due to technical difficulties, DJ Obi’s set will now start at 4:30 PM. Stay tuned.",
+    detail:
+      "Due to technical difficulties, DJ Obi’s set will now start at 4:30 PM. Stay tuned.",
     icon: "time-outline",
   },
   {
@@ -62,7 +63,8 @@ const feedItems: FeedItem[] = [
     category: "DROPS",
     age: "2 HOURS AGO",
     title: "VIVENDI X STREET SOUK HOODIE",
-    detail: "All sizes are completely sold out. Thanks for the massive support!",
+    detail:
+      "All sizes are completely sold out. Thanks for the massive support!",
     icon: "storefront-outline",
     soldOut: true,
   },
@@ -164,8 +166,22 @@ function FeedCard({ item }: { item: FeedItem }) {
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${item.category}: ${item.title}`}
-      onPress={() => router.push({ pathname: "/feed/[id]", params: { id: item.title, category: item.category, age: item.age, detail: item.detail } })}
-      style={[s.card, item.urgent && s.urgentCard, item.category === "INFO" && s.infoCard]}
+      onPress={() =>
+        router.push({
+          pathname: "/feed/[id]",
+          params: {
+            id: item.title,
+            category: item.category,
+            age: item.age,
+            detail: item.detail,
+          },
+        })
+      }
+      style={[
+        s.card,
+        item.urgent && s.urgentCard,
+        item.category === "INFO" && s.infoCard,
+      ]}
     >
       <View style={s.cardTop}>
         <View style={s.ageRow}>
@@ -178,7 +194,13 @@ function FeedCard({ item }: { item: FeedItem }) {
             {item.age}
           </Text>
         </View>
-        <View style={[s.tag, item.urgent && s.urgentTag, item.category === "INFO" && s.infoTag]}>
+        <View
+          style={[
+            s.tag,
+            item.urgent && s.urgentTag,
+            item.category === "INFO" && s.infoTag,
+          ]}
+        >
           <Text style={[s.tagText, item.category === "INFO" && s.infoTagText]}>
             {item.urgent ? "URGENT / FLASH DROP" : item.category}
           </Text>
@@ -216,39 +238,113 @@ const s = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: C.line,
   },
-  headerAction: { width: 36, height: 36, justifyContent: "center", position: "relative" },
+  headerAction: {
+    width: 36,
+    height: 36,
+    justifyContent: "center",
+    position: "relative",
+  },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 2 },
-  alertDot: { position: "absolute", width: 7, height: 7, borderRadius: 4, backgroundColor: C.neon, right: 1, top: 3 },
+  alertDot: {
+    position: "absolute",
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: C.neon,
+    right: 1,
+    top: 3,
+  },
   logo: { width: 142, height: 48 },
   content: { padding: 20, paddingBottom: 48 },
   titleBlock: { marginTop: 30, marginBottom: 28 },
   title: { color: C.neon, fontFamily: F.display, fontSize: 48, lineHeight: 52 },
-  subtitle: { color: C.neon, fontFamily: F.mono, fontSize: 11, letterSpacing: 1, marginTop: 8 },
+  subtitle: {
+    color: C.neon,
+    fontFamily: F.mono,
+    fontSize: 11,
+    letterSpacing: 1,
+    marginTop: 8,
+  },
   filters: { flexDirection: "row", gap: 9 },
-  filter: { flex: 1, height: 46, borderWidth: 2, borderColor: C.panel, alignItems: "center", justifyContent: "center" },
+  filter: {
+    flex: 1,
+    height: 46,
+    borderWidth: 2,
+    borderColor: C.panel,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   filterActive: { backgroundColor: C.neon, borderColor: C.neon },
   filterText: { color: C.paper, fontFamily: F.mono, fontSize: 10 },
   filterTextActive: { color: C.ink },
   rule: { height: 5, backgroundColor: C.neon, marginTop: 19, marginBottom: 30 },
   feedList: { gap: 16 },
-  card: { borderWidth: 2, borderColor: C.paper, backgroundColor: C.panel, padding: 18 },
+  card: {
+    borderWidth: 2,
+    borderColor: C.paper,
+    backgroundColor: C.panel,
+    padding: 18,
+  },
   urgentCard: { borderColor: C.neon, borderBottomWidth: 8, paddingTop: 64 },
   infoCard: { backgroundColor: C.paper, borderColor: C.paper },
-  cardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
+  cardTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
   ageRow: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
   age: { color: C.muted, fontFamily: F.mono, fontSize: 10 },
-  tag: { borderWidth: 2, borderColor: C.paper, paddingHorizontal: 9, paddingVertical: 8 },
-  urgentTag: { position: "absolute", right: -18, top: -48, backgroundColor: C.neon, borderColor: C.neon },
+  tag: {
+    borderWidth: 2,
+    borderColor: C.paper,
+    paddingHorizontal: 9,
+    paddingVertical: 8,
+  },
+  urgentTag: {
+    position: "absolute",
+    right: -18,
+    top: -48,
+    backgroundColor: C.neon,
+    borderColor: C.neon,
+  },
   infoTag: { backgroundColor: C.ink, borderColor: C.ink },
   tagText: { color: C.paper, fontFamily: F.mono, fontSize: 9 },
   infoTagText: { color: C.paper },
-  cardTitle: { color: C.neon, fontFamily: F.display, fontSize: 25, lineHeight: 29, marginTop: 23 },
-  cardDetail: { color: C.muted, fontFamily: F.body, fontSize: 16, lineHeight: 24, marginTop: 21 },
+  cardTitle: {
+    color: C.neon,
+    fontFamily: F.display,
+    fontSize: 25,
+    lineHeight: 29,
+    marginTop: 23,
+  },
+  cardDetail: {
+    color: C.muted,
+    fontFamily: F.body,
+    fontSize: 16,
+    lineHeight: 24,
+    marginTop: 21,
+  },
   infoDetail: { color: C.ink },
   inkText: { color: C.ink },
-  livePill: { alignSelf: "flex-start", backgroundColor: C.neon, flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 10, paddingVertical: 8, marginTop: 24 },
+  livePill: {
+    alignSelf: "flex-start",
+    backgroundColor: C.neon,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginTop: 24,
+  },
   liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.ink },
   liveText: { color: C.ink, fontFamily: F.mono, fontSize: 10 },
-  soldPill: { alignSelf: "flex-start", backgroundColor: C.neon, paddingHorizontal: 10, paddingVertical: 7, marginTop: 22 },
+  soldPill: {
+    alignSelf: "flex-start",
+    backgroundColor: C.neon,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    marginTop: 22,
+  },
   soldText: { color: C.ink, fontFamily: F.mono, fontSize: 10 },
 });

@@ -1,8 +1,126 @@
-import { C,F,Header } from '@/components/street-souk-ui';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useMemo,useState } from 'react';
-import { Pressable,SafeAreaView,ScrollView,StyleSheet,Text,TextInput,View } from 'react-native';
-const items=[['BRANDS','Independent labels & makers','storefront-outline','/vendors'],['EVENTS','Shows, pop-ups & convention','ticket-outline','/(tabs)/events'],['SS TV','Films, interviews & culture','play-circle-outline','/ss-tv'],['CONVENTION MAP','Plan your day on the floor','map-outline','/map'] ] as const;
-export default function SearchScreen(){const router=useRouter();const [query,setQuery]=useState('');const visible=useMemo(()=>items.filter(x=>`${x[0]} ${x[1]}`.toLowerCase().includes(query.toLowerCase())),[query]);return <SafeAreaView style={s.safe}><Header title="SEARCH"/><ScrollView contentContainerStyle={s.content}><Text style={s.title}>WHAT ARE{ '\n'}YOU LOOKING FOR?</Text><View style={s.search}><Ionicons name="search" size={21} color={C.muted}/><TextInput accessibilityLabel="Search StreetSouk" value={query} onChangeText={setQuery} placeholder="BRANDS, EVENTS, STORIES..." placeholderTextColor={C.muted} style={s.input}/>{query.length>0&&<Pressable onPress={()=>setQuery('')}><Ionicons name="close-circle" size={19} color={C.muted}/></Pressable>}</View><Text style={s.label}>{query?'SEARCH RESULTS':'EXPLORE STREET SOUK'}</Text>{visible.map(item=><Pressable key={item[0]} style={s.row} onPress={()=>router.push(item[3])}><View style={s.icon}><Ionicons name={item[2]} size={21} color={C.neon}/></View><View style={s.copy}><Text style={s.name}>{item[0]}</Text><Text style={s.detail}>{item[1]}</Text></View><Ionicons name="arrow-forward" size={18} color={C.muted}/></Pressable>)}{visible.length===0&&<Text style={s.empty}>NO MATCHES YET. TRY A DIFFERENT SEARCH.</Text>}</ScrollView></SafeAreaView>}
-const s=StyleSheet.create({safe:{flex:1,backgroundColor:C.bg},content:{padding:20},title:{color:C.neon,fontFamily:F.display,fontSize:37,lineHeight:40,marginTop:27,marginBottom:20},search:{height:53,borderWidth:1,borderColor:C.line,backgroundColor:C.panel,flexDirection:'row',alignItems:'center',paddingHorizontal:13,gap:10},input:{flex:1,color:C.paper,fontFamily:F.mono,fontSize:10},label:{color:C.neon,fontFamily:F.mono,fontSize:9,marginTop:28,marginBottom:7},row:{minHeight:74,borderTopWidth:1,borderTopColor:C.line,flexDirection:'row',alignItems:'center',gap:13},icon:{width:40,height:40,borderWidth:1,borderColor:C.line,alignItems:'center',justifyContent:'center'},copy:{flex:1},name:{color:C.neon,fontFamily:F.display,fontSize:18},detail:{color:C.muted,fontFamily:F.body,fontSize:14,marginTop:2},empty:{color:C.muted,fontFamily:F.mono,fontSize:10,marginTop:20}});
+import { C, F, Header } from "@/components/street-souk-ui";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useMemo, useState } from "react";
+import {
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+const items = [
+  ["BRANDS", "Independent labels & makers", "storefront-outline", "/vendors"],
+  ["EVENTS", "Shows, pop-ups & convention", "ticket-outline", "/(tabs)/events"],
+  ["SS TV", "Films, interviews & culture", "play-circle-outline", "/ss-tv"],
+  ["CONVENTION MAP", "Plan your day on the floor", "map-outline", "/map"],
+] as const;
+export default function SearchScreen() {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const visible = useMemo(
+    () =>
+      items.filter((x) =>
+        `${x[0]} ${x[1]}`.toLowerCase().includes(query.toLowerCase()),
+      ),
+    [query],
+  );
+  return (
+    <SafeAreaView style={s.safe}>
+      <Header title="SEARCH" />
+      <ScrollView contentContainerStyle={s.content}>
+        <Text style={s.title}>WHAT ARE{"\n"}YOU LOOKING FOR?</Text>
+        <View style={s.search}>
+          <Ionicons name="search" size={21} color={C.muted} />
+          <TextInput
+            accessibilityLabel="Search StreetSouk"
+            value={query}
+            onChangeText={setQuery}
+            placeholder="BRANDS, EVENTS, STORIES..."
+            placeholderTextColor={C.muted}
+            style={s.input}
+          />
+          {query.length > 0 && (
+            <Pressable onPress={() => setQuery("")}>
+              <Ionicons name="close-circle" size={19} color={C.muted} />
+            </Pressable>
+          )}
+        </View>
+        <Text style={s.label}>
+          {query ? "SEARCH RESULTS" : "EXPLORE STREET SOUK"}
+        </Text>
+        {visible.map((item) => (
+          <Pressable
+            key={item[0]}
+            style={s.row}
+            onPress={() => router.push(item[3])}
+          >
+            <View style={s.icon}>
+              <Ionicons name={item[2]} size={21} color={C.neon} />
+            </View>
+            <View style={s.copy}>
+              <Text style={s.name}>{item[0]}</Text>
+              <Text style={s.detail}>{item[1]}</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={18} color={C.muted} />
+          </Pressable>
+        ))}
+        {visible.length === 0 && (
+          <Text style={s.empty}>NO MATCHES YET. TRY A DIFFERENT SEARCH.</Text>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: C.bg },
+  content: { padding: 20 },
+  title: {
+    color: C.neon,
+    fontFamily: F.display,
+    fontSize: 37,
+    lineHeight: 40,
+    marginTop: 27,
+    marginBottom: 20,
+  },
+  search: {
+    height: 53,
+    borderWidth: 1,
+    borderColor: C.line,
+    backgroundColor: C.panel,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 13,
+    gap: 10,
+  },
+  input: { flex: 1, color: C.paper, fontFamily: F.mono, fontSize: 10 },
+  label: {
+    color: C.neon,
+    fontFamily: F.mono,
+    fontSize: 9,
+    marginTop: 28,
+    marginBottom: 7,
+  },
+  row: {
+    minHeight: 74,
+    borderTopWidth: 1,
+    borderTopColor: C.line,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 13,
+  },
+  icon: {
+    width: 40,
+    height: 40,
+    borderWidth: 1,
+    borderColor: C.line,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  copy: { flex: 1 },
+  name: { color: C.neon, fontFamily: F.display, fontSize: 18 },
+  detail: { color: C.muted, fontFamily: F.body, fontSize: 14, marginTop: 2 },
+  empty: { color: C.muted, fontFamily: F.mono, fontSize: 10, marginTop: 20 },
+});

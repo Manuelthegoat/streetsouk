@@ -126,7 +126,9 @@ export default function VendorsScreen() {
                       style={s.favorite}
                     >
                       <Ionicons
-                        name={isFavorite(vendor.name) ? "heart" : "heart-outline"}
+                        name={
+                          isFavorite(vendor.name) ? "heart" : "heart-outline"
+                        }
                         size={18}
                         color={C.neon}
                       />
@@ -201,7 +203,14 @@ const s = StyleSheet.create({
   },
   vendorImage: { width: 88, height: 88 },
   vendorMeta: { alignItems: "flex-end", gap: 9 },
-  favorite: { width: 34, height: 34, borderWidth: 1, borderColor: C.neon, alignItems: "center", justifyContent: "center" },
+  favorite: {
+    width: 34,
+    height: 34,
+    borderWidth: 1,
+    borderColor: C.neon,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   type: {
     backgroundColor: C.neon,
     color: C.ink,

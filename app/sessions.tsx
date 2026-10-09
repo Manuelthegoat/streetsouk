@@ -1,6 +1,107 @@
-import { C,F } from '@/components/street-souk-ui';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { Pressable,SafeAreaView,StyleSheet,Text,View } from 'react-native';
-export default function SessionsScreen(){const router=useRouter();return <SafeAreaView style={s.safe}><View style={s.header}><Pressable onPress={()=>router.back()}><Ionicons name="arrow-back" size={22} color={C.paper}/></Pressable><Text style={s.headerText}>STREET SOUK</Text><View style={{width:22}}/></View><View style={s.content}><View style={s.icon}><Ionicons name="people-outline" size={26} color={C.neon}/></View><Text style={s.title}>SS SESSIONS</Text><Text style={s.copy}>A platform for the next generation of African creatives. We’re building it step by step.</Text><View style={s.feature}><Text style={s.label}>UP NEXT</Text><Text style={s.headline}>UNI TOUR</Text><Text style={s.detail}>Campus visits, conversations and creative community.</Text></View><View style={s.feature}><Text style={s.label}>ON THE ROADMAP</Text><Text style={s.headline}>CREATIVE JOB DIRECTORY</Text><Text style={s.detail}>A place for creative companies to post roles and for talent to share their work.</Text></View><Pressable style={s.link} onPress={()=>router.replace('/(tabs)')}><Text style={s.linkText}>BACK TO STREET SOUK</Text><Ionicons name="arrow-forward" size={18} color={C.ink}/></Pressable></View></SafeAreaView>}
-const s=StyleSheet.create({safe:{flex:1,backgroundColor:C.bg},header:{height:62,paddingHorizontal:18,borderBottomWidth:1,borderBottomColor:C.line,flexDirection:'row',justifyContent:'space-between',alignItems:'center'},headerText:{color:C.neon,fontFamily:F.mono,fontSize:9},content:{flex:1,justifyContent:'center',padding:23},icon:{width:50,height:50,borderWidth:1,borderColor:C.neon,alignItems:'center',justifyContent:'center'},title:{color:C.neon,fontFamily:F.display,fontSize:35,marginTop:15},copy:{color:C.muted,fontFamily:F.body,fontSize:16,lineHeight:22,marginTop:4,marginBottom:17},feature:{padding:14,backgroundColor:C.panel,borderWidth:1,borderColor:C.line,marginTop:9},label:{color:C.neon,fontFamily:F.mono,fontSize:8},headline:{color:C.neon,fontFamily:F.display,fontSize:20,marginTop:5},detail:{color:C.muted,fontFamily:F.body,fontSize:14,lineHeight:19,marginTop:3},link:{marginTop:18,backgroundColor:C.green,padding:14,flexDirection:'row',justifyContent:'space-between'},linkText:{color:C.ink,fontFamily:F.mono,fontSize:10}});
+import { C, F } from "@/components/street-souk-ui";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+export default function SessionsScreen() {
+  const router = useRouter();
+  return (
+    <SafeAreaView style={s.safe}>
+      <View style={s.header}>
+        <Pressable onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={22} color={C.paper} />
+        </Pressable>
+        <Text style={s.headerText}>STREET SOUK</Text>
+        <View style={{ width: 22 }} />
+      </View>
+      <View style={s.content}>
+        <View style={s.icon}>
+          <Ionicons name="people-outline" size={26} color={C.neon} />
+        </View>
+        <Text style={s.title}>SS SESSIONS</Text>
+        <Text style={s.copy}>
+          A platform for the next generation of African creatives. We’re
+          building it step by step.
+        </Text>
+        <View style={s.feature}>
+          <Text style={s.label}>UP NEXT</Text>
+          <Text style={s.headline}>UNI TOUR</Text>
+          <Text style={s.detail}>
+            Campus visits, conversations and creative community.
+          </Text>
+        </View>
+        <View style={s.feature}>
+          <Text style={s.label}>ON THE ROADMAP</Text>
+          <Text style={s.headline}>CREATIVE JOB DIRECTORY</Text>
+          <Text style={s.detail}>
+            A place for creative companies to post roles and for talent to share
+            their work.
+          </Text>
+        </View>
+        <Pressable style={s.link} onPress={() => router.replace("/(tabs)")}>
+          <Text style={s.linkText}>BACK TO STREET SOUK</Text>
+          <Ionicons name="arrow-forward" size={18} color={C.ink} />
+        </Pressable>
+      </View>
+    </SafeAreaView>
+  );
+}
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: C.bg },
+  header: {
+    height: 62,
+    paddingHorizontal: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: C.line,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  headerText: { color: C.neon, fontFamily: F.mono, fontSize: 9 },
+  content: { flex: 1, justifyContent: "center", padding: 23 },
+  icon: {
+    width: 50,
+    height: 50,
+    borderWidth: 1,
+    borderColor: C.neon,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  title: { color: C.neon, fontFamily: F.display, fontSize: 35, marginTop: 15 },
+  copy: {
+    color: C.muted,
+    fontFamily: F.body,
+    fontSize: 16,
+    lineHeight: 22,
+    marginTop: 4,
+    marginBottom: 17,
+  },
+  feature: {
+    padding: 14,
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.line,
+    marginTop: 9,
+  },
+  label: { color: C.neon, fontFamily: F.mono, fontSize: 8 },
+  headline: {
+    color: C.neon,
+    fontFamily: F.display,
+    fontSize: 20,
+    marginTop: 5,
+  },
+  detail: {
+    color: C.muted,
+    fontFamily: F.body,
+    fontSize: 14,
+    lineHeight: 19,
+    marginTop: 3,
+  },
+  link: {
+    marginTop: 18,
+    backgroundColor: C.green,
+    padding: 14,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  linkText: { color: C.ink, fontFamily: F.mono, fontSize: 10 },
+});
