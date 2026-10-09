@@ -11,8 +11,15 @@ import {
   Text,
   TextInput,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useStreetSoukStore } from "@/context/street-souk-store";
+import { useVendors } from "@/hooks/use-vendors";
+import { vendorImage } from "@/lib/vendor-assets";
+import { groupByDay, useSchedule } from "@/hooks/use-schedule";
+import { useFaqs } from "@/hooks/use-faqs";
+import { formatTimeRange } from "@/lib/format";
+import { scheduleImage } from "@/lib/vendor-assets";
 
 const tabs = ["Event Map", "Schedule", "Marketplace", "Lineup", "FAQ"] as const;
 type EventTab = (typeof tabs)[number];
@@ -136,38 +143,14 @@ function Feature({
   );
 }
 
-const scheduleItems = [
-  {
-    time: "2:00 PM – 3:30 PM",
-    title: "EARLY ACCESS DROP",
-    place: "HYPE TENT B",
-    image: require("@/assets/brands/iyoocampaign.jpg"),
-  },
-  {
-    time: "4:00 PM – 5:00 PM",
-    title: "ZAYLEVELTEN PERFORMANCE",
-    place: "MAIN STAGE",
-    image: require("@/assets/brands/bolacampaign.jpg"),
-  },
-  {
-    time: "5:30 PM – 7:00 PM",
-    title: "DJ SET: SMADA",
-    place: "SOUND ARENA",
-    image: require("@/assets/brands/bonfocampaign.jpg"),
-  },
-];
+
 
 function ScheduleContent() {
   const [filter, setFilter] = useState("ALL");
   const { toggleSavedEvent, isEventSaved } = useStreetSoukStore();
-  const filtered = scheduleItems.filter(
-    (item) =>
-      filter === "ALL" ||
-      (filter === "DROP"
-        ? item.title.includes("DROP")
-        : filter === "STAGE"
-          ? item.title.includes("PERFORMANCE")
-          : item.title.includes("DJ")),
+  const { items, loading, error, reload } = useSchedule();
+  const days = groupByDay(
+    filter === "ALL" ? items : items.filter((i) => i.category === filter),
   );
   return (
     <View>
@@ -197,98 +180,74 @@ function ScheduleContent() {
           </Pressable>
         ))}
       </ScrollView>
-      <View style={s.scheduleDay}>
-        <Text style={s.scheduleDayTitle}>DAY 1</Text>
-        <Text style={s.scheduleDayDate}>SATURDAY 24TH</Text>
-      </View>
-      {filtered.map((item) => (
-        <View key={item.title} style={s.scheduleItem}>
-          <Text style={s.scheduleTime}>{item.time}</Text>
-          <View style={s.scheduleCard}>
-            <Image
-              source={item.image}
-              style={s.scheduleImage}
-              contentFit="cover"
-            />
-            <View style={s.scheduleCopy}>
-              <Text style={s.scheduleTitle}>{item.title}</Text>
-              <View style={s.scheduleLocation}>
-                <Ionicons name="location-outline" size={13} color={C.neon} />
-                <Text numberOfLines={1} style={s.schedulePlace}>
-                  {item.place}
-                </Text>
+      {loading && <ActivityIndicator color={C.neon} style={{ marginTop: 24 }} />}
+      {error && (
+        <Pressable onPress={reload}>
+          <Text style={s.sectionEyebrow}>COULD NOT LOAD SCHEDULE. TAP TO RETRY.</Text>
+        </Pressable>
+      )}
+      {days.map((day) => (
+        <View key={day.day}>
+          <View style={s.scheduleDay}>
+            <Text style={s.scheduleDayTitle}>DAY {day.day}</Text>
+            {day.label && <Text style={s.scheduleDayDate}>{day.label}</Text>}
+          </View>
+          {day.items.map((item) => (
+            <View key={item.id} style={s.scheduleItem}>
+              <Text style={s.scheduleTime}>
+                {formatTimeRange(item.start_time, item.end_time)}
+              </Text>
+              <View style={s.scheduleCard}>
+                <Image
+                  source={scheduleImage(item.category, item.image_url)}
+                  style={s.scheduleImage}
+                  contentFit="cover"
+                />
+                <View style={s.scheduleCopy}>
+                  <Text style={s.scheduleTitle}>{item.title}</Text>
+                  <View style={s.scheduleLocation}>
+                    <Ionicons name="location-outline" size={13} color={C.neon} />
+                    <Text numberOfLines={1} style={s.schedulePlace}>
+                      {item.place}
+                    </Text>
+                  </View>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${isEventSaved(item.id) ? "Unsave" : "Save"} ${item.title}`}
+                  accessibilityState={{ selected: isEventSaved(item.id) }}
+                  onPress={() => toggleSavedEvent(item.id)}
+                  style={s.scheduleStar}
+                >
+                  <Ionicons
+                    name={isEventSaved(item.id) ? "star" : "star-outline"}
+                    size={21}
+                    color={isEventSaved(item.id) ? C.neon : C.paper}
+                  />
+                </Pressable>
               </View>
             </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`${isEventSaved(item.title) ? "Unsave" : "Save"} ${item.title}`}
-              accessibilityState={{ selected: isEventSaved(item.title) }}
-              onPress={() => toggleSavedEvent(item.title)}
-              style={s.scheduleStar}
-            >
-              <Ionicons
-                name={isEventSaved(item.title) ? "star" : "star-outline"}
-                size={21}
-                color={isEventSaved(item.title) ? C.neon : C.paper}
-              />
-            </Pressable>
-          </View>
+          ))}
         </View>
       ))}
     </View>
   );
 }
 
-const marketplaceBrands = [
-  {
-    name: "BOLAPSD.",
-    type: "FOOTWEAR",
-    location: "BOOTH B-12",
-    description: "Exclusive drops, rare deadstock, and custom streetwear polo.",
-    image: require("@/assets/brands/bolacampaign.jpg"),
-  },
-  {
-    name: "IYOO CARTEL",
-    type: "APPAREL",
-    location: "BOOTH A-04",
-    description:
-      "Members only streetwear and accessories from the IYOO CARTEL collective.",
-    image: require("@/assets/brands/iyoocampaign.jpg"),
-  },
-  {
-    name: "BONFO",
-    type: "ACCESSORIES",
-    location: "BOOTH C-22",
-    description: "Neo-African fashion.",
-    image: require("@/assets/brands/bonfocampaign.jpg"),
-  },
-  {
-    name: "THE CHROME PILGRIM",
-    type: "ACCESSORIES",
-    location: "BOOTH C-22",
-    description: "Chains, pendants, and grills. Heavy metals only.",
-    image: require("@/assets/brands/tcpcampaign.png"),
-  },
-  {
-    name: "GREATERTHAN00",
-    type: "ACCESSORIES",
-    location: "BOOTH C-22",
-    description: "Chains, pendants, and grills. Heavy metals only.",
-    image: require("@/assets/brands/iyoocampaign.jpg"),
-  },
-];
+
 
 function MarketplaceContent() {
   const router = useRouter();
-  const { favorites, toggleFavorite, isFavorite } = useStreetSoukStore();
+  const { toggleFavorite, isFavorite } = useStreetSoukStore();
+  const { vendors, loading, error, reload } = useVendors();
   const [filter, setFilter] = useState<"ALL" | "FAVORITES" | "SPONSORS">("ALL");
   const [query, setQuery] = useState("");
-  const filtered = marketplaceBrands.filter((brand) => {
+  const filtered = vendors.filter((vendor) => {
     const matchesFilter =
       filter === "ALL" ||
-      (filter === "FAVORITES" ? isFavorite(brand.name) : false);
+      (filter === "FAVORITES" ? isFavorite(vendor.slug) : vendor.is_sponsor);
     const matchesSearch =
-      `${brand.name} ${brand.type} ${brand.location} ${brand.description}`
+      `${vendor.name} ${vendor.category} ${vendor.booth ?? ""} ${vendor.detail ?? ""}`
         .toLowerCase()
         .includes(query.trim().toLowerCase());
     return matchesFilter && matchesSearch;
@@ -335,54 +294,66 @@ function MarketplaceContent() {
           </Pressable>
         )}
       </View>
+      {loading && (
+        <ActivityIndicator color={C.neon} style={{ marginTop: 24 }} />
+      )}
       <View style={s.marketList}>
-        {filtered.map((brand) => (
-          <View key={brand.name} style={s.brandCard}>
+        {filtered.map((vendor) => (
+          <View key={vendor.id} style={s.brandCard}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Open ${brand.name}`}
+              accessibilityLabel={`Open ${vendor.name}`}
               onPress={() =>
                 router.push({
-                  pathname: "/vendor/[name]",
-                  params: { name: brand.name },
+                  pathname: "/vendor/[slug]",
+                  params: { slug: vendor.slug },
                 })
               }
               style={s.brandCardMain}
             >
               <Image
-                source={brand.image}
+                source={vendorImage(vendor.slug, "campaign", vendor.campaign_url)}
                 contentFit="cover"
                 style={s.brandCardImage}
               />
               <View style={s.brandCardCopy}>
                 <Text numberOfLines={1} style={s.brandCardName}>
-                  {brand.name}
+                  {vendor.name}
                 </Text>
-                <View style={s.brandLocation}>
-                  <Ionicons name="location-outline" size={12} color={C.neon} />
-                  <Text style={s.brandLocationText}>{brand.location}</Text>
-                </View>
+                {vendor.booth && (
+                  <View style={s.brandLocation}>
+                    <Ionicons name="location-outline" size={12} color={C.neon} />
+                    <Text style={s.brandLocationText}>
+                      BOOTH {vendor.booth}
+                    </Text>
+                  </View>
+                )}
                 <Text numberOfLines={2} style={s.brandDescription}>
-                  {brand.description}
+                  {vendor.detail}
                 </Text>
               </View>
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`${isFavorite(brand.name) ? "Remove" : "Add"} ${brand.name} ${isFavorite(brand.name) ? "from" : "to"} favorites`}
-              accessibilityState={{ selected: isFavorite(brand.name) }}
-              onPress={() => toggleFavorite(brand.name)}
+              accessibilityLabel={`${isFavorite(vendor.slug) ? "Remove" : "Add"} ${vendor.name} ${isFavorite(vendor.slug) ? "from" : "to"} favorites`}
+              accessibilityState={{ selected: isFavorite(vendor.slug) }}
+              onPress={() => toggleFavorite(vendor.slug)}
               style={s.brandStar}
             >
               <Ionicons
-                name={isFavorite(brand.name) ? "star" : "star-outline"}
+                name={isFavorite(vendor.slug) ? "star" : "star-outline"}
                 size={21}
-                color={isFavorite(brand.name) ? C.neon : C.paper}
+                color={isFavorite(vendor.slug) ? C.neon : C.paper}
               />
             </Pressable>
           </View>
         ))}
-        {filtered.length === 0 && (
+        {error && (
+          <Pressable style={s.empty} onPress={reload}>
+            <Text style={s.emptyText}>COULD NOT LOAD BRANDS. TAP TO RETRY.</Text>
+          </Pressable>
+        )}
+        {!loading && !error && filtered.length === 0 && (
           <View style={s.empty}>
             <Ionicons
               name={filter === "SPONSORS" ? "ribbon-outline" : "search-outline"}
@@ -402,40 +373,28 @@ function MarketplaceContent() {
 }
 
 function Faq() {
-  const [open, setOpen] = useState<number | null>(0);
-  const questions = [
-    ["When is the Convention?", "The event date will be announced soon."],
-    [
-      "Where will it take place?",
-      "Street Souk Convention will take place in Lagos, Nigeria. Venue details are coming soon.",
-    ],
-    [
-      "Where can I get tickets?",
-      "Ticket information will be shared here when it is available.",
-    ],
-    [
-      "How does the SS Passport work?",
-      "Collect a stamp at participating brand booths during the Convention. More details will be announced closer to the event.",
-    ],
-  ];
+  const { faqs, loading } = useFaqs();
+  const [open, setOpen] = useState<string | null | undefined>(undefined);
+  const current = open === undefined ? faqs[0]?.id : open;
   return (
     <View>
       <Text style={s.faqTitle}>FREQUENTLY ASKED QUESTIONS</Text>
-      {questions.map(([question, answer], index) => (
+      {loading && <ActivityIndicator color={C.neon} style={{ marginTop: 24 }} />}
+      {faqs.map((faq) => (
         <Pressable
-          key={question}
-          onPress={() => setOpen(open === index ? null : index)}
+          key={faq.id}
+          onPress={() => setOpen(current === faq.id ? null : faq.id)}
           style={s.faqRow}
         >
           <View style={s.faqQuestion}>
-            <Text style={s.question}>{question}</Text>
+            <Text style={s.question}>{faq.question}</Text>
             <Ionicons
-              name={open === index ? "remove" : "add"}
+              name={current === faq.id ? "remove" : "add"}
               size={20}
               color={C.neon}
             />
           </View>
-          {open === index && <Text style={s.answer}>{answer}</Text>}
+          {current === faq.id && <Text style={s.answer}>{faq.answer}</Text>}
         </Pressable>
       ))}
     </View>

@@ -43,7 +43,7 @@ export default function RootLayout() {
           <Stack.Screen name="my-souk" options={{ headerShown: false }} />
           <Stack.Screen name="feed/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="scan" options={{ headerShown: false }} />
-          <Stack.Screen name="vendor/[name]" options={{ headerShown: false }} />
+          <Stack.Screen name="vendor/[slug]" options={{ headerShown: false }} />
           <Stack.Screen name="passport" options={{ headerShown: false }} />
           <Stack.Screen name="passport-scan" options={{ headerShown: false }} />
           <Stack.Screen name="tickets" options={{ headerShown: false }} />

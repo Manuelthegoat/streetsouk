@@ -10,10 +10,19 @@ import {
 } from "react-native";
 import { C, F } from "@/components/street-souk-ui";
 import { useStreetSoukStore } from "@/context/street-souk-store";
+import { useVendors } from "@/hooks/use-vendors";
+import { useSchedule } from "@/hooks/use-schedule";
 
 export default function MySoukScreen() {
   const router = useRouter();
   const { favorites, savedEvents, startingPoint } = useStreetSoukStore();
+  const { vendors } = useVendors();
+  const favoriteVendors = vendors.filter((v) => favorites.includes(v.slug));
+  const { items: scheduleItems } = useSchedule();
+  const savedScheduleItems = scheduleItems.filter((i) =>
+    savedEvents.includes(i.id),
+  );
+
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
@@ -33,34 +42,47 @@ export default function MySoukScreen() {
         <View style={s.rule} />
         <View style={s.stats}>
           <View>
-            <Text style={s.statValue}>{favorites.length}</Text>
+            <Text style={s.statValue}>{favoriteVendors.length}</Text>
             <Text style={s.statLabel}>SAVED VENDORS</Text>
           </View>
           <View>
-            <Text style={s.statValue}>{savedEvents.length}</Text>
+            <Text style={s.statValue}>{savedScheduleItems.length}</Text>
             <Text style={s.statLabel}>SAVED EVENTS</Text>
           </View>
         </View>
         <Text style={s.section}>SAVED VENDORS</Text>
-        {favorites.length ? (
-          favorites.map((vendor) => (
-            <View key={vendor} style={s.row}>
+        {favoriteVendors.length ? (
+          favoriteVendors.map((vendor) => (
+            <Pressable
+              key={vendor.id}
+              style={s.row}
+              onPress={() =>
+                router.push({
+                  pathname: "/vendor/[slug]",
+                  params: { slug: vendor.slug },
+                })
+              }
+            >
               <Ionicons name="heart" size={19} color={C.neon} />
-              <Text style={s.rowText}>{vendor}</Text>
+              <Text style={s.rowText}>{vendor.name}</Text>
               <Ionicons name="chevron-forward" size={18} color={C.muted} />
-            </View>
+            </Pressable>
           ))
         ) : (
           <Empty text="SAVE VENDORS FROM THE DIRECTORY TO SEE THEM HERE." />
         )}
         <Text style={s.section}>SAVED EVENTS</Text>
-        {savedEvents.length ? (
-          savedEvents.map((event) => (
-            <View key={event} style={s.row}>
+        {savedScheduleItems.length ? (
+          savedScheduleItems.map((event) => (
+            <Pressable
+              key={event.id}
+              style={s.row}
+              onPress={() => router.push("/schedule")}
+            >
               <Ionicons name="bookmark" size={19} color={C.neon} />
-              <Text style={s.rowText}>{event}</Text>
+              <Text style={s.rowText}>{event.title}</Text>
               <Ionicons name="chevron-forward" size={18} color={C.muted} />
-            </View>
+            </Pressable>
           ))
         ) : (
           <Empty text="SAVE SCHEDULE EVENTS TO BUILD YOUR DAY." />

@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   ImageBackground,
   Pressable,
@@ -14,64 +15,24 @@ import {
   View,
 } from "react-native";
 import { useStreetSoukStore } from "@/context/street-souk-store";
-
-const VENDORS = [
-  {
-    name: "BOLAPSD.",
-    type: "FOOTWEAR",
-    booth: "B-12",
-    detail: "Exclusive drops, rare deadstock, and custom streetwear polo.",
-    image: require("@/assets/brands/bolapsd.png"),
-    campaign: require("@/assets/brands/bolacampaign.jpg"),
-  },
-  {
-    name: "IYOO CARTEL",
-    type: "APPAREL",
-    booth: "A-04",
-    detail:
-      "MEMBERS ONLY. Streetwear and accessories from the IYOO CARTEL collective.",
-    image: require("@/assets/brands/iyoocartel.png"),
-    campaign: require("@/assets/brands/iyoocampaign.jpg"),
-  },
-  {
-    name: "BONFO",
-    type: "ACCESSORIES",
-    booth: "C-22",
-    detail: "NEO-AFRICAN FASHION",
-    image: require("@/assets/brands/bonfo.png"),
-    campaign: require("@/assets/brands/bonfocampaign.jpg"),
-  },
-  {
-    name: "THE CHROME PILGRIM",
-    type: "ACCESSORIES",
-    booth: "C-22",
-    detail: "Chains, pendants, and grills. Heavy metals only.",
-    image: require("@/assets/brands/TCP.png"),
-    campaign: require("@/assets/brands/tcpcampaign.png"),
-  },
-  {
-    name: "GREATERTHAN00",
-    type: "ACCESSORIES",
-    booth: "C-22",
-    detail: "Chains, pendants, and grills. Heavy metals only.",
-    image: require("@/assets/brands/ssx_logo.png"),
-    campaign: require("@/assets/brands/iyoocampaign.jpg"),
-  },
-];
+import { useVendors } from "@/hooks/use-vendors";
+import { vendorImage } from "@/lib/vendor-assets";
 
 export default function VendorsScreen() {
   const router = useRouter();
   const { toggleFavorite, isFavorite } = useStreetSoukStore();
+  const { vendors, loading, error, reload } = useVendors();
   const [query, setQuery] = useState("");
-  const visible = useMemo(
-    () =>
-      VENDORS.filter(
-        (vendor) =>
-          vendor.name.toLowerCase().includes(query.toLowerCase()) ||
-          vendor.type.toLowerCase().includes(query.toLowerCase()),
-      ),
-    [query],
-  );
+
+  const visible = useMemo(() => {
+    const q = query.toLowerCase();
+    return vendors.filter(
+      (vendor) =>
+        vendor.name.toLowerCase().includes(q) ||
+        vendor.category.toLowerCase().includes(q),
+    );
+  }, [vendors, query]);
+
   return (
     <SafeAreaView style={s.safe}>
       <Header title="BRANDS" />
@@ -91,20 +52,30 @@ export default function VendorsScreen() {
             style={s.input}
           />
         </View>
+
+        {loading && (
+          <ActivityIndicator color={C.neon} style={{ marginTop: 30 }} />
+        )}
+        {error && (
+          <Pressable onPress={reload}>
+            <Text style={s.empty}>COULD NOT LOAD VENDORS. TAP TO RETRY.</Text>
+          </Pressable>
+        )}
+
         {visible.map((vendor) => (
           <Pressable
-            key={vendor.name}
+            key={vendor.id}
             accessibilityRole="button"
             accessibilityLabel={`Open ${vendor.name}`}
             onPress={() =>
               router.push({
-                pathname: "/vendor/[name]",
-                params: { name: vendor.name },
+                pathname: "/vendor/[slug]",
+                params: { slug: vendor.slug },
               })
             }
           >
             <ImageBackground
-              source={vendor.campaign}
+              source={vendorImage(vendor.slug, "campaign", vendor.campaign_url)}
               imageStyle={s.vendorImageBackground}
               style={s.vendor}
             >
@@ -112,7 +83,7 @@ export default function VendorsScreen() {
                 <View style={s.vendorTop}>
                   <View style={s.vendorIcon}>
                     <Image
-                      source={vendor.image}
+                      source={vendorImage(vendor.slug, "logo", vendor.logo_url)}
                       style={s.vendorImage}
                       resizeMode="contain"
                     />
@@ -120,25 +91,27 @@ export default function VendorsScreen() {
                   <View style={s.vendorMeta}>
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={`${isFavorite(vendor.name) ? "Remove" : "Save"} ${vendor.name} from favorites`}
-                      onPress={() => toggleFavorite(vendor.name)}
+                      accessibilityLabel={`${isFavorite(vendor.slug) ? "Remove" : "Save"} ${vendor.name} from favorites`}
+                      onPress={() => toggleFavorite(vendor.slug)}
                       hitSlop={8}
                       style={s.favorite}
                     >
                       <Ionicons
                         name={
-                          isFavorite(vendor.name) ? "heart" : "heart-outline"
+                          isFavorite(vendor.slug) ? "heart" : "heart-outline"
                         }
                         size={18}
                         color={C.neon}
                       />
                     </Pressable>
-                    <Text style={s.type}>{vendor.type}</Text>
-                    <Text style={s.booth}>{vendor.booth}</Text>
+                    <Text style={s.type}>{vendor.category}</Text>
+                    {vendor.booth && (
+                      <Text style={s.booth}>{vendor.booth}</Text>
+                    )}
                   </View>
                 </View>
                 <Text style={s.name}>{vendor.name}</Text>
-                <Text style={s.detail}>{vendor.detail}</Text>
+                {vendor.detail && <Text style={s.detail}>{vendor.detail}</Text>}
                 <Pressable onPress={() => router.push("/map")} style={s.show}>
                   <Text style={s.showText}>SHOW ON MAP</Text>
                   <Ionicons name="arrow-forward" size={20} color={C.ink} />
@@ -147,7 +120,10 @@ export default function VendorsScreen() {
             </ImageBackground>
           </Pressable>
         ))}
-        {visible.length === 0 && <Text style={s.empty}>NO VENDORS FOUND</Text>}
+
+        {!loading && !error && visible.length === 0 && (
+          <Text style={s.empty}>NO VENDORS FOUND</Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

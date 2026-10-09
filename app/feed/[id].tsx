@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
+  ActivityIndicator,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -9,21 +10,14 @@ import {
   View,
 } from "react-native";
 import { C, F } from "@/components/street-souk-ui";
+import { useFeedPost } from "@/hooks/use-feed";
+import { timeAgo } from "@/lib/format";
 
 export default function FeedDetailScreen() {
   const router = useRouter();
-  const {
-    id,
-    category = "INFO",
-    age = "JUST NOW",
-    detail = "More information will be posted here as the festival develops.",
-  } = useLocalSearchParams<{
-    id: string;
-    category: string;
-    age: string;
-    detail: string;
-  }>();
-  const title = id ?? "LIVE UPDATE";
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { post, loading } = useFeedPost(id);
+
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
@@ -40,34 +34,45 @@ export default function FeedDetailScreen() {
           <View style={s.dot} />
         </View>
       </View>
-      <ScrollView contentContainerStyle={s.content}>
-        <View style={s.kickerRow}>
-          <Text style={s.category}>{category}</Text>
-          <Text style={s.age}>{age}</Text>
-        </View>
-        <Text style={s.title}>{title}</Text>
-        <View style={s.rule} />
-        <Text style={s.detail}>{detail}</Text>
-        <View style={s.actions}>
-          <Pressable onPress={() => router.push("/map")} style={s.action}>
-            <Ionicons name="map-outline" size={20} color={C.ink} />
-            <Text style={s.actionText}>OPEN MAP</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => router.push("/schedule")}
-            style={[s.action, s.secondaryAction]}
-          >
-            <Ionicons name="calendar-outline" size={20} color={C.neon} />
-            <Text style={s.secondaryText}>VIEW SCHEDULE</Text>
-          </Pressable>
-        </View>
-        <View style={s.note}>
-          <Ionicons name="radio-outline" size={22} color={C.neon} />
-          <Text style={s.noteText}>
-            LIVE UPDATES ARE SUBJECT TO CHANGE ON SITE. KEEP THIS FEED OPEN.
+
+      {loading ? (
+        <ActivityIndicator color={C.neon} style={{ marginTop: 40 }} />
+      ) : !post ? (
+        <Pressable onPress={() => router.back()}>
+          <Text style={{ color: C.muted, fontFamily: F.mono, textAlign: "center", marginTop: 40 }}>
+            THIS UPDATE IS NO LONGER AVAILABLE. TAP TO GO BACK.
           </Text>
-        </View>
-      </ScrollView>
+        </Pressable>
+      ) : (
+        <ScrollView contentContainerStyle={s.content}>
+          <View style={s.kickerRow}>
+            <Text style={s.category}>{post.category}</Text>
+            <Text style={s.age}>{timeAgo(post.published_at)}</Text>
+          </View>
+          <Text style={s.title}>{post.title}</Text>
+          <View style={s.rule} />
+          <Text style={s.detail}>{post.detail}</Text>
+          <View style={s.actions}>
+            <Pressable onPress={() => router.push("/map")} style={s.action}>
+              <Ionicons name="map-outline" size={20} color={C.ink} />
+              <Text style={s.actionText}>OPEN MAP</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push("/schedule")}
+              style={[s.action, s.secondaryAction]}
+            >
+              <Ionicons name="calendar-outline" size={20} color={C.neon} />
+              <Text style={s.secondaryText}>VIEW SCHEDULE</Text>
+            </Pressable>
+          </View>
+          <View style={s.note}>
+            <Ionicons name="radio-outline" size={22} color={C.neon} />
+            <Text style={s.noteText}>
+              LIVE UPDATES ARE SUBJECT TO CHANGE ON SITE. KEEP THIS FEED OPEN.
+            </Text>
+          </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }

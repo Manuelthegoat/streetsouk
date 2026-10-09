@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   Pressable,
   SafeAreaView,
@@ -11,76 +12,33 @@ import {
   View,
 } from "react-native";
 import { C, F } from "@/components/street-souk-ui";
+import { useFeed } from "@/hooks/use-feed";
+import { timeAgo } from "@/lib/format";
+import type { FeedPost } from "@/lib/types";
 
 type FeedCategory = "ALL" | "DROPS" | "SCHEDULE" | "CROWD";
-type FeedItem = {
-  category: Exclude<FeedCategory, "ALL"> | "INFO";
-  age: string;
-  title: string;
-  detail: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  urgent?: boolean;
-  live?: boolean;
-  soldOut?: boolean;
-};
-
-const feedItems: FeedItem[] = [
-  {
-    category: "DROPS",
-    age: "JUST NOW",
-    title: "WAF EXCLUSIVE TEE DROP AT BOOTH 42",
-    detail:
-      "Only 50 pieces available. Line is already forming near the main stage. Get there before it’s gone.",
-    icon: "flash",
-    urgent: true,
-    live: true,
-  },
-  {
-    category: "SCHEDULE",
-    age: "10 MINS AGO",
-    title: "DJ OBI SET DELAYED",
-    detail:
-      "Due to technical difficulties, DJ Obi’s set will now start at 4:30 PM. Stay tuned.",
-    icon: "time-outline",
-  },
-  {
-    category: "CROWD",
-    age: "25 MINS AGO",
-    title: "FOOD COURT AT CAPACITY",
-    detail:
-      "The main food area is currently packed. We recommend checking out the food trucks near the East Entrance for shorter lines.",
-    icon: "people-outline",
-  },
-  {
-    category: "INFO",
-    age: "1 HOUR AGO",
-    title: "FREE RED BULL AT THE VIP LOUNGE",
-    detail:
-      "Show your festival wristband at the Red Bull tent for a complimentary energy boost. While supplies last.",
-    icon: "information-circle-outline",
-  },
-  {
-    category: "DROPS",
-    age: "2 HOURS AGO",
-    title: "VIVENDI X STREET SOUK HOODIE",
-    detail:
-      "All sizes are completely sold out. Thanks for the massive support!",
-    icon: "storefront-outline",
-    soldOut: true,
-  },
-];
-
 const filters: FeedCategory[] = ["ALL", "DROPS", "SCHEDULE", "CROWD"];
+
+const categoryIcons: Record<
+  FeedPost["category"],
+  keyof typeof Ionicons.glyphMap
+> = {
+  DROPS: "storefront-outline",
+  SCHEDULE: "time-outline",
+  CROWD: "people-outline",
+  INFO: "information-circle-outline",
+};
 
 export default function FeedScreen() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<FeedCategory>("ALL");
+  const { posts, loading, error, reload } = useFeed();
   const visibleItems = useMemo(
     () =>
       activeFilter === "ALL"
-        ? feedItems
-        : feedItems.filter((item) => item.category === activeFilter),
-    [activeFilter],
+        ? posts
+        : posts.filter((item) => item.category === activeFilter),
+    [posts, activeFilter],
   );
 
   return (
@@ -150,75 +108,87 @@ export default function FeedScreen() {
         </View>
         <View style={s.rule} />
 
+        {loading && (
+          <ActivityIndicator color={C.neon} style={{ marginTop: 30 }} />
+        )}
+        {error && (
+          <Pressable onPress={reload}>
+            <Text
+              style={{
+                color: C.muted,
+                fontFamily: F.mono,
+                textAlign: "center",
+                marginTop: 30,
+              }}
+            >
+              COULD NOT LOAD FEED. TAP TO RETRY.
+            </Text>
+          </Pressable>
+        )}
+
         <View style={s.feedList}>
           {visibleItems.map((item) => (
-            <FeedCard key={item.title} item={item} />
+            <FeedCard key={item.id} item={item} />
           ))}
         </View>
+
+        {!loading && !error && visibleItems.length === 0 && (
+          <Text
+            style={{
+              color: C.muted,
+              fontFamily: F.mono,
+              textAlign: "center",
+              marginTop: 30,
+            }}
+          >
+            NOTHING POSTED YET.
+          </Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function FeedCard({ item }: { item: FeedItem }) {
+function FeedCard({ item }: { item: FeedPost }) {
   const router = useRouter();
+  const isInfo = item.category === "INFO";
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${item.category}: ${item.title}`}
       onPress={() =>
-        router.push({
-          pathname: "/feed/[id]",
-          params: {
-            id: item.title,
-            category: item.category,
-            age: item.age,
-            detail: item.detail,
-          },
-        })
+        router.push({ pathname: "/feed/[id]", params: { id: item.id } })
       }
-      style={[
-        s.card,
-        item.urgent && s.urgentCard,
-        item.category === "INFO" && s.infoCard,
-      ]}
+      style={[s.card, item.is_urgent && s.urgentCard, isInfo && s.infoCard]}
     >
       <View style={s.cardTop}>
         <View style={s.ageRow}>
           <Ionicons
-            name={item.icon}
+            name={item.is_urgent ? "flash" : categoryIcons[item.category]}
             size={22}
-            color={item.category === "INFO" ? C.ink : C.muted}
+            color={isInfo ? C.ink : C.muted}
           />
-          <Text style={[s.age, item.category === "INFO" && s.inkText]}>
-            {item.age}
+          <Text style={[s.age, isInfo && s.inkText]}>
+            {timeAgo(item.published_at)}
           </Text>
         </View>
         <View
-          style={[
-            s.tag,
-            item.urgent && s.urgentTag,
-            item.category === "INFO" && s.infoTag,
-          ]}
+          style={[s.tag, item.is_urgent && s.urgentTag, isInfo && s.infoTag]}
         >
-          <Text style={[s.tagText, item.category === "INFO" && s.infoTagText]}>
-            {item.urgent ? "URGENT / FLASH DROP" : item.category}
+          <Text style={[s.tagText, isInfo && s.infoTagText]}>
+            {item.is_urgent ? "URGENT / FLASH DROP" : item.category}
           </Text>
         </View>
       </View>
-      <Text style={[s.cardTitle, item.category === "INFO" && s.inkText]}>
-        {item.title}
-      </Text>
-      <Text style={[s.cardDetail, item.category === "INFO" && s.infoDetail]}>
-        {item.detail}
-      </Text>
-      {item.live && (
+      <Text style={[s.cardTitle, isInfo && s.inkText]}>{item.title}</Text>
+      <Text style={[s.cardDetail, isInfo && s.infoDetail]}>{item.detail}</Text>
+      {item.is_live && (
         <View style={s.livePill}>
           <View style={s.liveDot} />
           <Text style={s.liveText}>HAPPENING NOW</Text>
         </View>
       )}
-      {item.soldOut && (
+      {item.is_sold_out && (
         <View style={s.soldPill}>
           <Text style={s.soldText}>SOLD OUT</Text>
         </View>

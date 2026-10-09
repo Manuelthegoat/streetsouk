@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   Pressable,
   SafeAreaView,
@@ -12,43 +13,24 @@ import {
   View,
 } from "react-native";
 import { useStreetSoukStore } from "@/context/street-souk-store";
-
-const EVENTS = [
-  {
-    time: "2:00 PM – 3:30 PM",
-    title: "EARLY ACCESS DROP",
-    place: "HYPE TENT B",
-    type: "DROP",
-    image: require("@/assets/brands/iyoocampaign.jpg"),
-  },
-  {
-    time: "4:00 PM – 5:00 PM",
-    title: "ZAYLEVELTEN PERFORMANCE",
-    place: "MAIN STAGE",
-    type: "STAGE",
-    image: require("@/assets/brands/bolacampaign.jpg"),
-  },
-  {
-    time: "5:30 PM – 7:00 PM",
-    title: "DJ SET: SMADA",
-    place: "SOUND ARENA",
-    live: true,
-    type: "DJ",
-    image: require("@/assets/brands/bonfocampaign.jpg"),
-  },
-];
+import { groupByDay, useSchedule } from "@/hooks/use-schedule";
+import { formatTimeRange } from "@/lib/format";
+import { scheduleImage } from "@/lib/vendor-assets";
 
 export default function ScheduleScreen() {
   const router = useRouter();
   const [filter, setFilter] = useState("ALL");
   const { toggleSavedEvent, isEventSaved } = useStreetSoukStore();
-  const visibleEvents = useMemo(
+  const { items, loading, error, reload } = useSchedule();
+  const days = useMemo(
     () =>
-      filter === "ALL"
-        ? EVENTS
-        : EVENTS.filter((event) => event.type === filter),
-    [filter],
+      groupByDay(
+        filter === "ALL" ? items : items.filter((i) => i.category === filter),
+      ),
+    [items, filter],
   );
+  const note = { color: C.muted, fontFamily: F.mono, textAlign: "center" as const, marginTop: 30 };
+
   return (
     <SafeAreaView style={s.safe}>
       <Header title="SCHEDULE" />
@@ -77,61 +59,72 @@ export default function ScheduleScreen() {
             </Pressable>
           ))}
         </ScrollView>
-        <View style={s.day}>
-          <View style={s.dayHeader}>
-            <Text style={s.dayTitle}>DAY 1</Text>
-            <Text style={s.dayDate}>SATURDAY 24TH</Text>
-          </View>
-          {visibleEvents.map((event) => (
-            <View key={event.title} style={s.scheduleItem}>
-              <Text style={s.time}>{event.time}</Text>
-              <View style={[s.eventCard, event.live && s.liveEvent]}>
-                <Image
-                  source={event.image}
-                  style={s.eventImage}
-                  resizeMode="cover"
-                />
-                <View style={s.eventInfo}>
-                  {event.live && <Text style={s.live}>LIVE NOW</Text>}
-                  <Text style={[s.eventTitle, event.live && s.liveTitle]}>
-                    {event.title}
-                  </Text>
+
+        {loading && <ActivityIndicator color={C.neon} style={{ marginTop: 30 }} />}
+        {error && (
+          <Pressable onPress={reload}>
+            <Text style={note}>COULD NOT LOAD SCHEDULE. TAP TO RETRY.</Text>
+          </Pressable>
+        )}
+
+        {days.map((day) => (
+          <View key={day.day} style={s.day}>
+            <View style={s.dayHeader}>
+              <Text style={s.dayTitle}>DAY {day.day}</Text>
+              {day.label && <Text style={s.dayDate}>{day.label}</Text>}
+            </View>
+            {day.items.map((event) => (
+              <View key={event.id} style={s.scheduleItem}>
+                <Text style={s.time}>
+                  {formatTimeRange(event.start_time, event.end_time)}
+                </Text>
+                <View style={[s.eventCard, event.is_live && s.liveEvent]}>
+                  <Image
+                    source={scheduleImage(event.category, event.image_url)}
+                    style={s.eventImage}
+                    resizeMode="cover"
+                  />
+                  <View style={s.eventInfo}>
+                    {event.is_live && <Text style={s.live}>LIVE NOW</Text>}
+                    <Text style={[s.eventTitle, event.is_live && s.liveTitle]}>
+                      {event.title}
+                    </Text>
+                    <Pressable
+                      onPress={() => router.push("/map")}
+                      style={s.location}
+                    >
+                      <Ionicons
+                        name="location-outline"
+                        size={14}
+                        color={C.neon}
+                      />
+                      <Text numberOfLines={1} style={s.locationText}>
+                        {event.place}
+                      </Text>
+                    </Pressable>
+                  </View>
                   <Pressable
-                    onPress={() => router.push("/map")}
-                    style={s.location}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${isEventSaved(event.id) ? "Unsave" : "Save"} ${event.title}`}
+                    accessibilityState={{ selected: isEventSaved(event.id) }}
+                    onPress={() => toggleSavedEvent(event.id)}
+                    style={s.saveEvent}
                   >
                     <Ionicons
-                      name="location-outline"
-                      size={14}
-                      color={C.neon}
+                      name={isEventSaved(event.id) ? "star" : "star-outline"}
+                      size={21}
+                      color={isEventSaved(event.id) ? C.neon : C.paper}
                     />
-                    <Text numberOfLines={1} style={s.locationText}>
-                      {event.place}
-                    </Text>
                   </Pressable>
                 </View>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`${isEventSaved(event.title) ? "Unsave" : "Save"} ${event.title}`}
-                  accessibilityState={{ selected: isEventSaved(event.title) }}
-                  onPress={() => toggleSavedEvent(event.title)}
-                  style={s.saveEvent}
-                >
-                  <Ionicons
-                    name={isEventSaved(event.title) ? "star" : "star-outline"}
-                    size={21}
-                    color={isEventSaved(event.title) ? C.neon : C.paper}
-                  />
-                </Pressable>
               </View>
-            </View>
-          ))}
-        </View>
-        <View style={s.nextDay}>
-          <Text style={s.nextDayTitle}>DAY 2</Text>
-          <Text style={s.nextDayDate}>SUNDAY 25TH</Text>
-          <Ionicons name="arrow-forward" size={22} color={C.muted} />
-        </View>
+            ))}
+          </View>
+        ))}
+
+        {!loading && !error && days.length === 0 && (
+          <Text style={note}>NOTHING SCHEDULED YET.</Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
