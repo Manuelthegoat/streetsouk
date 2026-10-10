@@ -1,10 +1,10 @@
-import { CameraView, useCameraPermissions } from "expo-camera";
+import { C, F } from "@/components/street-souk-ui";
+import { useStreetSoukStore } from "@/context/street-souk-store";
 import { Ionicons } from "@expo/vector-icons";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
-import { C, F } from "@/components/street-souk-ui";
-import { useStreetSoukStore } from "@/context/street-souk-store";
 
 export default function ScanScreen() {
   const router = useRouter();
@@ -117,7 +117,7 @@ const s = StyleSheet.create({
   headerTitle: {
     color: C.neon,
     fontFamily: F.mono,
-    fontSize: 10,
+    fontSize: 20,
     letterSpacing: 1,
   },
   spacer: { width: 40 },

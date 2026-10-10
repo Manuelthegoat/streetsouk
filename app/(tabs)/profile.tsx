@@ -1,7 +1,9 @@
 import { C, F, Header } from "@/components/street-souk-ui";
+import { useAuth } from "@/context/auth-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
+  Alert,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -28,24 +30,42 @@ const rows = [
 ] as const;
 export default function ProfileScreen() {
   const router = useRouter();
+  const { user, signOut } = useAuth();
+
+  const confirmSignOut = () =>
+    Alert.alert("Sign out?", "You can sign back in any time with a new code.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Sign out", style: "destructive", onPress: () => signOut() },
+    ]);
+
   return (
     <SafeAreaView style={s.safe}>
       <Header title="PROFILE" />
       <ScrollView contentContainerStyle={s.content}>
         <Text style={s.kicker}>YOUR STREET SOUK</Text>
         <Text style={s.title}>PROFILE</Text>
-        <View style={s.identity}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={user ? "Signed in" : "Sign in"}
+          disabled={!!user}
+          onPress={() => router.push("/sign-in")}
+          style={s.identity}
+        >
           <View style={s.avatar}>
-            <Ionicons name="person" size={31} color={C.muted} />
+            <Ionicons name="person" size={31} color={user ? C.neon : C.muted} />
           </View>
           <View style={s.welcome}>
-            <Text style={s.name}>WELCOME TO THE SOUK</Text>
-            <Text style={s.detail}>
-              Sign in to keep your world in one place.
+            <Text style={s.name}>
+              {user ? "SIGNED IN" : "WELCOME TO THE SOUK"}
+            </Text>
+            <Text style={s.detail} numberOfLines={1}>
+              {user ? user.email : "Sign in to keep your world in one place."}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={C.muted} />
-        </View>
+          {!user && (
+            <Ionicons name="chevron-forward" size={20} color={C.muted} />
+          )}
+        </Pressable>
         <Text style={s.section}>YOUR ACCOUNT</Text>
         {rows.map(([title, detail, icon, path]) => (
           <Pressable
@@ -61,6 +81,15 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={19} color={C.muted} />
           </Pressable>
         ))}
+        {user && (
+          <Pressable style={s.row} onPress={confirmSignOut}>
+            <Ionicons name="log-out-outline" size={22} color={C.paper} />
+            <View style={s.copy}>
+              <Text style={s.rowTitle}>SIGN OUT</Text>
+              <Text style={s.rowDetail}>{user.email}</Text>
+            </View>
+          </Pressable>
+        )}
         <Text style={s.section}>THE STREET SOUK COMMUNITY</Text>
         <Pressable
           style={s.community}

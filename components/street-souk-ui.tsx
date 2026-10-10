@@ -87,13 +87,13 @@ export const ui = StyleSheet.create({
   },
   headerSide: { width: 62, height: 42, justifyContent: "center" },
   logoImage: { width: 58, height: 32 },
-  headerTitle: {
+   headerTitle: {
     color: C.neon,
-    fontFamily: F.bodyBold,
-    fontSize: 17,
+    fontFamily: F.display,
+    fontSize: 24,
     textAlign: "center",
     flex: 1,
-    letterSpacing: 0.6,
+    letterSpacing: 1,
   },
   cart: { alignItems: "flex-end" },
   pageTitle: { marginTop: 24, marginBottom: 16 },

@@ -16,6 +16,7 @@ import { useStreetSoukStore } from "@/context/street-souk-store";
 import { useVendor } from "@/hooks/use-vendor";
 import { formatNaira } from "@/lib/format";
 import { vendorImage } from "@/lib/vendor-assets";
+import { VendorDetailSkeleton } from "@/components/skeleton";
 
 export default function VendorDetailScreen() {
   const router = useRouter();
@@ -63,7 +64,7 @@ export default function VendorDetailScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color={C.neon} style={{ marginTop: 40 }} />
+        <VendorDetailSkeleton />
       ) : !vendor ? (
         <Pressable onPress={error ? reload : () => router.back()}>
           <Text

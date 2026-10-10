@@ -9,6 +9,7 @@ import {
 import { JetBrainsMono_700Bold } from "@expo-google-fonts/jetbrains-mono";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
+import { AuthProvider } from "@/context/auth-context";
 import { StreetSoukStore } from "@/context/street-souk-store";
 
 export const unstable_settings = {
@@ -27,32 +28,38 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={DarkTheme}>
-      <StreetSoukStore>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="map" options={{ headerShown: false }} />
-          <Stack.Screen name="schedule" options={{ headerShown: false }} />
-          <Stack.Screen name="vendors" options={{ headerShown: false }} />
-          <Stack.Screen name="feed" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="modal"
-            options={{ presentation: "modal", title: "Modal" }}
-          />
-          <Stack.Screen name="settings" options={{ headerShown: false }} />
-          <Stack.Screen name="alerts" options={{ headerShown: false }} />
-          <Stack.Screen name="my-souk" options={{ headerShown: false }} />
-          <Stack.Screen name="feed/[id]" options={{ headerShown: false }} />
-          <Stack.Screen name="scan" options={{ headerShown: false }} />
-          <Stack.Screen name="vendor/[slug]" options={{ headerShown: false }} />
-          <Stack.Screen name="passport" options={{ headerShown: false }} />
-          <Stack.Screen name="passport-scan" options={{ headerShown: false }} />
-          <Stack.Screen name="tickets" options={{ headerShown: false }} />
-          <Stack.Screen name="sessions" options={{ headerShown: false }} />
-          <Stack.Screen name="ss-tv" options={{ headerShown: false }} />
-          <Stack.Screen name="cart" options={{ headerShown: false }} />
-          <Stack.Screen name="events/[id]" options={{ headerShown: false }} />
-        </Stack>
-      </StreetSoukStore>
+      <AuthProvider>
+        <StreetSoukStore>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="map" options={{ headerShown: false }} />
+            <Stack.Screen name="schedule" options={{ headerShown: false }} />
+            <Stack.Screen name="vendors" options={{ headerShown: false }} />
+            <Stack.Screen name="feed" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="modal"
+              options={{ presentation: "modal", title: "Modal" }}
+            />
+            <Stack.Screen
+              name="sign-in"
+              options={{ headerShown: false, presentation: "modal" }}
+            />
+            <Stack.Screen name="settings" options={{ headerShown: false }} />
+            <Stack.Screen name="alerts" options={{ headerShown: false }} />
+            <Stack.Screen name="my-souk" options={{ headerShown: false }} />
+            <Stack.Screen name="feed/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="scan" options={{ headerShown: false }} />
+            <Stack.Screen name="vendor/[slug]" options={{ headerShown: false }} />
+            <Stack.Screen name="passport" options={{ headerShown: false }} />
+            <Stack.Screen name="passport-scan" options={{ headerShown: false }} />
+            <Stack.Screen name="tickets" options={{ headerShown: false }} />
+            <Stack.Screen name="sessions" options={{ headerShown: false }} />
+            <Stack.Screen name="ss-tv" options={{ headerShown: false }} />
+            <Stack.Screen name="cart" options={{ headerShown: false }} />
+            <Stack.Screen name="events/[id]" options={{ headerShown: false }} />
+          </Stack>
+        </StreetSoukStore>
+      </AuthProvider>
       <StatusBar style="light" />
     </ThemeProvider>
   );

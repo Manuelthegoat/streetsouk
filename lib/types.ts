@@ -19,6 +19,8 @@ export type Product = {
   price_ngn: number;
   image_url: string | null;
   is_featured: boolean;
+  department: "MENS" | "WOMENS" | "UNISEX";
+  created_at: string;
 };
 
 export type ScheduleItem = {

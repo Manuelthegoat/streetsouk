@@ -16,6 +16,7 @@ import { useStreetSoukStore } from "@/context/street-souk-store";
 import { groupByDay, useSchedule } from "@/hooks/use-schedule";
 import { formatTimeRange } from "@/lib/format";
 import { scheduleImage } from "@/lib/vendor-assets";
+import { ScheduleSkeleton } from "@/components/skeleton";
 
 export default function ScheduleScreen() {
   const router = useRouter();
@@ -60,7 +61,7 @@ export default function ScheduleScreen() {
           ))}
         </ScrollView>
 
-        {loading && <ActivityIndicator color={C.neon} style={{ marginTop: 30 }} />}
+       {loading && <ScheduleSkeleton />}
         {error && (
           <Pressable onPress={reload}>
             <Text style={note}>COULD NOT LOAD SCHEDULE. TAP TO RETRY.</Text>

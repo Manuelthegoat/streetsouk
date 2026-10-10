@@ -11,6 +11,9 @@ import {
   View,
 } from "react-native";
 import { useState } from "react";
+import { useFeed } from "@/hooks/use-feed";
+import { timeAgo } from "@/lib/format";
+import { ListRowSkeleton } from "@/components/skeleton";
 
 const categories = [
   "FOR YOU",
@@ -79,6 +82,8 @@ export default function HomeScreen() {
   const router = useRouter();
   const [category, setCategory] = useState<HomeCategory>("FOR YOU");
   const feature = categoryCopy[category];
+  const { posts, loading } = useFeed();
+  const latest = posts.slice(0, 3);
   return (
     <SafeAreaView style={s.safe}>
       <Header title="HOME" />
@@ -139,6 +144,34 @@ export default function HomeScreen() {
             </View>
           </ImageBackground>
         </Pressable>
+        <View style={s.sectionHead}>
+          <Text style={s.sectionTitle}>HAPPENING NOW</Text>
+          <Pressable onPress={() => router.push("/feed")}>
+            <Text style={s.seeAll}>LIVE FEED ↗</Text>
+          </Pressable>
+        </View>
+        {loading ? (
+          <ListRowSkeleton count={2} />
+        ) : latest.length > 0 ? (
+          latest.map((post) => (
+            <Action
+              key={post.id}
+              icon={post.is_urgent ? "flash" : "radio-outline"}
+              label={post.title}
+              detail={`${post.category} · ${timeAgo(post.published_at)}`}
+              onPress={() =>
+                router.push({ pathname: "/feed/[id]", params: { id: post.id } })
+              }
+            />
+          ))
+        ) : (
+          <Action
+            icon="radio-outline"
+            label="LIVE FEED"
+            detail="Real-time updates from the Convention."
+            onPress={() => router.push("/feed")}
+          />
+        )}
         <View style={s.sectionHead}>
           <Text style={s.sectionTitle}>MORE THAN A MARKET.</Text>
           <Text style={s.sectionNote}>THE STREETSOUK WORLD</Text>

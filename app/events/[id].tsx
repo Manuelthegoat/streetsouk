@@ -20,6 +20,11 @@ import { groupByDay, useSchedule } from "@/hooks/use-schedule";
 import { useFaqs } from "@/hooks/use-faqs";
 import { formatTimeRange } from "@/lib/format";
 import { scheduleImage } from "@/lib/vendor-assets";
+import {
+  FaqSkeleton,
+  ImageRowSkeleton,
+  ScheduleSkeleton,
+} from "@/components/skeleton";
 
 const tabs = ["Event Map", "Schedule", "Marketplace", "Lineup", "FAQ"] as const;
 type EventTab = (typeof tabs)[number];
@@ -180,7 +185,7 @@ function ScheduleContent() {
           </Pressable>
         ))}
       </ScrollView>
-      {loading && <ActivityIndicator color={C.neon} style={{ marginTop: 24 }} />}
+     {loading && <ScheduleSkeleton />}
       {error && (
         <Pressable onPress={reload}>
           <Text style={s.sectionEyebrow}>COULD NOT LOAD SCHEDULE. TAP TO RETRY.</Text>
@@ -294,9 +299,7 @@ function MarketplaceContent() {
           </Pressable>
         )}
       </View>
-      {loading && (
-        <ActivityIndicator color={C.neon} style={{ marginTop: 24 }} />
-      )}
+     {loading && <ImageRowSkeleton count={4} />}
       <View style={s.marketList}>
         {filtered.map((vendor) => (
           <View key={vendor.id} style={s.brandCard}>
@@ -379,7 +382,7 @@ function Faq() {
   return (
     <View>
       <Text style={s.faqTitle}>FREQUENTLY ASKED QUESTIONS</Text>
-      {loading && <ActivityIndicator color={C.neon} style={{ marginTop: 24 }} />}
+      {loading && <FaqSkeleton />}
       {faqs.map((faq) => (
         <Pressable
           key={faq.id}

@@ -1,3 +1,6 @@
+import { C, F } from "@/components/street-souk-ui";
+import { useFeedPost } from "@/hooks/use-feed";
+import { timeAgo } from "@/lib/format";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -9,9 +12,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { C, F } from "@/components/street-souk-ui";
-import { useFeedPost } from "@/hooks/use-feed";
-import { timeAgo } from "@/lib/format";
+import { FeedDetailSkeleton } from "@/components/skeleton";
 
 export default function FeedDetailScreen() {
   const router = useRouter();
@@ -36,10 +37,17 @@ export default function FeedDetailScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color={C.neon} style={{ marginTop: 40 }} />
+        <FeedDetailSkeleton />
       ) : !post ? (
         <Pressable onPress={() => router.back()}>
-          <Text style={{ color: C.muted, fontFamily: F.mono, textAlign: "center", marginTop: 40 }}>
+          <Text
+            style={{
+              color: C.muted,
+              fontFamily: F.mono,
+              textAlign: "center",
+              marginTop: 40,
+            }}
+          >
             THIS UPDATE IS NO LONGER AVAILABLE. TAP TO GO BACK.
           </Text>
         </Pressable>
@@ -99,7 +107,7 @@ const s = StyleSheet.create({
   headerTitle: {
     color: C.neon,
     fontFamily: F.mono,
-    fontSize: 10,
+    fontSize: 20,
     letterSpacing: 1,
   },
   headerMark: {

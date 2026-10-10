@@ -2,6 +2,7 @@ import { C, F, Header } from "@/components/street-souk-ui";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
+  ActivityIndicator,
   Image,
   Pressable,
   SafeAreaView,
@@ -11,6 +12,11 @@ import {
   View,
 } from "react-native";
 import { useState } from "react";
+import { useProducts } from "@/hooks/use-products";
+import { useVendors } from "@/hooks/use-vendors";
+import { formatNaira } from "@/lib/format";
+import { vendorImage } from "@/lib/vendor-assets";
+import { ImageRowSkeleton, ProductGridSkeleton } from "@/components/skeleton";
 
 const categories = [
   "Explore",
@@ -22,59 +28,55 @@ const categories = [
   "Accessories",
 ] as const;
 type ShopCategory = (typeof categories)[number];
-const products = [
-  {
-    name: "BOLAPSD. / THE DAILY POLO",
-    brand: "BOLAPSD.",
-    price: "₦ 48,000",
-    image: require("@/assets/brands/bolapsdpolo.png"),
-  },
-  {
-    name: "BONFO / CITY TROUSER",
-    brand: "BONFO",
-    price: "₦ 65,000",
-    image: require("@/assets/brands/bonfotrouser.png"),
-  },
-];
-const brands = [
-  {
-    name: "BOLAPSD.",
-    type: "FOOTWEAR",
-    image: require("@/assets/brands/bolapsd.png"),
-  },
-  {
-    name: "IYOO CARTEL",
-    type: "APPAREL",
-    image: require("@/assets/brands/iyoocartel.png"),
-  },
-  {
-    name: "BONFO",
-    type: "ACCESSORIES",
-    image: require("@/assets/brands/bonfo.png"),
-  },
-  {
-    name: "THE CHROME PILGRIM",
-    type: "ACCESSORIES",
-    image: require("@/assets/brands/TCP.png"),
-  },
-  {
-    name: "GREATERTHAN00",
-    type: "ACCESSORIES",
-    image: require("@/assets/brands/ssx_logo.png"),
-  },
+const productTabs: ShopCategory[] = [
+  "Explore",
+  "New Arrivals",
+  "Mens",
+  "Womens",
 ];
 
 export default function ShopScreen() {
   const router = useRouter();
   const [category, setCategory] = useState<ShopCategory>("Explore");
-  const showProducts = category === "Explore" || category === "New Arrivals";
+  const {
+    products,
+    loading: loadingProducts,
+    error: productsError,
+    reload,
+  } = useProducts();
+  const { vendors, loading: loadingVendors } = useVendors();
+
+  const showProducts = productTabs.includes(category);
+
+  let visibleProducts = products;
+  if (category === "Explore") {
+    const featured = products.filter((p) => p.is_featured);
+    visibleProducts = featured.length ? featured : products.slice(0, 6);
+  } else if (category === "Mens") {
+    visibleProducts = products.filter((p) => p.department !== "WOMENS");
+  } else if (category === "Womens") {
+    visibleProducts = products.filter((p) => p.department !== "MENS");
+  }
+
   const visibleBrands =
     category === "Footwear"
-      ? brands.filter((b) => b.type === "FOOTWEAR")
+      ? vendors.filter((v) => v.category === "FOOTWEAR")
       : category === "Accessories"
-        ? brands.filter((b) => b.type === "ACCESSORIES")
-        : brands;
+        ? vendors.filter((v) => v.category === "ACCESSORIES")
+        : vendors;
+
+  const loading = showProducts ? loadingProducts : loadingVendors;
   const openBrands = () => router.push("/vendors");
+  const openVendor = (slug: string) =>
+    router.push({ pathname: "/vendor/[slug]", params: { slug } });
+  const note = {
+    color: C.muted,
+    fontFamily: F.mono,
+    fontSize: 11,
+    textAlign: "center" as const,
+    marginTop: 30,
+  };
+
   return (
     <SafeAreaView style={s.safe}>
       <Header title="SHOP" />
@@ -149,58 +151,95 @@ export default function ShopScreen() {
             </Text>
           </>
         )}
+
+        {loading &&
+          (showProducts ? (
+            <ProductGridSkeleton />
+          ) : (
+            <ImageRowSkeleton count={4} />
+          ))}
+        {showProducts && productsError && (
+          <Pressable onPress={reload}>
+            <Text style={note}>COULD NOT LOAD THE STORE. TAP TO RETRY.</Text>
+          </Pressable>
+        )}
+
         {showProducts ? (
           <>
-            <View style={s.head}>
-              <Text style={s.section}>
-                {category === "Explore" ? "FEATURED DROPS" : "LATEST DROPS"}
-              </Text>
-              <Text style={s.count}>01 — 02</Text>
-            </View>
+            {!loading && visibleProducts.length > 0 && (
+              <View style={s.head}>
+                <Text style={s.section}>
+                  {category === "Explore" ? "FEATURED DROPS" : "LATEST DROPS"}
+                </Text>
+                <Text style={s.count}>
+                  {String(visibleProducts.length).padStart(2, "0")}{" "}
+                  {visibleProducts.length === 1 ? "PIECE" : "PIECES"}
+                </Text>
+              </View>
+            )}
             <View style={s.grid}>
-              {products.map((p) => (
-                <Pressable key={p.name} style={s.product} onPress={openBrands}>
+              {visibleProducts.map((p) => (
+                <Pressable
+                  key={p.id}
+                  style={s.product}
+                  onPress={() => openVendor(p.vendors.slug)}
+                >
                   <View style={s.imageWrap}>
                     <Image
-                      source={p.image}
+                      source={vendorImage(
+                        p.vendors.slug,
+                        "product",
+                        p.image_url,
+                      )}
                       resizeMode="cover"
                       style={s.image}
                     />
-                    <View style={s.badge}>
-                      <Text style={s.badgeText}>STREET SOUK SELECT</Text>
-                    </View>
+                    {p.is_featured && (
+                      <View style={s.badge}>
+                        <Text style={s.badgeText}>STREET SOUK SELECT</Text>
+                      </View>
+                    )}
                   </View>
-                  <Text style={s.brand}>{p.brand}</Text>
-                  <Text style={s.name}>{p.name}</Text>
-                  <Text style={s.price}>{p.price}</Text>
+                  <Text style={s.brand}>{p.vendors.name}</Text>
+                  <Text style={s.name}>
+                    {p.vendors.name} / {p.name}
+                  </Text>
+                  <Text style={s.price}>{formatNaira(p.price_ngn)}</Text>
                 </Pressable>
               ))}
             </View>
+            {!loading && !productsError && visibleProducts.length === 0 && (
+              <Text style={note}>NOTHING HERE YET. CHECK BACK SOON.</Text>
+            )}
           </>
         ) : (
           <View style={s.brandList}>
             {visibleBrands.map((brand) => (
               <Pressable
-                key={brand.name}
+                key={brand.id}
                 style={s.brandRow}
-                onPress={openBrands}
+                onPress={() => openVendor(brand.slug)}
               >
                 <View style={s.brandLogo}>
                   <Image
-                    source={brand.image}
+                    source={vendorImage(brand.slug, "logo", brand.logo_url)}
                     resizeMode="contain"
                     style={s.brandImage}
                   />
                 </View>
                 <View style={s.brandInfo}>
                   <Text style={s.brandName}>{brand.name}</Text>
-                  <Text style={s.brandType}>{brand.type}</Text>
+                  <Text style={s.brandType}>{brand.category}</Text>
                 </View>
                 <Ionicons name="arrow-forward" size={17} color={C.muted} />
               </Pressable>
             ))}
+            {!loading && visibleBrands.length === 0 && (
+              <Text style={note}>NO BRANDS IN THIS CATEGORY YET.</Text>
+            )}
           </View>
         )}
+
         {(category === "Mens" || category === "Womens") && (
           <Pressable style={s.directory} onPress={openBrands}>
             <Text style={s.directoryText}>BROWSE ALL BRANDS</Text>

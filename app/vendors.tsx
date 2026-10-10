@@ -17,6 +17,7 @@ import {
 import { useStreetSoukStore } from "@/context/street-souk-store";
 import { useVendors } from "@/hooks/use-vendors";
 import { vendorImage } from "@/lib/vendor-assets";
+import { VendorListSkeleton } from "@/components/skeleton";
 
 export default function VendorsScreen() {
   const router = useRouter();
@@ -53,9 +54,7 @@ export default function VendorsScreen() {
           />
         </View>
 
-        {loading && (
-          <ActivityIndicator color={C.neon} style={{ marginTop: 30 }} />
-        )}
+        {loading && <VendorListSkeleton />}
         {error && (
           <Pressable onPress={reload}>
             <Text style={s.empty}>COULD NOT LOAD VENDORS. TAP TO RETRY.</Text>

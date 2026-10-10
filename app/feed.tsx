@@ -15,6 +15,7 @@ import { C, F } from "@/components/street-souk-ui";
 import { useFeed } from "@/hooks/use-feed";
 import { timeAgo } from "@/lib/format";
 import type { FeedPost } from "@/lib/types";
+import { FeedSkeleton } from "@/components/skeleton";
 
 type FeedCategory = "ALL" | "DROPS" | "SCHEDULE" | "CROWD";
 const filters: FeedCategory[] = ["ALL", "DROPS", "SCHEDULE", "CROWD"];
@@ -108,9 +109,7 @@ export default function FeedScreen() {
         </View>
         <View style={s.rule} />
 
-        {loading && (
-          <ActivityIndicator color={C.neon} style={{ marginTop: 30 }} />
-        )}
+       {loading && <FeedSkeleton />}
         {error && (
           <Pressable onPress={reload}>
             <Text
