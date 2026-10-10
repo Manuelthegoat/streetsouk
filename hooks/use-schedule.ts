@@ -1,33 +1,27 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCachedQuery } from "@/hooks/use-cached-query";
 import { supabase } from "@/lib/supabase";
 import type { ScheduleItem } from "@/lib/types";
 
+const EMPTY: ScheduleItem[] = [];
+
+async function fetchSchedule() {
+  const { data, error } = await supabase
+    .from("schedule_items")
+    .select("*")
+    .order("day_number")
+    .order("start_time");
+  if (error) throw new Error(error.message);
+  return data as ScheduleItem[];
+}
+
 export function useSchedule() {
-  const [items, setItems] = useState<ScheduleItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("schedule_items")
-      .select("*")
-      .order("day_number")
-      .order("start_time");
-    if (error) {
-      setError(error.message);
-    } else {
-      setItems(data as ScheduleItem[]);
-      setError(null);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return { items, loading, error, reload: load };
+  // schedules change on the day, so keep this one fresher
+  const { data, loading, error, reload } = useCachedQuery(
+    "schedule",
+    fetchSchedule,
+    { ttl: 60_000 },
+  );
+  return { items: data ?? EMPTY, loading, error, reload };
 }
 
 export function groupByDay(items: ScheduleItem[]) {

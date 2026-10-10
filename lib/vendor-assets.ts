@@ -1,8 +1,9 @@
-import { ImageSourcePropType } from "react-native";
+import type { ImageSource } from "expo-image";
 
 type Kind = "logo" | "campaign" | "product";
+type Asset = ImageSource | number;
 
-const assets: Record<string, Record<Kind, ImageSourcePropType>> = {
+const assets: Record<string, Record<Kind, number>> = {
   bolapsd: {
     logo: require("@/assets/brands/bolapsd.png"),
     campaign: require("@/assets/brands/bolacampaign.jpg"),
@@ -30,26 +31,24 @@ const assets: Record<string, Record<Kind, ImageSourcePropType>> = {
   },
 };
 
-const placeholder: ImageSourcePropType = require("@/assets/images/sslogo.png");
+const placeholder: number = require("@/assets/images/sslogo.png");
 
 export function vendorImage(
   slug: string,
   kind: Kind,
   url?: string | null,
-): ImageSourcePropType {
+): Asset {
   if (url) return { uri: url };
   return assets[slug]?.[kind] ?? placeholder;
 }
-const scheduleFallbacks: Record<string, ImageSourcePropType> = {
+
+const scheduleFallbacks: Record<string, number> = {
   DROP: require("@/assets/brands/iyoocampaign.jpg"),
   STAGE: require("@/assets/brands/bolacampaign.jpg"),
   DJ: require("@/assets/brands/bonfocampaign.jpg"),
 };
 
-export function scheduleImage(
-  category: string,
-  url?: string | null,
-): ImageSourcePropType {
+export function scheduleImage(category: string, url?: string | null): Asset {
   if (url) return { uri: url };
   return scheduleFallbacks[category] ?? placeholder;
 }

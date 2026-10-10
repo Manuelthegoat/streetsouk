@@ -233,6 +233,49 @@ export function FeedDetailSkeleton() {
     </Loading>
   );
 }
+// lineup cards: big photo, then name and text
+export function LineupSkeleton({ count = 2 }: { count?: number }) {
+  return (
+    <Loading style={s.stack}>
+      {range(count).map((i) => (
+        <View
+          key={i}
+          style={{
+            borderWidth: 1,
+            borderColor: C.line,
+            backgroundColor: C.panel,
+          }}
+        >
+          <Bone height={340} />
+          <View style={{ padding: 18, gap: 10 }}>
+            <Bone width={24} height={10} />
+            <Bone width="55%" height={28} />
+            <Bone height={12} />
+            <Bone width="85%" height={12} />
+          </View>
+        </View>
+      ))}
+    </Loading>
+  );
+}
+// horizontal strip of lineup tiles on Home
+export function LineupStripSkeleton() {
+  return (
+    <Loading
+      style={{
+        flexDirection: "row",
+        gap: 12,
+        marginHorizontal: -18,
+        paddingHorizontal: 18,
+        overflow: "hidden",
+      }}
+    >
+      {range(3).map((i) => (
+        <Bone key={i} width={150} height={200} />
+      ))}
+    </Loading>
+  );
+}
 
 const s = StyleSheet.create({
   stack: { gap: 14, marginTop: 16 },

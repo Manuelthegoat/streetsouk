@@ -8,8 +8,11 @@ import {
   StyleSheet,
   Text,
   View,
+  Alert,
 } from "react-native";
 import { C, F } from "@/components/street-souk-ui";
+import { Image as CachedImage } from "expo-image";
+import { clearCache } from "@/lib/cache";
 
 function SettingRow({
   icon,
@@ -50,6 +53,16 @@ export default function SettingsScreen() {
   const [notifications, setNotifications] = useState(true);
   const [guidance, setGuidance] = useState(true);
   const [motion, setMotion] = useState(false);
+  const [clearing, setClearing] = useState(false);
+
+  async function handleClearCache() {
+    setClearing(true);
+    await clearCache();
+    await CachedImage.clearDiskCache();
+    await CachedImage.clearMemoryCache();
+    setClearing(false);
+    Alert.alert("Cache cleared", "Fresh content is loading.");
+  }
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
@@ -104,6 +117,21 @@ export default function SettingsScreen() {
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={C.muted} />
+        </Pressable>
+                <Pressable
+          onPress={handleClearCache}
+          disabled={clearing}
+          style={s.action}
+        >
+          <Ionicons name="trash-outline" size={20} color={C.neon} />
+          <View style={s.rowCopy}>
+            <Text style={s.rowTitle}>
+              {clearing ? "CLEARING..." : "CLEAR CACHE"}
+            </Text>
+            <Text style={s.rowDetail}>
+              Remove saved content and images. Everything reloads fresh.
+            </Text>
+          </View>
         </Pressable>
         <Pressable style={s.action}>
           <Ionicons

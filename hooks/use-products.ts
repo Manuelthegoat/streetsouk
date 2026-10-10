@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCachedQuery } from "@/hooks/use-cached-query";
 import { supabase } from "@/lib/supabase";
 import type { Product } from "@/lib/types";
 
@@ -6,31 +6,22 @@ export type ShopProduct = Product & {
   vendors: { slug: string; name: string; category: string };
 };
 
+const EMPTY: ShopProduct[] = [];
+
+async function fetchProducts() {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*, vendors!inner(slug, name, category)")
+    .order("created_at", { ascending: false })
+    .order("sort_order");
+  if (error) throw new Error(error.message);
+  return data as unknown as ShopProduct[];
+}
+
 export function useProducts() {
-  const [products, setProducts] = useState<ShopProduct[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    // vendors!inner hides products whose vendor is unpublished
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, vendors!inner(slug, name, category)")
-      .order("created_at", { ascending: false })
-      .order("sort_order");
-    if (error) {
-      setError(error.message);
-    } else {
-      setProducts(data as unknown as ShopProduct[]);
-      setError(null);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return { products, loading, error, reload: load };
+  const { data, loading, error, reload } = useCachedQuery(
+    "products",
+    fetchProducts,
+  );
+  return { products: data ?? EMPTY, loading, error, reload };
 }

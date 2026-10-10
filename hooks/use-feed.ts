@@ -1,73 +1,62 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useCachedQuery } from "@/hooks/use-cached-query";
+import { peek } from "@/lib/cache";
+import { onTableChange } from "@/lib/realtime";
 import { supabase } from "@/lib/supabase";
 import type { FeedPost } from "@/lib/types";
 
-export function useFeed() {
-  const [posts, setPosts] = useState<FeedPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [, setTick] = useState(0);
-  const channelId = useRef(Math.random().toString(36).slice(2));
+const EMPTY: FeedPost[] = [];
 
-  const load = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("feed_posts")
-      .select("*")
-      .order("published_at", { ascending: false })
-      .limit(50);
-    if (error) {
-      setError(error.message);
-    } else {
-      setPosts(data as FeedPost[]);
-      setError(null);
-    }
-    setLoading(false);
-  }, []);
+async function fetchFeed() {
+  const { data, error } = await supabase
+    .from("feed_posts")
+    .select("*")
+    .order("published_at", { ascending: false })
+    .limit(50);
+  if (error) throw new Error(error.message);
+  return data as FeedPost[];
+}
+
+export function useFeed() {
+  // ttl 0: show saved posts instantly, but always check for newer ones
+  const { data, loading, error, reload } = useCachedQuery("feed", fetchFeed, {
+    ttl: 0,
+  });
+  const [, setTick] = useState(0);
 
   useEffect(() => {
-    load();
-
-    // reload whenever a post is added, edited or removed
-    const channel = supabase
-      .channel(`feed-${channelId.current}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "feed_posts" },
-        () => load(),
-      )
-      .subscribe();
-
+    // any post added, edited or removed => refresh the list and the saved copy
+    const stop = onTableChange("feed_posts", reload);
     // keep "10 MINS AGO" labels fresh
     const timer = setInterval(() => setTick((n) => n + 1), 30000);
-
     return () => {
-      supabase.removeChannel(channel);
+      stop();
       clearInterval(timer);
     };
-  }, [load]);
+  }, [reload]);
 
-  return { posts, loading, error, reload: load };
+  return { posts: data ?? EMPTY, loading, error, reload };
 }
 
 export function useFeedPost(id?: string) {
-  const [post, setPost] = useState<FeedPost | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, loading } = useCachedQuery<FeedPost | null>(
+    `feed-post:${id}`,
+    async () => {
+      const { data, error } = await supabase
+        .from("feed_posts")
+        .select("*")
+        .eq("id", id as string)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return data as FeedPost | null;
+    },
+    { enabled: !!id },
+  );
 
-  useEffect(() => {
-    if (!id) {
-      setLoading(false);
-      return;
-    }
-    supabase
-      .from("feed_posts")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setPost((data as FeedPost) ?? null);
-        setLoading(false);
-      });
-  }, [id]);
-
-  return { post, loading };
+  // opening a post from the feed list needs no waiting: use the list's copy
+  const fromFeed = peek<FeedPost[]>("feed")?.data.find((p) => p.id === id);
+  return {
+    post: data !== undefined ? data : (fromFeed ?? null),
+    loading: loading && !fromFeed,
+  };
 }

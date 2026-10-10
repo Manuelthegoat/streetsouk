@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -17,6 +16,7 @@ import { groupByDay, useSchedule } from "@/hooks/use-schedule";
 import { formatTimeRange } from "@/lib/format";
 import { scheduleImage } from "@/lib/vendor-assets";
 import { ScheduleSkeleton } from "@/components/skeleton";
+import { Image, ImageBackground } from "expo-image";
 
 export default function ScheduleScreen() {
   const router = useRouter();
@@ -30,7 +30,12 @@ export default function ScheduleScreen() {
       ),
     [items, filter],
   );
-  const note = { color: C.muted, fontFamily: F.mono, textAlign: "center" as const, marginTop: 30 };
+  const note = {
+    color: C.muted,
+    fontFamily: F.mono,
+    textAlign: "center" as const,
+    marginTop: 30,
+  };
 
   return (
     <SafeAreaView style={s.safe}>
@@ -61,7 +66,7 @@ export default function ScheduleScreen() {
           ))}
         </ScrollView>
 
-       {loading && <ScheduleSkeleton />}
+        {loading && <ScheduleSkeleton />}
         {error && (
           <Pressable onPress={reload}>
             <Text style={note}>COULD NOT LOAD SCHEDULE. TAP TO RETRY.</Text>
@@ -83,7 +88,7 @@ export default function ScheduleScreen() {
                   <Image
                     source={scheduleImage(event.category, event.image_url)}
                     style={s.eventImage}
-                    resizeMode="cover"
+                    contentFit="cover"
                   />
                   <View style={s.eventInfo}>
                     {event.is_live && <Text style={s.live}>LIVE NOW</Text>}

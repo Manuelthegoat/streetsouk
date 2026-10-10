@@ -2,8 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ActivityIndicator,
-  Image,
-  ImageBackground,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -17,6 +15,7 @@ import { useVendor } from "@/hooks/use-vendor";
 import { formatNaira } from "@/lib/format";
 import { vendorImage } from "@/lib/vendor-assets";
 import { VendorDetailSkeleton } from "@/components/skeleton";
+   import { Image, ImageBackground } from "expo-image";
 
 export default function VendorDetailScreen() {
   const router = useRouter();
@@ -97,7 +96,7 @@ export default function VendorDetailScreen() {
               <Image
                 source={vendorImage(vendor.slug, "logo", vendor.logo_url)}
                 style={s.heroLogo}
-                resizeMode="contain"
+                contentFit="contain"
               />
               <Text style={s.heroTitle}>{vendor.name}</Text>
             </View>
@@ -151,7 +150,7 @@ export default function VendorDetailScreen() {
                           product.image_url,
                         )}
                         style={s.productImage}
-                        resizeMode="contain"
+                        contentFit="contain"
                       />
                       <Text style={s.productStamp}>
                         SS26 / {String(index + 1).padStart(3, "0")}

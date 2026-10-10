@@ -53,3 +53,10 @@ export type Faq = {
   answer: string;
   sort_order: number;
 };
+export type LineupArtist = {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  sort_order: number;
+};

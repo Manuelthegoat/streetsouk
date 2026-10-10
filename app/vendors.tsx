@@ -4,8 +4,6 @@ import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
-  ImageBackground,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -18,6 +16,7 @@ import { useStreetSoukStore } from "@/context/street-souk-store";
 import { useVendors } from "@/hooks/use-vendors";
 import { vendorImage } from "@/lib/vendor-assets";
 import { VendorListSkeleton } from "@/components/skeleton";
+   import { Image, ImageBackground } from "expo-image";
 
 export default function VendorsScreen() {
   const router = useRouter();
@@ -84,7 +83,7 @@ export default function VendorsScreen() {
                     <Image
                       source={vendorImage(vendor.slug, "logo", vendor.logo_url)}
                       style={s.vendorImage}
-                      resizeMode="contain"
+                      contentFit="contain"
                     />
                   </View>
                   <View style={s.vendorMeta}>

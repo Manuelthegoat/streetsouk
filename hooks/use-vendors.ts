@@ -1,31 +1,23 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCachedQuery } from "@/hooks/use-cached-query";
 import { supabase } from "@/lib/supabase";
 import type { Vendor } from "@/lib/types";
 
+const EMPTY: Vendor[] = [];
+
+async function fetchVendors() {
+  const { data, error } = await supabase
+    .from("vendors")
+    .select("*")
+    .order("sort_order")
+    .order("name");
+  if (error) throw new Error(error.message);
+  return data as Vendor[];
+}
+
 export function useVendors() {
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("vendors")
-      .select("*")
-      .order("sort_order")
-      .order("name");
-    if (error) {
-      setError(error.message);
-    } else {
-      setVendors(data as Vendor[]);
-      setError(null);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return { vendors, loading, error, reload: load };
+  const { data, loading, error, reload } = useCachedQuery(
+    "vendors",
+    fetchVendors,
+  );
+  return { vendors: data ?? EMPTY, loading, error, reload };
 }

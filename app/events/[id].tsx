@@ -1,6 +1,6 @@
 import { C, F } from "@/components/street-souk-ui";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { useState } from "react";
 import {
@@ -23,15 +23,20 @@ import { scheduleImage } from "@/lib/vendor-assets";
 import {
   FaqSkeleton,
   ImageRowSkeleton,
+  LineupSkeleton,
   ScheduleSkeleton,
 } from "@/components/skeleton";
+import { useLineup } from "@/hooks/use-lineup";
 
 const tabs = ["Event Map", "Schedule", "Marketplace", "Lineup", "FAQ"] as const;
 type EventTab = (typeof tabs)[number];
 
 export default function EventDetailScreen() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<EventTab>("Event Map");
+  const { tab } = useLocalSearchParams<{ tab?: string }>();
+  const [activeTab, setActiveTab] = useState<EventTab>(
+    tabs.find((t) => t === tab) ?? "Event Map",
+  );
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
@@ -101,16 +106,7 @@ export default function EventDetailScreen() {
         )}
         {activeTab === "Schedule" && <ScheduleContent />}
         {activeTab === "Marketplace" && <MarketplaceContent />}
-        {activeTab === "Lineup" && (
-          <View style={s.coming}>
-            <Ionicons name="musical-notes-outline" size={27} color={C.neon} />
-            <Text style={s.comingTitle}>LINEUP COMING SOON</Text>
-            <Text style={s.body}>
-              We’ll share performers, sets and appearances here as they’re
-              announced.
-            </Text>
-          </View>
-        )}
+        {activeTab === "Lineup" && <LineupContent />}
         {activeTab === "FAQ" && <Faq />}
       </ScrollView>
     </SafeAreaView>
@@ -148,8 +144,6 @@ function Feature({
   );
 }
 
-
-
 function ScheduleContent() {
   const [filter, setFilter] = useState("ALL");
   const { toggleSavedEvent, isEventSaved } = useStreetSoukStore();
@@ -185,10 +179,12 @@ function ScheduleContent() {
           </Pressable>
         ))}
       </ScrollView>
-     {loading && <ScheduleSkeleton />}
+      {loading && <ScheduleSkeleton />}
       {error && (
         <Pressable onPress={reload}>
-          <Text style={s.sectionEyebrow}>COULD NOT LOAD SCHEDULE. TAP TO RETRY.</Text>
+          <Text style={s.sectionEyebrow}>
+            COULD NOT LOAD SCHEDULE. TAP TO RETRY.
+          </Text>
         </Pressable>
       )}
       {days.map((day) => (
@@ -211,7 +207,11 @@ function ScheduleContent() {
                 <View style={s.scheduleCopy}>
                   <Text style={s.scheduleTitle}>{item.title}</Text>
                   <View style={s.scheduleLocation}>
-                    <Ionicons name="location-outline" size={13} color={C.neon} />
+                    <Ionicons
+                      name="location-outline"
+                      size={13}
+                      color={C.neon}
+                    />
                     <Text numberOfLines={1} style={s.schedulePlace}>
                       {item.place}
                     </Text>
@@ -238,8 +238,6 @@ function ScheduleContent() {
     </View>
   );
 }
-
-
 
 function MarketplaceContent() {
   const router = useRouter();
@@ -299,7 +297,7 @@ function MarketplaceContent() {
           </Pressable>
         )}
       </View>
-     {loading && <ImageRowSkeleton count={4} />}
+      {loading && <ImageRowSkeleton count={4} />}
       <View style={s.marketList}>
         {filtered.map((vendor) => (
           <View key={vendor.id} style={s.brandCard}>
@@ -315,7 +313,11 @@ function MarketplaceContent() {
               style={s.brandCardMain}
             >
               <Image
-                source={vendorImage(vendor.slug, "campaign", vendor.campaign_url)}
+                source={vendorImage(
+                  vendor.slug,
+                  "campaign",
+                  vendor.campaign_url,
+                )}
                 contentFit="cover"
                 style={s.brandCardImage}
               />
@@ -325,7 +327,11 @@ function MarketplaceContent() {
                 </Text>
                 {vendor.booth && (
                   <View style={s.brandLocation}>
-                    <Ionicons name="location-outline" size={12} color={C.neon} />
+                    <Ionicons
+                      name="location-outline"
+                      size={12}
+                      color={C.neon}
+                    />
                     <Text style={s.brandLocationText}>
                       BOOTH {vendor.booth}
                     </Text>
@@ -353,7 +359,9 @@ function MarketplaceContent() {
         ))}
         {error && (
           <Pressable style={s.empty} onPress={reload}>
-            <Text style={s.emptyText}>COULD NOT LOAD BRANDS. TAP TO RETRY.</Text>
+            <Text style={s.emptyText}>
+              COULD NOT LOAD BRANDS. TAP TO RETRY.
+            </Text>
           </Pressable>
         )}
         {!loading && !error && filtered.length === 0 && (
@@ -374,7 +382,64 @@ function MarketplaceContent() {
     </View>
   );
 }
+function LineupContent() {
+  const { artists, loading, error, reload } = useLineup();
 
+  if (loading) return <LineupSkeleton />;
+
+  if (error) {
+    return (
+      <Pressable onPress={reload}>
+        <Text style={s.sectionEyebrow}>
+          COULD NOT LOAD THE LINEUP. TAP TO RETRY.
+        </Text>
+      </Pressable>
+    );
+  }
+
+  if (artists.length === 0) {
+    return (
+      <View style={s.coming}>
+        <Ionicons name="musical-notes-outline" size={27} color={C.neon} />
+        <Text style={s.comingTitle}>LINEUP COMING SOON</Text>
+        <Text style={s.body}>
+          We’ll share performers, sets and appearances here as they’re
+          announced.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={s.lineupList}>
+      <Text style={s.sectionEyebrow}>{artists.length} ON THE LINEUP</Text>
+      {artists.map((artist, index) => (
+        <View key={artist.id} style={s.lineupCard}>
+          {artist.image_url ? (
+            <Image
+              source={{ uri: artist.image_url }}
+              contentFit="cover"
+              style={s.lineupImage}
+            />
+          ) : (
+            <View style={[s.lineupImage, s.lineupPlaceholder]}>
+              <Ionicons name="person-outline" size={46} color={C.muted} />
+            </View>
+          )}
+          <View style={s.lineupBody}>
+            <Text style={s.lineupIndex}>
+              {String(index + 1).padStart(2, "0")}
+            </Text>
+            <Text style={s.lineupName}>{artist.name}</Text>
+            {artist.description && (
+              <Text style={s.lineupDescription}>{artist.description}</Text>
+            )}
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
 function Faq() {
   const { faqs, loading } = useFaqs();
   const [open, setOpen] = useState<string | null | undefined>(undefined);
@@ -647,6 +712,28 @@ const s = StyleSheet.create({
     fontFamily: F.display,
     fontSize: 24,
     marginTop: 14,
+  },
+  lineupList: { gap: 18 },
+  lineupCard: {
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  lineupImage: { width: "100%", height: 340, backgroundColor: C.bg },
+  lineupPlaceholder: { alignItems: "center", justifyContent: "center" },
+  lineupBody: { padding: 18, gap: 8 },
+  lineupIndex: { color: C.muted, fontFamily: F.mono, fontSize: 10 },
+  lineupName: {
+    color: C.neon,
+    fontFamily: F.display,
+    fontSize: 30,
+    lineHeight: 34,
+  },
+  lineupDescription: {
+    color: C.paper,
+    fontFamily: F.body,
+    fontSize: 16,
+    lineHeight: 23,
   },
   faqTitle: {
     color: C.neon,

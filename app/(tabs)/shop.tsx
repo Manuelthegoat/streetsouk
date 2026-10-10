@@ -191,7 +191,7 @@ export default function ShopScreen() {
                         "product",
                         p.image_url,
                       )}
-                      resizeMode="cover"
+                      contentFit="cover"
                       style={s.image}
                     />
                     {p.is_featured && (
@@ -223,7 +223,7 @@ export default function ShopScreen() {
                 <View style={s.brandLogo}>
                   <Image
                     source={vendorImage(brand.slug, "logo", brand.logo_url)}
-                    resizeMode="contain"
+                    contentFit="contain"
                     style={s.brandImage}
                   />
                 </View>

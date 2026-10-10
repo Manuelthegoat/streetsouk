@@ -1,38 +1,23 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCachedQuery } from "@/hooks/use-cached-query";
 import { supabase } from "@/lib/supabase";
 import type { Product, Vendor } from "@/lib/types";
 
 export type VendorWithProducts = Vendor & { products: Product[] };
 
 export function useVendor(slug?: string) {
-  const [vendor, setVendor] = useState<VendorWithProducts | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    if (!slug) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("vendors")
-      .select("*, products(*)")
-      .eq("slug", slug)
-      .order("sort_order", { referencedTable: "products" })
-      .maybeSingle();
-    if (error) {
-      setError(error.message);
-    } else {
-      setVendor(data as VendorWithProducts | null);
-      setError(null);
-    }
-    setLoading(false);
-  }, [slug]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return { vendor, loading, error, reload: load };
+  const { data, loading, error, reload } = useCachedQuery<VendorWithProducts | null>(
+    `vendor:${slug}`,
+    async () => {
+      const { data, error } = await supabase
+        .from("vendors")
+        .select("*, products(*)")
+        .eq("slug", slug as string)
+        .order("sort_order", { referencedTable: "products" })
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return data as VendorWithProducts | null;
+    },
+    { enabled: !!slug },
+  );
+  return { vendor: data ?? null, loading, error, reload };
 }

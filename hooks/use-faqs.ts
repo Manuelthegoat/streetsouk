@@ -1,21 +1,19 @@
-import { useEffect, useState } from "react";
+import { useCachedQuery } from "@/hooks/use-cached-query";
 import { supabase } from "@/lib/supabase";
 import type { Faq } from "@/lib/types";
 
+const EMPTY: Faq[] = [];
+
+async function fetchFaqs() {
+  const { data, error } = await supabase
+    .from("faqs")
+    .select("*")
+    .order("sort_order");
+  if (error) throw new Error(error.message);
+  return data as Faq[];
+}
+
 export function useFaqs() {
-  const [faqs, setFaqs] = useState<Faq[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase
-      .from("faqs")
-      .select("*")
-      .order("sort_order")
-      .then(({ data }) => {
-        setFaqs((data as Faq[]) ?? []);
-        setLoading(false);
-      });
-  }, []);
-
-  return { faqs, loading };
+  const { data, loading } = useCachedQuery("faqs", fetchFaqs);
+  return { faqs: data ?? EMPTY, loading };
 }

@@ -2,7 +2,6 @@ import { C, F, Header } from "@/components/street-souk-ui";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
-  ImageBackground,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -10,10 +9,13 @@ import {
   Text,
   View,
 } from "react-native";
+   import { Image, ImageBackground } from "expo-image";
 import { useState } from "react";
 import { useFeed } from "@/hooks/use-feed";
 import { timeAgo } from "@/lib/format";
 import { ListRowSkeleton } from "@/components/skeleton";
+import { LineupStripSkeleton } from "@/components/skeleton";
+import { useLineup } from "@/hooks/use-lineup";
 
 const categories = [
   "FOR YOU",
@@ -83,6 +85,12 @@ export default function HomeScreen() {
   const [category, setCategory] = useState<HomeCategory>("FOR YOU");
   const feature = categoryCopy[category];
   const { posts, loading } = useFeed();
+  const { artists, loading: lineupLoading } = useLineup();
+  const openLineup = () =>
+    router.push({
+      pathname: "/events/[id]",
+      params: { id: "street-souk-convention", tab: "Lineup" },
+    });
   const latest = posts.slice(0, 3);
   return (
     <SafeAreaView style={s.safe}>
@@ -171,6 +179,57 @@ export default function HomeScreen() {
             detail="Real-time updates from the Convention."
             onPress={() => router.push("/feed")}
           />
+        )}
+        {(lineupLoading || artists.length > 0) && (
+          <>
+            <View style={s.sectionHead}>
+              <Text style={s.sectionTitle}>THE LINEUP</Text>
+              <Pressable onPress={openLineup}>
+                <Text style={s.seeAll}>SEE ALL ↗</Text>
+              </Pressable>
+            </View>
+            {lineupLoading ? (
+              <LineupStripSkeleton />
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginHorizontal: -18 }}
+                contentContainerStyle={{ paddingHorizontal: 18, gap: 12 }}
+              >
+                {artists.map((artist) => (
+                  <Pressable
+                    key={artist.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${artist.name}, view the lineup`}
+                    onPress={openLineup}
+                    style={s.lineupTile}
+                  >
+                    {artist.image_url ? (
+                      <Image
+                        source={{ uri: artist.image_url }}
+                        style={s.lineupTileImage}
+                        contentFit="cover"
+                      />
+                    ) : (
+                      <View style={[s.lineupTileImage, s.lineupTileEmpty]}>
+                        <Ionicons
+                          name="person-outline"
+                          size={34}
+                          color={C.muted}
+                        />
+                      </View>
+                    )}
+                    <View style={s.lineupTileName}>
+                      <Text numberOfLines={2} style={s.lineupTileText}>
+                        {artist.name}
+                      </Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            )}
+          </>
         )}
         <View style={s.sectionHead}>
           <Text style={s.sectionTitle}>MORE THAN A MARKET.</Text>
@@ -358,6 +417,30 @@ const s = StyleSheet.create({
     marginTop: 2,
   },
   seeAll: { color: C.neon, fontFamily: F.mono, fontSize: 9 },
+  lineupTile: {
+    width: 150,
+    height: 200,
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  lineupTileImage: { width: "100%", height: "100%" },
+  lineupTileEmpty: { alignItems: "center", justifyContent: "center" },
+  lineupTileName: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.72)",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  lineupTileText: {
+    color: C.neon,
+    fontFamily: F.display,
+    fontSize: 16,
+    lineHeight: 19,
+  },
   eventCard: {
     backgroundColor: C.panel,
     borderWidth: 1,
