@@ -323,9 +323,14 @@ const s = StyleSheet.create({
     fontSize: 9,
     alignSelf: "center",
   },
-  grid: { flexDirection: "row", gap: 11 },
-  product: { flex: 1 },
-  imageWrap: { height: 205, backgroundColor: C.panel, position: "relative" },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: 20,
+  },
+  product: { width: "48%" },
+  imageWrap: { height: 205, backgroundColor: C.bg, position: "relative" },
   image: { width: "100%", height: "100%" },
   badge: {
     position: "absolute",

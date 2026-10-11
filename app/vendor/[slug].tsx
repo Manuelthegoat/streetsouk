@@ -320,7 +320,7 @@ const s = StyleSheet.create({
   productImageWrap: {
     height: 245,
     position: "relative",
-    backgroundColor: C.paper,
+    backgroundColor: C.bg,
   },
   productImage: { width: "100%", height: "100%" },
   productStamp: {

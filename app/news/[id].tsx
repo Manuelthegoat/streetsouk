@@ -117,7 +117,7 @@ const s = StyleSheet.create({
     fontSize: 20,
     letterSpacing: 1,
   },
-  cover: { width: "100%", height: 280, backgroundColor: C.panel },
+  cover: { width: "100%", height: 280, backgroundColor: C.bg },
   content: { padding: 20, paddingBottom: 48 },
   metaRow: { flexDirection: "row", justifyContent: "space-between" },
   topic: { color: C.neon, fontFamily: F.mono, fontSize: 10 },
