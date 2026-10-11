@@ -4,19 +4,22 @@ import type { Faq } from "@/lib/types";
 
 const EMPTY: Faq[] = [];
 
-async function fetchFaqs(eventId?: string) {
-  let query = supabase.from("faqs").select("*");
-  if (eventId) query = query.eq("event_id", eventId);
-  const { data, error } = await query.order("sort_order");
+async function fetchFaqs(eventId: string) {
+  const { data, error } = await supabase
+    .from("faqs")
+    .select("*")
+    .eq("event_id", eventId)
+    .order("sort_order");
   if (error) throw new Error(error.message);
   return data as Faq[];
 }
 
-export function useFaqs(eventId?: string | null) {
+// eventId null = still waiting for the event to load
+export function useFaqs(eventId: string | null) {
   const waiting = eventId === null;
   const { data, loading } = useCachedQuery(
-    `faqs:${eventId ?? "all"}`,
-    () => fetchFaqs(eventId ?? undefined),
+    `faqs:${eventId}`,
+    () => fetchFaqs(eventId as string),
     { enabled: !waiting },
   );
   return {

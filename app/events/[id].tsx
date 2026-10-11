@@ -33,6 +33,7 @@ import { useLineup } from "@/hooks/use-lineup";
 import { useEvent } from "@/hooks/use-events";
 import { useFeed } from "@/hooks/use-feed";
 import { timeAgo } from "@/lib/format";
+import { useEventVendors } from "@/hooks/use-event-vendors";
 
 const tabs = [
   "Event Map",
@@ -40,6 +41,7 @@ const tabs = [
   "Schedule",
   "Marketplace",
   "Lineup",
+  "Tickets",
   "FAQ",
 ] as const;
 type EventTab = (typeof tabs)[number];
@@ -146,10 +148,13 @@ export default function EventDetailScreen() {
           />
         )}
         {activeTab === "Schedule" && <ScheduleContent eventId={eventId} />}
-        {activeTab === "Marketplace" && <MarketplaceContent />}
+        {activeTab === "Marketplace" && (
+          <MarketplaceContent eventId={eventId} />
+        )}
         {activeTab === "Lineup" && <LineupContent eventId={eventId} />}
         {activeTab === "FAQ" && <Faq eventId={eventId} />}
         {activeTab === "Live" && <LiveContent eventId={eventId} />}
+        {activeTab === "Tickets" && <View />}
       </ScrollView>
     </SafeAreaView>
   );
@@ -281,10 +286,10 @@ function ScheduleContent({ eventId }: { eventId: string | null }) {
   );
 }
 
-function MarketplaceContent() {
+function MarketplaceContent({ eventId }: { eventId: string | null }) {
   const router = useRouter();
   const { toggleFavorite, isFavorite } = useStreetSoukStore();
-  const { vendors, loading, error, reload } = useVendors();
+  const { vendors, loading, error, reload } = useEventVendors(eventId);
   const [filter, setFilter] = useState<"ALL" | "FAVORITES" | "SPONSORS">("ALL");
   const [query, setQuery] = useState("");
   const filtered = vendors.filter((vendor) => {
@@ -537,7 +542,7 @@ function LiveContent({ eventId }: { eventId: string | null }) {
   );
 }
 function Faq({ eventId }: { eventId: string | null }) {
-  const { faqs, loading } = useFaqs();
+  const { faqs, loading } = useFaqs(eventId);
   const [open, setOpen] = useState<string | null | undefined>(undefined);
   const current = open === undefined ? faqs[0]?.id : open;
   return (
