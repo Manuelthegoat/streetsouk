@@ -160,7 +160,16 @@ export default function EventDetailScreen() {
         {activeTab === "Lineup" && <LineupContent eventId={eventId} />}
         {activeTab === "FAQ" && <Faq eventId={eventId} />}
         {activeTab === "Live" && <LiveContent eventId={eventId} />}
-        {activeTab === "Tickets" && <View />}
+        {activeTab === "Tickets" && (
+          <Feature
+            icon="ticket-outline"
+            eyebrow="YOUR WAY IN"
+            title="TICKETS"
+            body="Ticket details for the next Street Souk Convention will be announced here."
+            action="VIEW TICKET INFO"
+            onPress={() => router.push("/tickets")}
+          />
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -200,7 +209,7 @@ function Feature({
 function ScheduleContent({ eventId }: { eventId: string | null }) {
   const [filter, setFilter] = useState("ALL");
   const { toggleSavedEvent, isEventSaved } = useStreetSoukStore();
-  const { items, loading, error, reload } = useSchedule();
+  const { items, loading, error, reload } = useSchedule(eventId);
   const days = groupByDay(
     filter === "ALL" ? items : items.filter((i) => i.category === filter),
   );
@@ -442,8 +451,7 @@ function MarketplaceContent({
   );
 }
 function LineupContent({ eventId }: { eventId: string | null }) {
-  const { artists, loading, error, reload } = useLineup();
-
+const { artists, loading, error, reload } = useLineup(eventId);
   if (loading) return <LineupSkeleton />;
 
   if (error) {

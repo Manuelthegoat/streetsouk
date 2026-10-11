@@ -14,19 +14,32 @@ async function fetchSchedule(eventId?: string) {
   return data as ScheduleItem[];
 }
 
-export function useSchedule(eventId?: string | null) {
-  const waiting = eventId === null;
+// ONE event's schedule.
+// eventId: a string = that event, null = still waiting for the event to load,
+// undefined = there is no such event (empty, not loading)
+export function useSchedule(eventId: string | null | undefined) {
+  const ready = typeof eventId === "string";
   const { data, loading, error, reload } = useCachedQuery(
-    `schedule:${eventId ?? "all"}`,
-    () => fetchSchedule(eventId ?? undefined),
-    { ttl: 60_000, enabled: !waiting },
+    `schedule:${eventId}`,
+    () => fetchSchedule(eventId as string),
+    { ttl: 60_000, enabled: ready },
   );
   return {
-    items: waiting ? EMPTY : (data ?? EMPTY),
-    loading: waiting || loading,
-    error,
+    items: ready ? (data ?? EMPTY) : EMPTY,
+    loading: eventId === null || (ready && loading),
+    error: ready ? error : null,
     reload,
   };
+}
+
+// every event's items together; only for looking up saved items by id
+export function useAllSchedule() {
+  const { data, loading } = useCachedQuery(
+    "schedule:all",
+    () => fetchSchedule(),
+    { ttl: 60_000 },
+  );
+  return { items: data ?? EMPTY, loading };
 }
 
 export function groupByDay(items: ScheduleItem[]) {

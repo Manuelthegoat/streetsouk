@@ -1,6 +1,6 @@
 import { C, F } from "@/components/street-souk-ui";
 import { useStreetSoukStore } from "@/context/street-souk-store";
-import { useSchedule } from "@/hooks/use-schedule";
+import { useAllSchedule } from "@/hooks/use-schedule";
 import { useVendors } from "@/hooks/use-vendors";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -19,7 +19,7 @@ export default function MySoukScreen() {
   const { favorites, savedEvents, startingPoint } = useStreetSoukStore();
   const { vendors, loading: vendorsLoading } = useVendors();
   const favoriteVendors = vendors.filter((v) => favorites.includes(v.slug));
-  const { items: scheduleItems, loading: scheduleLoading } = useSchedule();
+  const { items: scheduleItems, loading: scheduleLoading } = useAllSchedule();
   const savedScheduleItems = scheduleItems.filter((i) =>
     savedEvents.includes(i.id),
   );
@@ -53,8 +53,8 @@ export default function MySoukScreen() {
         </View>
         <Text style={s.section}>SAVED VENDORS</Text>
         {vendorsLoading && favorites.length > 0 ? (
-  <ListRowSkeleton count={Math.min(favorites.length, 3)} />
-) : favoriteVendors.length ? (
+          <ListRowSkeleton count={Math.min(favorites.length, 3)} />
+        ) : favoriteVendors.length ? (
           favoriteVendors.map((vendor) => (
             <Pressable
               key={vendor.id}
@@ -76,8 +76,8 @@ export default function MySoukScreen() {
         )}
         <Text style={s.section}>SAVED EVENTS</Text>
         {scheduleLoading && savedEvents.length > 0 ? (
-  <ListRowSkeleton count={Math.min(savedEvents.length, 3)} />
-) : savedScheduleItems.length ? (
+          <ListRowSkeleton count={Math.min(savedEvents.length, 3)} />
+        ) : savedScheduleItems.length ? (
           savedScheduleItems.map((event) => (
             <Pressable
               key={event.id}
