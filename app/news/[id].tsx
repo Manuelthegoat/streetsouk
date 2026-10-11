@@ -123,7 +123,7 @@ const s = StyleSheet.create({
   topic: { color: C.neon, fontFamily: F.mono, fontSize: 10 },
   date: { color: C.muted, fontFamily: F.mono, fontSize: 10 },
   title: {
-    color: C.paper,
+    color: C.neon,
     fontFamily: F.display,
     fontSize: 36,
     lineHeight: 40,

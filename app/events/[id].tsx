@@ -689,7 +689,7 @@ const s = StyleSheet.create({
   liveRowTop: { flexDirection: "row", justifyContent: "space-between" },
   liveMeta: { color: C.muted, fontFamily: F.mono, fontSize: 10 },
   liveTitle: {
-    color: C.paper,
+    color: C.neon,
     fontFamily: F.display,
     fontSize: 22,
     lineHeight: 26,

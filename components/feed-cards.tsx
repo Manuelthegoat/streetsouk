@@ -101,7 +101,7 @@ const s = StyleSheet.create({
   tagText: { color: C.ink, fontFamily: F.mono, fontSize: 9 },
   body: { padding: 16, gap: 6 },
   kicker: { color: C.muted, fontFamily: F.mono, fontSize: 10 },
-  title: { color: C.paper, fontFamily: F.display, fontSize: 24, lineHeight: 28 },
+  title: { color: C.neon, fontFamily: F.display, fontSize: 24, lineHeight: 28 },
   excerpt: { color: C.muted, fontFamily: F.body, fontSize: 15, lineHeight: 21 },
   price: { color: C.neon, fontFamily: F.mono, fontSize: 12 },
   meta: { color: C.muted, fontFamily: F.mono, fontSize: 10, marginTop: 2 },
