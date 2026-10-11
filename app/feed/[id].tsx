@@ -16,8 +16,8 @@ import { FeedDetailSkeleton } from "@/components/skeleton";
 
 export default function FeedDetailScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { post, loading } = useFeedPost(id);
+  const { id, event } = useLocalSearchParams<{ id: string; event?: string }>();
+  const { post, loading } = useFeedPost(id, event);
 
   return (
     <SafeAreaView style={s.safe}>

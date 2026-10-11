@@ -7,24 +7,29 @@ import type { FeedPost } from "@/lib/types";
 
 const EMPTY: FeedPost[] = [];
 
-async function fetchFeed() {
-  const { data, error } = await supabase
-    .from("feed_posts")
-    .select("*")
+async function fetchFeed(eventId?: string) {
+  let query = supabase.from("feed_posts").select("*");
+  if (eventId) query = query.eq("event_id", eventId);
+  const { data, error } = await query
     .order("published_at", { ascending: false })
     .limit(50);
   if (error) throw new Error(error.message);
   return data as FeedPost[];
 }
 
-export function useFeed() {
-  // ttl 0: show saved posts instantly, but always check for newer ones
-  const { data, loading, error, reload } = useCachedQuery("feed", fetchFeed, {
-    ttl: 0,
-  });
+// eventId: an event's id = that event's feed, undefined = every event,
+// null = still waiting for the event id
+export function useFeed(eventId?: string | null) {
+  const waiting = eventId === null;
+  const { data, loading, error, reload } = useCachedQuery(
+    `feed:${eventId ?? "all"}`,
+    () => fetchFeed(eventId ?? undefined),
+    { ttl: 0, enabled: !waiting },
+  );
   const [, setTick] = useState(0);
 
   useEffect(() => {
+    if (waiting) return;
     // any post added, edited or removed => refresh the list and the saved copy
     const stop = onTableChange("feed_posts", reload);
     // keep "10 MINS AGO" labels fresh
@@ -33,12 +38,17 @@ export function useFeed() {
       stop();
       clearInterval(timer);
     };
-  }, [reload]);
+  }, [reload, waiting]);
 
-  return { posts: data ?? EMPTY, loading, error, reload };
+  return {
+    posts: waiting ? EMPTY : (data ?? EMPTY),
+    loading: waiting || loading,
+    error,
+    reload,
+  };
 }
 
-export function useFeedPost(id?: string) {
+export function useFeedPost(id?: string, eventId?: string) {
   const { data, loading } = useCachedQuery<FeedPost | null>(
     `feed-post:${id}`,
     async () => {
@@ -53,8 +63,10 @@ export function useFeedPost(id?: string) {
     { enabled: !!id },
   );
 
-  // opening a post from the feed list needs no waiting: use the list's copy
-  const fromFeed = peek<FeedPost[]>("feed")?.data.find((p) => p.id === id);
+  // opening a post from a feed list needs no waiting: use the list's copy
+  const fromFeed = peek<FeedPost[]>(`feed:${eventId ?? "all"}`)?.data.find(
+    (p) => p.id === id,
+  );
   return {
     post: data !== undefined ? data : (fromFeed ?? null),
     loading: loading && !fromFeed,

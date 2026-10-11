@@ -1,5 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEvents } from "@/hooks/use-events";
+import { isPastEvent } from "@/lib/event-dates";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -33,7 +35,11 @@ const categoryIcons: Record<
 export default function FeedScreen() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<FeedCategory>("ALL");
-  const { posts, loading, error, reload } = useFeed();
+  const { event: eventParam } = useLocalSearchParams<{ event?: string }>();
+  const { events, loading: eventsLoading } = useEvents();
+  const current = events.find((e) => !isPastEvent(e)) ?? events[0];
+  const eventId = eventParam || (eventsLoading ? null : current?.id);
+  const { posts, loading, error, reload } = useFeed(eventId);
   const visibleItems = useMemo(
     () =>
       activeFilter === "ALL"
@@ -109,7 +115,7 @@ export default function FeedScreen() {
         </View>
         <View style={s.rule} />
 
-       {loading && <FeedSkeleton />}
+        {loading && <FeedSkeleton />}
         {error && (
           <Pressable onPress={reload}>
             <Text
@@ -156,7 +162,10 @@ function FeedCard({ item }: { item: FeedPost }) {
       accessibilityRole="button"
       accessibilityLabel={`${item.category}: ${item.title}`}
       onPress={() =>
-        router.push({ pathname: "/feed/[id]", params: { id: item.id } })
+        router.push({
+          pathname: "/feed/[id]",
+          params: { id: item.id, event: item.event_id },
+        })
       }
       style={[s.card, item.is_urgent && s.urgentCard, isInfo && s.infoCard]}
     >

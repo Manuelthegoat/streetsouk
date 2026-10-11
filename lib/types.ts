@@ -60,3 +60,32 @@ export type LineupArtist = {
   image_url: string | null;
   sort_order: number;
 };
+export type FestivalEvent = {
+  id: string;
+  slug: string;
+  title: string;
+  badge: string | null;
+  location: string | null;
+  date_label: string | null;
+  description: string | null;
+  cover_url: string | null;
+  sort_order: number;
+  starts_on: string | null;
+  ends_on: string | null;
+};
+export type Topic = {
+  id: string;
+  label: string;
+  sort_order: number;
+};
+
+export type NewsPost = {
+  id: string;
+  title: string;
+  excerpt: string | null;
+  body: string | null;
+  cover_url: string | null;
+  video_url: string | null;
+  topic_id: string | null;
+  published_at: string;
+};

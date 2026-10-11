@@ -1,44 +1,72 @@
+import { NewsCard } from "@/components/feed-cards";
+import { HomeFeedSkeleton } from "@/components/skeleton";
 import { C, F } from "@/components/street-souk-ui";
+import { useTopics } from "@/hooks/use-home";
+import { useNews } from "@/hooks/use-news";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+
 export default function SsTvScreen() {
   const router = useRouter();
+  const { posts, loading, error, reload } = useNews();
+  const { topics } = useTopics();
+
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
-        <Pressable onPress={() => router.back()}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          onPress={() => router.back()}
+          style={s.back}
+        >
           <Ionicons name="arrow-back" size={22} color={C.paper} />
         </Pressable>
-        <Text style={s.headerText}>STREET SOUK</Text>
-        <View style={{ width: 22 }} />
+        <Text style={s.headerTitle}>STREET SOUK</Text>
+        <View style={{ width: 40 }} />
       </View>
-      <View style={s.content}>
-        <View style={s.frame}>
-          <Ionicons name="play" size={33} color={C.neon} />
-          <Text style={s.frameLabel}>SS TV</Text>
-          <Text style={s.frameSub}>CULTURE IN MOTION</Text>
-        </View>
-        <Text style={s.kicker}>STORIES FROM THE STREET</Text>
+      <ScrollView
+        contentContainerStyle={s.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={s.title}>SS TV</Text>
-        <Text style={s.copy}>
-          Original films, conversations, performances and a closer look at the
-          people shaping the culture.
-        </Text>
-        <View style={s.notice}>
-          <Ionicons name="videocam-outline" size={20} color={C.neon} />
-          <Text style={s.noticeText}>
-            PROGRAMMING IS IN THE WORKS. NEW STORIES COMING SOON.
-          </Text>
+
+        {loading && <HomeFeedSkeleton />}
+        {error && (
+          <Pressable onPress={reload}>
+            <Text style={s.note}>COULD NOT LOAD STORIES. TAP TO RETRY.</Text>
+          </Pressable>
+        )}
+
+        <View style={s.list}>
+          {posts.map((post) => (
+            <NewsCard
+              key={post.id}
+              post={post}
+              topic={topics.find((t) => t.id === post.topic_id)?.label}
+              onPress={() =>
+                router.push({ pathname: "/news/[id]", params: { id: post.id } })
+              }
+            />
+          ))}
         </View>
-        <Pressable style={s.link} onPress={() => router.replace("/(tabs)")}>
-          <Text style={s.linkText}>BACK TO STREET SOUK</Text>
-          <Ionicons name="arrow-forward" size={18} color={C.ink} />
-        </Pressable>
-      </View>
+
+        {!loading && !error && posts.length === 0 && (
+          <Text style={s.note}>NEW STORIES COMING SOON.</Text>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
+
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   header: {
@@ -47,56 +75,31 @@ const s = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: C.line,
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
   },
-  headerText: { color: C.neon, fontFamily: F.mono, fontSize: 9 },
-  content: { padding: 20, justifyContent: "center", flex: 1 },
-  frame: {
-    height: 230,
-    backgroundColor: C.panel,
+  back: {
+    width: 40,
+    height: 40,
     borderWidth: 1,
     borderColor: C.line,
     alignItems: "center",
     justifyContent: "center",
   },
-  frameLabel: {
+  headerTitle: {
     color: C.neon,
     fontFamily: F.display,
-    fontSize: 39,
-    marginTop: 8,
+    fontSize: 20,
+    letterSpacing: 1,
   },
-  frameSub: { color: C.neon, fontFamily: F.mono, fontSize: 9, marginTop: 2 },
-  kicker: { color: C.neon, fontFamily: F.mono, fontSize: 9, marginTop: 24 },
-  title: { color: C.neon, fontFamily: F.display, fontSize: 36, marginTop: 4 },
-  copy: {
+  content: { padding: 18, paddingBottom: 48 },
+  title: { color: C.neon, fontFamily: F.display, fontSize: 40 },
+  list: { gap: 16, marginTop: 16 },
+  note: {
     color: C.muted,
-    fontFamily: F.body,
-    fontSize: 16,
-    lineHeight: 22,
-    marginTop: 4,
-  },
-  notice: {
-    marginTop: 20,
-    padding: 13,
-    backgroundColor: C.panel,
-    flexDirection: "row",
-    gap: 11,
-    alignItems: "center",
-  },
-  noticeText: {
-    color: C.paper,
     fontFamily: F.mono,
-    fontSize: 9,
-    lineHeight: 15,
-    flex: 1,
+    fontSize: 11,
+    textAlign: "center",
+    marginTop: 34,
   },
-  link: {
-    marginTop: 18,
-    backgroundColor: C.green,
-    padding: 14,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  linkText: { color: C.ink, fontFamily: F.mono, fontSize: 10 },
 });

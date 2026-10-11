@@ -15,11 +15,33 @@ export function formatTimeRange(start: string, end?: string | null) {
 }
 
 export function timeAgo(iso: string) {
-  const mins = Math.floor(Math.max(0, Date.now() - new Date(iso).getTime()) / 60000);
+  const mins = Math.floor(
+    Math.max(0, Date.now() - new Date(iso).getTime()) / 60000,
+  );
   if (mins < 1) return "JUST NOW";
   if (mins < 60) return `${mins} MIN${mins === 1 ? "" : "S"} AGO`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours} HOUR${hours === 1 ? "" : "S"} AGO`;
   const days = Math.floor(hours / 24);
   return `${days} DAY${days === 1 ? "" : "S"} AGO`;
+}
+const MONTHS = [
+  "JAN",
+  "FEB",
+  "MAR",
+  "APR",
+  "MAY",
+  "JUN",
+  "JUL",
+  "AUG",
+  "SEP",
+  "OCT",
+  "NOV",
+  "DEC",
+];
+
+// "2026-12-15T10:00:00Z" -> "15 DEC 2026"
+export function formatDate(iso: string) {
+  const d = new Date(iso);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }

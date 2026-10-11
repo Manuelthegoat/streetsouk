@@ -17,12 +17,18 @@ import { formatTimeRange } from "@/lib/format";
 import { scheduleImage } from "@/lib/vendor-assets";
 import { ScheduleSkeleton } from "@/components/skeleton";
 import { Image, ImageBackground } from "expo-image";
+import { useEvents } from "@/hooks/use-events";
+import { isPastEvent } from "@/lib/event-dates";
 
 export default function ScheduleScreen() {
   const router = useRouter();
   const [filter, setFilter] = useState("ALL");
   const { toggleSavedEvent, isEventSaved } = useStreetSoukStore();
-  const { items, loading, error, reload } = useSchedule();
+   const { events, loading: eventsLoading } = useEvents();
+  const current = events.find((e) => !isPastEvent(e)) ?? events[0];
+  const { items, loading, error, reload } = useSchedule(
+    eventsLoading ? null : current?.id,
+  );
   const days = useMemo(
     () =>
       groupByDay(

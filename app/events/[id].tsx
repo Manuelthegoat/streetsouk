@@ -20,20 +20,35 @@ import { groupByDay, useSchedule } from "@/hooks/use-schedule";
 import { useFaqs } from "@/hooks/use-faqs";
 import { formatTimeRange } from "@/lib/format";
 import { scheduleImage } from "@/lib/vendor-assets";
+import { isPastEvent } from "@/lib/event-dates";
 import {
   FaqSkeleton,
   ImageRowSkeleton,
   LineupSkeleton,
   ScheduleSkeleton,
+  Bone,
+  FeedSkeleton,
 } from "@/components/skeleton";
 import { useLineup } from "@/hooks/use-lineup";
+import { useEvent } from "@/hooks/use-events";
+import { useFeed } from "@/hooks/use-feed";
+import { timeAgo } from "@/lib/format";
 
-const tabs = ["Event Map", "Schedule", "Marketplace", "Lineup", "FAQ"] as const;
+const tabs = [
+  "Event Map",
+  "Live",
+  "Schedule",
+  "Marketplace",
+  "Lineup",
+  "FAQ",
+] as const;
 type EventTab = (typeof tabs)[number];
 
 export default function EventDetailScreen() {
   const router = useRouter();
-  const { tab } = useLocalSearchParams<{ tab?: string }>();
+  const { id, tab } = useLocalSearchParams<{ id: string; tab?: string }>();
+  const { event, loading: eventLoading } = useEvent(id);
+  const eventId = event?.id ?? null;
   const [activeTab, setActiveTab] = useState<EventTab>(
     tabs.find((t) => t === tab) ?? "Event Map",
   );
@@ -89,9 +104,32 @@ export default function EventDetailScreen() {
       >
         {activeTab !== "Marketplace" && (
           <>
-            <Text style={s.eventName}>STREET SOUK CONVENTION</Text>
-            <Text style={s.eventMeta}>LAGOS, NIGERIA / DATE TBA</Text>
+            {eventLoading ? (
+              <>
+                <Bone width="75%" height={30} />
+                <Bone width="50%" height={12} style={{ marginTop: 10 }} />
+              </>
+            ) : (
+              <>
+                <Text style={s.eventName}>{event?.title ?? "EVENT"}</Text>
+                <Text style={s.eventMeta}>
+                  {[event?.location, event?.date_label]
+                    .filter(Boolean)
+                    .join(" / ")}
+                </Text>
+                {event && isPastEvent(event) && (
+                  <View style={s.pastTag}>
+                    <Text style={s.pastTagText}>PAST EVENT</Text>
+                  </View>
+                )}
+              </>
+            )}
             <View style={s.rule} />
+            {!eventLoading && !event && (
+              <Text style={s.sectionEyebrow}>
+                THIS EVENT IS NO LONGER AVAILABLE.
+              </Text>
+            )}
           </>
         )}
         {activeTab === "Event Map" && (
@@ -99,15 +137,19 @@ export default function EventDetailScreen() {
             icon="map-outline"
             eyebrow="PLAN YOUR VISIT"
             title="EVENT MAP"
-            body="Explore the Convention floor plan and find your way around."
+            body={
+              event?.description ??
+              "Explore the floor plan and find your way around."
+            }
             action="OPEN EVENT MAP"
             onPress={() => router.push("/map")}
           />
         )}
-        {activeTab === "Schedule" && <ScheduleContent />}
+        {activeTab === "Schedule" && <ScheduleContent eventId={eventId} />}
         {activeTab === "Marketplace" && <MarketplaceContent />}
-        {activeTab === "Lineup" && <LineupContent />}
-        {activeTab === "FAQ" && <Faq />}
+        {activeTab === "Lineup" && <LineupContent eventId={eventId} />}
+        {activeTab === "FAQ" && <Faq eventId={eventId} />}
+        {activeTab === "Live" && <LiveContent eventId={eventId} />}
       </ScrollView>
     </SafeAreaView>
   );
@@ -144,7 +186,7 @@ function Feature({
   );
 }
 
-function ScheduleContent() {
+function ScheduleContent({ eventId }: { eventId: string | null }) {
   const [filter, setFilter] = useState("ALL");
   const { toggleSavedEvent, isEventSaved } = useStreetSoukStore();
   const { items, loading, error, reload } = useSchedule();
@@ -382,7 +424,7 @@ function MarketplaceContent() {
     </View>
   );
 }
-function LineupContent() {
+function LineupContent({ eventId }: { eventId: string | null }) {
   const { artists, loading, error, reload } = useLineup();
 
   if (loading) return <LineupSkeleton />;
@@ -440,7 +482,61 @@ function LineupContent() {
     </View>
   );
 }
-function Faq() {
+function LiveContent({ eventId }: { eventId: string | null }) {
+  const router = useRouter();
+  const { posts, loading, error, reload } = useFeed(eventId);
+
+  if (loading) return <FeedSkeleton count={3} />;
+  if (error) {
+    return (
+      <Pressable onPress={reload}>
+        <Text style={s.sectionEyebrow}>
+          COULD NOT LOAD UPDATES. TAP TO RETRY.
+        </Text>
+      </Pressable>
+    );
+  }
+
+  return (
+    <View>
+      <Text style={s.sectionEyebrow}>HAPPENING NOW</Text>
+      {posts.length === 0 && (
+        <Text style={s.sectionEyebrow}>NOTHING POSTED YET.</Text>
+      )}
+      {posts.slice(0, 5).map((post) => (
+        <Pressable
+          key={post.id}
+          style={s.liveRow}
+          onPress={() =>
+            router.push({
+              pathname: "/feed/[id]",
+              params: { id: post.id, event: post.event_id },
+            })
+          }
+        >
+          <View style={s.liveRowTop}>
+            <Text style={s.liveMeta}>
+              {post.is_urgent ? "URGENT · " : ""}
+              {post.category}
+            </Text>
+            <Text style={s.liveMeta}>{timeAgo(post.published_at)}</Text>
+          </View>
+          <Text style={s.liveTitle}>{post.title}</Text>
+        </Pressable>
+      ))}
+      <Pressable
+        style={s.liveOpen}
+        onPress={() =>
+          router.push({ pathname: "/feed", params: { event: eventId ?? "" } })
+        }
+      >
+        <Text style={s.liveOpenText}>OPEN THE FULL LIVE FEED</Text>
+        <Ionicons name="arrow-forward" size={20} color={C.ink} />
+      </Pressable>
+    </View>
+  );
+}
+function Faq({ eventId }: { eventId: string | null }) {
   const { faqs, loading } = useFaqs();
   const [open, setOpen] = useState<string | null | undefined>(undefined);
   const current = open === undefined ? faqs[0]?.id : open;
@@ -508,6 +604,14 @@ const s = StyleSheet.create({
   },
   eventMeta: { color: C.neon, fontFamily: F.mono, fontSize: 9, marginTop: 5 },
   rule: { height: 1, backgroundColor: C.line, marginTop: 17, marginBottom: 21 },
+  pastTag: {
+    alignSelf: "flex-start",
+    marginTop: 10,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    backgroundColor: C.muted,
+  },
+  pastTagText: { color: C.ink, fontFamily: F.mono, fontSize: 9 },
   feature: {
     minHeight: 280,
     justifyContent: "center",
@@ -569,6 +673,31 @@ const s = StyleSheet.create({
     marginBottom: 15,
   },
   scheduleDayTitle: { color: C.neon, fontFamily: F.display, fontSize: 21 },
+  liveRow: {
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.line,
+    padding: 16,
+    gap: 8,
+    marginTop: 12,
+  },
+  liveRowTop: { flexDirection: "row", justifyContent: "space-between" },
+  liveMeta: { color: C.muted, fontFamily: F.mono, fontSize: 10 },
+  liveTitle: {
+    color: C.paper,
+    fontFamily: F.display,
+    fontSize: 22,
+    lineHeight: 26,
+  },
+  liveOpen: {
+    marginTop: 16,
+    backgroundColor: C.neon,
+    padding: 14,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  liveOpenText: { color: C.ink, fontFamily: F.display, fontSize: 16 },
   scheduleDayDate: { color: C.muted, fontFamily: F.mono, fontSize: 8 },
   scheduleItem: { marginBottom: 16 },
   scheduleTime: {

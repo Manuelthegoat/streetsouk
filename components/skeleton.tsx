@@ -276,7 +276,50 @@ export function LineupStripSkeleton() {
     </Loading>
   );
 }
-
+// event card on the Events tab
+export function EventCardSkeleton() {
+  return (
+    <Loading style={s.stack}>
+      <Bone height={420} />
+    </Loading>
+  );
+}
+// Home hero while the tab content loads
+export function HomeHeroSkeleton() {
+  return (
+    <Loading style={{ gap: 12, marginTop: 16 }}>
+      <Bone width="50%" height={10} />
+      <Bone width="80%" height={34} />
+      <Bone width="60%" height={34} />
+      <Bone height={12} />
+      <Bone height={300} style={{ marginTop: 8 }} />
+    </Loading>
+  );
+}
+// image-on-top cards on the Home feed
+export function HomeFeedSkeleton({ count = 2 }: { count?: number }) {
+  return (
+    <Loading style={s.stack}>
+      {range(count).map((i) => (
+        <View
+          key={i}
+          style={{
+            borderWidth: 1,
+            borderColor: C.line,
+            backgroundColor: C.panel,
+          }}
+        >
+          <Bone height={220} />
+          <View style={{ padding: 16, gap: 10 }}>
+            <Bone width="30%" height={10} />
+            <Bone width="75%" height={22} />
+            <Bone width="35%" height={12} />
+          </View>
+        </View>
+      ))}
+    </Loading>
+  );
+}
 const s = StyleSheet.create({
   stack: { gap: 14, marginTop: 16 },
   card: {
@@ -287,7 +330,12 @@ const s = StyleSheet.create({
   },
   between: { flexDirection: "row", justifyContent: "space-between" },
   imageRow: { flexDirection: "row", alignItems: "center", gap: 14 },
-  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 22 },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: 22,
+  },
   faqRow: {
     flexDirection: "row",
     justifyContent: "space-between",

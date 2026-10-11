@@ -4,24 +4,29 @@ import type { ScheduleItem } from "@/lib/types";
 
 const EMPTY: ScheduleItem[] = [];
 
-async function fetchSchedule() {
-  const { data, error } = await supabase
-    .from("schedule_items")
-    .select("*")
+async function fetchSchedule(eventId?: string) {
+  let query = supabase.from("schedule_items").select("*");
+  if (eventId) query = query.eq("event_id", eventId);
+  const { data, error } = await query
     .order("day_number")
     .order("start_time");
   if (error) throw new Error(error.message);
   return data as ScheduleItem[];
 }
 
-export function useSchedule() {
-  // schedules change on the day, so keep this one fresher
+export function useSchedule(eventId?: string | null) {
+  const waiting = eventId === null;
   const { data, loading, error, reload } = useCachedQuery(
-    "schedule",
-    fetchSchedule,
-    { ttl: 60_000 },
+    `schedule:${eventId ?? "all"}`,
+    () => fetchSchedule(eventId ?? undefined),
+    { ttl: 60_000, enabled: !waiting },
   );
-  return { items: data ?? EMPTY, loading, error, reload };
+  return {
+    items: waiting ? EMPTY : (data ?? EMPTY),
+    loading: waiting || loading,
+    error,
+    reload,
+  };
 }
 
 export function groupByDay(items: ScheduleItem[]) {

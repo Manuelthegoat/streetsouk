@@ -57,6 +57,7 @@ export default function RootLayout() {
             <Stack.Screen name="ss-tv" options={{ headerShown: false }} />
             <Stack.Screen name="cart" options={{ headerShown: false }} />
             <Stack.Screen name="events/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="news/[id]" options={{ headerShown: false }} />
           </Stack>
         </StreetSoukStore>
       </AuthProvider>

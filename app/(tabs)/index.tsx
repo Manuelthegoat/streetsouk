@@ -1,6 +1,16 @@
+import { NewsCard, ShopCard } from "@/components/feed-cards";
+import { Bone, HomeFeedSkeleton } from "@/components/skeleton";
 import { C, F, Header } from "@/components/street-souk-ui";
+import { useEvents } from "@/hooks/use-events";
+import { useTopics } from "@/hooks/use-home";
+import { useNews } from "@/hooks/use-news";
+import { useProducts, type ShopProduct } from "@/hooks/use-products";
+import { isPastEvent } from "@/lib/event-dates";
+import type { NewsPost } from "@/lib/types";
 import { Ionicons } from "@expo/vector-icons";
+import { ImageBackground } from "expo-image";
 import { useRouter } from "expo-router";
+import { useMemo, useState } from "react";
 import {
   Pressable,
   SafeAreaView,
@@ -9,89 +19,67 @@ import {
   Text,
   View,
 } from "react-native";
-   import { Image, ImageBackground } from "expo-image";
-import { useState } from "react";
-import { useFeed } from "@/hooks/use-feed";
-import { timeAgo } from "@/lib/format";
-import { ListRowSkeleton } from "@/components/skeleton";
-import { LineupStripSkeleton } from "@/components/skeleton";
-import { useLineup } from "@/hooks/use-lineup";
 
-const categories = [
-  "FOR YOU",
-  "TOP STORIES",
-  "STYLE",
-  "SNEAKERS",
-  "MUSIC",
-] as const;
-type HomeCategory = (typeof categories)[number];
-const categoryCopy: Record<
-  HomeCategory,
-  {
-    kicker: string;
-    title: string;
-    intro: string;
-    hero: string;
-    action: string;
-    route: "/(tabs)/events" | "/(tabs)/shop" | "/ss-tv";
-  }
-> = {
-  "FOR YOU": {
-    kicker: "CULTURE MOVES HERE / LAGOS",
-    title: "THE STREETSOUK\nCULTURE CLUB.",
-    intro:
-      "Shop independent brands. Watch the culture. Find your people. Pull up when the city comes alive.",
-    hero: "THE CITY’S\nCULTURE, IN\nONE PLACE.",
-    action: "EXPLORE EVENTS",
-    route: "/(tabs)/events",
-  },
-  "TOP STORIES": {
-    kicker: "THE LATEST FROM THE SOUK",
-    title: "STORIES FROM\nTHE STREETS.",
-    intro: "The people, ideas and moments pushing the culture forward.",
-    hero: "CULTURE HAS\nA NEW POINT\nOF VIEW.",
-    action: "WATCH SS TV",
-    route: "/ss-tv",
-  },
-  STYLE: {
-    kicker: "INDEPENDENT BY NATURE",
-    title: "FIND YOUR\nNEXT FAVOURITE.",
-    intro:
-      "Meet the independent labels and makers shaping what the city wears.",
-    hero: "MADE HERE.\nWORN EVERY-\nWHERE.",
-    action: "SHOP THE LABELS",
-    route: "/(tabs)/shop",
-  },
-  SNEAKERS: {
-    kicker: "THE CITY’S ROTATION",
-    title: "GOOD FINDS.\nGREAT STORIES.",
-    intro: "Explore standout pieces and the people putting them on the map.",
-    hero: "STEP INTO\nTHE STREET\nSOUK WORLD.",
-    action: "EXPLORE BRANDS",
-    route: "/(tabs)/shop",
-  },
-  MUSIC: {
-    kicker: "SOUND OF THE CITY",
-    title: "LAGOS NEVER\nMISSES A BEAT.",
-    intro: "Discover the sounds and creative voices moving the city.",
-    hero: "TUNE INTO\nWHAT’S NEXT.",
-    action: "WATCH SS TV",
-    route: "/ss-tv",
-  },
-};
+type Mode = "All" | "Shop" | "Read";
+const modes: Mode[] = ["All", "Shop", "Read"];
+
+type Item =
+  | { kind: "shop"; id: string; date: number; product: ShopProduct }
+  | { kind: "read"; id: string; date: number; post: NewsPost };
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [category, setCategory] = useState<HomeCategory>("FOR YOU");
-  const feature = categoryCopy[category];
-  const { posts, loading } = useFeed();
-  const { artists, loading: lineupLoading } = useLineup();
-  const openLineup = () =>
-    router.push({
-      pathname: "/events/[id]",
-      params: { id: "street-souk-convention", tab: "Lineup" },
-    });
-  const latest = posts.slice(0, 3);
+  const [topicId, setTopicId] = useState<string | null>(null);
+  const [mode, setMode] = useState<Mode>("All");
+  const { topics } = useTopics();
+  const { events, loading: eventsLoading } = useEvents();
+  const { products, loading: productsLoading } = useProducts();
+  const { posts: news, loading: newsLoading } = useNews();
+
+  const featured = events.find((e) => !isPastEvent(e));
+  const meta = featured
+    ? [featured.location, featured.date_label].filter(Boolean).join(" / ")
+    : "";
+
+  // if a topic was removed in the admin while selected, fall back to FOR YOU
+  const activeTopic = topics.some((t) => t.id === topicId) ? topicId : null;
+  const topicLabel = (id: string | null) =>
+    topics.find((t) => t.id === id)?.label;
+
+  const tabs = [
+    { id: null as string | null, label: "FOR YOU" },
+    ...topics.map((t) => ({ id: t.id as string | null, label: t.label })),
+  ];
+
+  const items = useMemo(() => {
+    const shop: Item[] =
+      mode === "Read"
+        ? []
+        : products
+            .filter((p) => !activeTopic || p.topic_id === activeTopic)
+            .map((p) => ({
+              kind: "shop" as const,
+              id: p.id,
+              date: new Date(p.created_at).getTime(),
+              product: p,
+            }));
+    const read: Item[] =
+      mode === "Shop"
+        ? []
+        : news
+            .filter((n) => !activeTopic || n.topic_id === activeTopic)
+            .map((n) => ({
+              kind: "read" as const,
+              id: n.id,
+              date: new Date(n.published_at).getTime(),
+              post: n,
+            }));
+    return [...shop, ...read].sort((a, b) => b.date - a.date);
+  }, [products, news, activeTopic, mode]);
+
+  const loading =
+    (mode !== "Read" && productsLoading) || (mode !== "Shop" && newsLoading);
+
   return (
     <SafeAreaView style={s.safe}>
       <Header title="HOME" />
@@ -101,208 +89,125 @@ export default function HomeScreen() {
         contentContainerStyle={s.topTabsContent}
         showsHorizontalScrollIndicator={false}
       >
-        {categories.map((item) => (
-          <Pressable
-            key={item}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: category === item }}
-            onPress={() => setCategory(item)}
-            style={[s.topTab, category === item && s.topTabActive]}
-          >
-            <Text
-              style={[s.topTabText, category === item && s.topTabTextActive]}
+        {tabs.map((item) => {
+          const selected = activeTopic === item.id;
+          return (
+            <Pressable
+              key={item.id ?? "for-you"}
+              accessibilityRole="tab"
+              accessibilityState={{ selected }}
+              onPress={() => setTopicId(item.id)}
+              style={[s.topTab, selected && s.topTabActive]}
             >
-              {item}
-            </Text>
-          </Pressable>
-        ))}
+              <Text style={[s.topTabText, selected && s.topTabTextActive]}>
+                {item.label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </ScrollView>
+
       <ScrollView
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={s.kicker}>{feature.kicker}</Text>
-        <Text style={s.title}>{feature.title}</Text>
-        <Text style={s.intro}>{feature.intro}</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push(feature.route)}
-        >
-          <ImageBackground
-            source={require("@/assets/brands/bolacampaign.jpg")}
-            imageStyle={s.heroImage}
-            style={s.hero}
-          >
-            <View style={s.heroShade}>
-              <View style={s.live}>
-                <View style={s.dot} />
-                <Text style={s.liveText}>
-                  {category === "FOR YOU"
-                    ? "THE STREET SOUK CONVENTION"
-                    : category}
-                </Text>
-              </View>
-              <View>
-                <Text style={s.heroTitle}>{feature.hero}</Text>
-                <View style={s.cta}>
-                  <Text style={s.ctaText}>{feature.action}</Text>
-                  <Ionicons name="arrow-forward" size={18} color={C.ink} />
-                </View>
-              </View>
-            </View>
-          </ImageBackground>
-        </Pressable>
-        <View style={s.sectionHead}>
-          <Text style={s.sectionTitle}>HAPPENING NOW</Text>
-          <Pressable onPress={() => router.push("/feed")}>
-            <Text style={s.seeAll}>LIVE FEED ↗</Text>
-          </Pressable>
-        </View>
-        {loading ? (
-          <ListRowSkeleton count={2} />
-        ) : latest.length > 0 ? (
-          latest.map((post) => (
-            <Action
-              key={post.id}
-              icon={post.is_urgent ? "flash" : "radio-outline"}
-              label={post.title}
-              detail={`${post.category} · ${timeAgo(post.published_at)}`}
+        {activeTopic === null &&
+          (eventsLoading && !featured ? (
+            <Bone height={320} />
+          ) : featured ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${featured.title}`}
               onPress={() =>
-                router.push({ pathname: "/feed/[id]", params: { id: post.id } })
+                router.push({
+                  pathname: "/events/[id]",
+                  params: { id: featured.slug },
+                })
               }
-            />
-          ))
-        ) : (
-          <Action
-            icon="radio-outline"
-            label="LIVE FEED"
-            detail="Real-time updates from the Convention."
-            onPress={() => router.push("/feed")}
-          />
-        )}
-        {(lineupLoading || artists.length > 0) && (
-          <>
-            <View style={s.sectionHead}>
-              <Text style={s.sectionTitle}>THE LINEUP</Text>
-              <Pressable onPress={openLineup}>
-                <Text style={s.seeAll}>SEE ALL ↗</Text>
-              </Pressable>
-            </View>
-            {lineupLoading ? (
-              <LineupStripSkeleton />
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={{ marginHorizontal: -18 }}
-                contentContainerStyle={{ paddingHorizontal: 18, gap: 12 }}
+            >
+              <ImageBackground
+                source={
+                  featured.cover_url
+                    ? { uri: featured.cover_url }
+                    : require("@/assets/brands/bolacampaign.jpg")
+                }
+                imageStyle={s.heroImage}
+                style={s.hero}
               >
-                {artists.map((artist) => (
-                  <Pressable
-                    key={artist.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${artist.name}, view the lineup`}
-                    onPress={openLineup}
-                    style={s.lineupTile}
-                  >
-                    {artist.image_url ? (
-                      <Image
-                        source={{ uri: artist.image_url }}
-                        style={s.lineupTileImage}
-                        contentFit="cover"
-                      />
-                    ) : (
-                      <View style={[s.lineupTileImage, s.lineupTileEmpty]}>
-                        <Ionicons
-                          name="person-outline"
-                          size={34}
-                          color={C.muted}
-                        />
-                      </View>
-                    )}
-                    <View style={s.lineupTileName}>
-                      <Text numberOfLines={2} style={s.lineupTileText}>
-                        {artist.name}
-                      </Text>
+                <View style={s.heroShade}>
+                  <View style={s.live}>
+                    <View style={s.dot} />
+                    <Text style={s.liveText}>
+                      {featured.badge ?? "FEATURED EVENT"}
+                    </Text>
+                  </View>
+                  <View>
+                    <Text style={s.heroTitle}>{featured.title}</Text>
+                    {!!meta && <Text style={s.heroMeta}>{meta}</Text>}
+                    <View style={s.cta}>
+                      <Text style={s.ctaText}>VIEW EVENT</Text>
+                      <Ionicons name="arrow-forward" size={18} color={C.ink} />
                     </View>
-                  </Pressable>
-                ))}
-              </ScrollView>
+                  </View>
+                </View>
+              </ImageBackground>
+            </Pressable>
+          ) : null)}
+
+        <View style={s.modeRow}>
+          {modes.map((m) => (
+            <Pressable
+              key={m}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: mode === m }}
+              onPress={() => setMode(m)}
+              style={[s.modeChip, mode === m && s.modeChipActive]}
+            >
+              <Text style={[s.modeText, mode === m && s.modeTextActive]}>
+                {m.toUpperCase()}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {loading && items.length === 0 ? (
+          <HomeFeedSkeleton />
+        ) : items.length > 0 ? (
+          <View style={s.feedList}>
+            {items.map((item) =>
+              item.kind === "shop" ? (
+                <ShopCard
+                  key={`p-${item.id}`}
+                  product={item.product}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/vendor/[slug]",
+                      params: { slug: item.product.vendors.slug },
+                    })
+                  }
+                />
+              ) : (
+                <NewsCard
+                  key={`n-${item.id}`}
+                  post={item.post}
+                  topic={topicLabel(item.post.topic_id)}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/news/[id]",
+                      params: { id: item.id },
+                    })
+                  }
+                />
+              ),
             )}
-          </>
+          </View>
+        ) : (
+          <Text style={s.emptyNote}>NOTHING HERE YET. CHECK BACK SOON.</Text>
         )}
-        <View style={s.sectionHead}>
-          <Text style={s.sectionTitle}>MORE THAN A MARKET.</Text>
-          <Text style={s.sectionNote}>THE STREETSOUK WORLD</Text>
-        </View>
-        <Action
-          icon="bag-outline"
-          label="THE STORE"
-          detail="Independent labels. New drops."
-          onPress={() => router.push("/(tabs)/shop")}
-        />
-        <Action
-          icon="play-circle-outline"
-          label="SS TV"
-          detail="Films, interviews & stories."
-          onPress={() => router.push("/ss-tv")}
-        />
-        <Action
-          icon="people-outline"
-          label="SS SESSIONS"
-          detail="Uni tour, opportunities & community."
-          onPress={() => router.push("/sessions")}
-        />
-        <View style={s.sectionHead}>
-          <Text style={s.sectionTitle}>ON THE RADAR</Text>
-          <Pressable onPress={() => router.push("/(tabs)/events")}>
-            <Text style={s.seeAll}>ALL EVENTS ↗</Text>
-          </Pressable>
-        </View>
-        <Pressable
-          style={s.eventCard}
-          onPress={() => router.push("/(tabs)/events")}
-        >
-          <Text style={s.eventEyebrow}>THE FLAGSHIP EXPERIENCE</Text>
-          <Text style={s.eventTitle}>STREET SOUK{"\n"}CONVENTION</Text>
-          <Text style={s.eventDetail}>Brands / music / community / Lagos</Text>
-          <Ionicons
-            name="arrow-forward"
-            size={22}
-            color={C.neon}
-            style={s.eventArrow}
-          />
-        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-function Action({
-  icon,
-  label,
-  detail,
-  onPress,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  detail: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable style={s.action} onPress={onPress}>
-      <View style={s.actionIcon}>
-        <Ionicons name={icon} size={22} color={C.neon} />
-      </View>
-      <View style={s.actionCopy}>
-        <Text style={s.actionTitle}>{label}</Text>
-        <Text style={s.actionDetail}>{detail}</Text>
-      </View>
-      <Ionicons name="arrow-forward" size={18} color={C.muted} />
-    </Pressable>
-  );
-}
-
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   topTabs: {
@@ -367,6 +272,30 @@ const s = StyleSheet.create({
     paddingVertical: 8,
   },
   dot: { width: 8, height: 8, borderRadius: 5, backgroundColor: C.green },
+  heroMeta: {
+    color: C.paper,
+    fontFamily: F.mono,
+    fontSize: 10,
+    marginTop: 8,
+  },
+  modeRow: { flexDirection: "row", gap: 10, marginTop: 18 },
+  modeChip: {
+    borderWidth: 1,
+    borderColor: C.line,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+  },
+  modeChipActive: { backgroundColor: C.neon, borderColor: C.neon },
+  modeText: { color: C.paper, fontFamily: F.mono, fontSize: 10 },
+  modeTextActive: { color: C.ink },
+  feedList: { gap: 16, marginTop: 16 },
+  emptyNote: {
+    color: C.muted,
+    fontFamily: F.mono,
+    fontSize: 11,
+    textAlign: "center",
+    marginTop: 34,
+  },
   liveText: { color: C.paper, fontFamily: F.mono, fontSize: 9 },
   heroTitle: {
     fontFamily: F.display,

@@ -7,19 +7,40 @@ type Options = {
   enabled?: boolean;
 };
 
+type Snapshot<T> = { key: string; data: T | undefined; error: string | null };
+
 export function useCachedQuery<T>(
   key: string,
   fetcher: () => Promise<T>,
   { ttl = 5 * 60_000, enabled = true }: Options = {},
 ) {
-  const [data, setData] = useState<T | undefined>(() => peek<T>(key)?.data);
-  const [loading, setLoading] = useState(() => enabled && !peek<T>(key));
-  const [error, setError] = useState<string | null>(null);
+  const [snap, setSnap] = useState<Snapshot<T>>(() => ({
+    key,
+    data: peek<T>(key)?.data,
+    error: null,
+  }));
   const fetcherRef = useRef(fetcher);
 
   useEffect(() => {
     fetcherRef.current = fetcher;
   });
+
+  // a snapshot made for a different key is never shown
+  const current: Snapshot<T> =
+    snap.key === key ? snap : { key, data: peek<T>(key)?.data, error: null };
+
+  const patch = useCallback(
+    (changes: Partial<Omit<Snapshot<T>, "key">>) => {
+      setSnap((prev) => ({
+        ...(prev.key === key
+          ? prev
+          : { key, data: peek<T>(key)?.data, error: null }),
+        ...changes,
+        key,
+      }));
+    },
+    [key],
+  );
 
   const fetchNow = useCallback(
     async (force = false) => {
@@ -27,51 +48,36 @@ export function useCachedQuery<T>(
         const fresh = force
           ? await fetcherRef.current()
           : await dedupe(key, () => fetcherRef.current());
-        save(key, fresh); // also updates every screen showing this key
-        setError(null);
+        save(key, fresh); // updates every screen showing this key
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Something went wrong");
-      } finally {
-        setLoading(false);
+        patch({ error: e instanceof Error ? e.message : "Something went wrong" });
       }
     },
-    [key],
+    [key, patch],
   );
 
   useEffect(() => {
-    if (!enabled) {
-      setLoading(false);
-      return;
-    }
+    if (!enabled) return;
     let cancelled = false;
 
     (async () => {
       const cached = await load<T>(key);
       if (cancelled) return;
-      if (cached) {
-        setData(cached.data);
-        setLoading(false);
-      } else {
-        setData(undefined);
-        setLoading(true);
-      }
+      if (cached) patch({ data: cached.data, error: null });
       if (!cached || Date.now() - cached.savedAt > ttl) fetchNow();
     })();
 
     const unsubscribe = subscribe(key, () => {
       const entry = peek<T>(key);
       if (entry) {
-        setData(entry.data);
-        setLoading(false);
+        patch({ data: entry.data, error: null });
       } else {
         // cache was cleared
-        setData(undefined);
-        setLoading(true);
+        patch({ data: undefined, error: null });
         fetchNow();
       }
     });
 
-    // coming back to the app: refresh anything gone stale
     const appState = AppState.addEventListener("change", (state) => {
       if (state !== "active") return;
       const entry = peek<T>(key);
@@ -83,15 +89,15 @@ export function useCachedQuery<T>(
       unsubscribe();
       appState.remove();
     };
-  }, [key, enabled, ttl, fetchNow]);
+  }, [key, enabled, ttl, fetchNow, patch]);
 
   const reload = useCallback(() => fetchNow(true), [fetchNow]);
 
   return {
-    data,
-    loading,
-    // stale content stays on screen; errors only show when there's nothing to show
-    error: data === undefined ? error : null,
+    data: current.data,
+    loading: enabled && current.data === undefined && current.error === null,
+    // saved content stays on screen; errors only show when there's nothing to show
+    error: current.data === undefined ? current.error : null,
     reload,
   };
 }
