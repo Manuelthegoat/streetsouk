@@ -15,6 +15,7 @@ export type CartItem = {
   productId: string;
   size: string | null;
   qty: number;
+  stock: number; // how many were available when it was added
   name: string;
   brand: string;
   vendorSlug: string;
@@ -37,6 +38,10 @@ type CartValue = {
 const STORAGE_KEY = "ss-cart:v1";
 const MAX_QTY = 10;
 const Ctx = createContext<CartValue | null>(null);
+
+// carts saved before stock existed have no limit stored
+const limitOf = (item: { stock?: number }) =>
+  Math.min(MAX_QTY, item.stock ?? MAX_QTY);
 
 export function CartProvider({ children }: PropsWithChildren) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -73,9 +78,16 @@ export function CartProvider({ children }: PropsWithChildren) {
       const existing = cur.find((i) => i.key === key);
       if (existing) {
         return cur.map((i) =>
-          i.key === key ? { ...i, qty: Math.min(MAX_QTY, i.qty + 1) } : i,
+          i.key === key
+            ? {
+                ...i,
+                stock: item.stock,
+                qty: Math.min(limitOf(item), i.qty + 1),
+              }
+            : i,
         );
       }
+      if (item.stock <= 0) return cur;
       return [...cur, { ...item, key, qty: 1 }];
     });
   }, []);
@@ -85,7 +97,7 @@ export function CartProvider({ children }: PropsWithChildren) {
       qty <= 0
         ? cur.filter((i) => i.key !== key)
         : cur.map((i) =>
-            i.key === key ? { ...i, qty: Math.min(MAX_QTY, qty) } : i,
+            i.key === key ? { ...i, qty: Math.min(limitOf(i), qty) } : i,
           ),
     );
   }, []);

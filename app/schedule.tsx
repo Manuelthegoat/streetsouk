@@ -45,7 +45,7 @@ export default function ScheduleScreen() {
 
   return (
     <SafeAreaView style={s.safe}>
-      <Header title="SCHEDULE" />
+      <Header title="SCHEDULE" back/>
       <ScrollView
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}

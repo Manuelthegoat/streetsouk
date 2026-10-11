@@ -36,23 +36,42 @@ export function CartBadge() {
     </View>
   );
 }
-export function Header({ title = "STREET SOUK" }: { title?: string }) {
+export function Header({
+  title = "STREET SOUK",
+  back = false,
+}: {
+  title?: string;
+  back?: boolean;
+}) {
   const router = useRouter();
   return (
     <View style={ui.header}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Go to home"
-        onPress={() => router.replace("/(tabs)")}
-        style={ui.headerSide}
-      >
-        <Image
-          accessibilityLabel="Street Souk"
-          source={require("@/assets/images/sslogo.png")}
-          contentFit="contain"
-          style={ui.logoImage}
-        />
-      </Pressable>
+      {back ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          onPress={() =>
+            router.canGoBack() ? router.back() : router.replace("/(tabs)")
+          }
+          style={ui.headerSide}
+        >
+          <Ionicons name="arrow-back" size={23} color={C.paper} />
+        </Pressable>
+      ) : (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Go to home"
+          onPress={() => router.replace("/(tabs)")}
+          style={ui.headerSide}
+        >
+          <Image
+            accessibilityLabel="Street Souk"
+            source={require("@/assets/images/sslogo.png")}
+            contentFit="contain"
+            style={ui.logoImage}
+          />
+        </Pressable>
+      )}
       <Text numberOfLines={1} style={ui.headerTitle}>
         {title}
       </Text>

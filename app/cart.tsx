@@ -28,7 +28,7 @@ export default function CartScreen() {
   if (items.length === 0) {
     return (
       <SafeAreaView style={s.safe}>
-        <Header title="YOUR CART" />
+        <Header title="YOUR CART" back/>
         <View style={s.empty}>
           <View style={s.emptyIcon}>
             <Ionicons name="cart-outline" size={28} color={C.neon} />
@@ -52,7 +52,7 @@ export default function CartScreen() {
 
   return (
     <SafeAreaView style={s.safe}>
-      <Header title="YOUR CART" />
+      <Header title="YOUR CART" back/>
       <ScrollView contentContainerStyle={s.list}>
         {items.map((item) => (
           <View key={item.key} style={s.row}>
@@ -88,8 +88,14 @@ export default function CartScreen() {
                   <Text style={s.qty}>{item.qty}</Text>
                   <Pressable
                     accessibilityLabel="Increase quantity"
+                    disabled={item.qty >= Math.min(10, item.stock ?? 10)}
                     onPress={() => setQty(item.key, item.qty + 1)}
-                    style={s.stepBtn}
+                    style={[
+                      s.stepBtn,
+                      item.qty >= Math.min(10, item.stock ?? 10) && {
+                        opacity: 0.3,
+                      },
+                    ]}
                   >
                     <Ionicons name="add" size={16} color={C.paper} />
                   </Pressable>
@@ -130,7 +136,12 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  emptyTitle: { fontFamily: F.display, color: C.neon, fontSize: 31, marginTop: 18 },
+  emptyTitle: {
+    fontFamily: F.display,
+    color: C.neon,
+    fontSize: 31,
+    marginTop: 18,
+  },
   emptyCopy: {
     fontFamily: F.body,
     color: C.muted,
@@ -174,8 +185,19 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: C.line,
   },
-  stepBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
-  qty: { color: C.paper, fontFamily: F.mono, fontSize: 13, minWidth: 26, textAlign: "center" },
+  stepBtn: {
+    width: 34,
+    height: 34,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  qty: {
+    color: C.paper,
+    fontFamily: F.mono,
+    fontSize: 13,
+    minWidth: 26,
+    textAlign: "center",
+  },
   remove: { color: C.muted, fontFamily: F.mono, fontSize: 10 },
   clear: { alignItems: "center", paddingVertical: 12 },
   clearText: { color: C.muted, fontFamily: F.mono, fontSize: 10 },

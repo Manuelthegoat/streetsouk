@@ -7,6 +7,7 @@ import { vendorImage } from "@/lib/vendor-assets";
 import { Ionicons } from "@expo/vector-icons";
 import { Image, ImageBackground } from "expo-image";
 import { useRouter } from "expo-router";
+import { isSoldOut } from "@/lib/stock";
 import {
   Pressable,
   SafeAreaView,
@@ -167,7 +168,7 @@ export default function VendorView({
                       contentFit="cover"
                       style={s.tileImage}
                     />
-                    {!p.in_stock && (
+                    {isSoldOut(p) && (
                       <View style={s.soldTag}>
                         <Text style={s.soldTagText}>SOLD OUT</Text>
                       </View>

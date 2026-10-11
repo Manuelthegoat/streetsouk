@@ -12,6 +12,8 @@ export type Vendor = {
   sort_order: number;
 };
 
+export type SizeStock = { size: string; stock: number };
+
 export type Product = {
   id: string;
   vendor_id: string;
@@ -23,8 +25,8 @@ export type Product = {
   topic_id: string | null;
   description: string | null;
   gallery: string[];
-  sizes: string[];
-  in_stock: boolean;
+  stock: number;
+  size_stock: SizeStock[];
   created_at: string;
 };
 

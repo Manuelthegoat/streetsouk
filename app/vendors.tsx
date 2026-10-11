@@ -35,7 +35,7 @@ export default function VendorsScreen() {
 
   return (
     <SafeAreaView style={s.safe}>
-      <Header title="BRANDS" />
+      <Header title="BRANDS" back/>
       <ScrollView
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}

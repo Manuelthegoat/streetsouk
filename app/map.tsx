@@ -50,7 +50,7 @@ export default function MapScreen() {
   };
   return (
     <SafeAreaView style={s.safe}>
-      <Header title="MAP" />
+      <Header title="MAP" back/>
       <View style={s.content}>
         <View style={s.search}>
           <Ionicons name="search" size={20} color={C.paper} />

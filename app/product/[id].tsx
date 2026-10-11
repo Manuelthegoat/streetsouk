@@ -3,6 +3,7 @@ import { C, CartBadge, F } from "@/components/street-souk-ui";
 import { useCart } from "@/context/cart-context";
 import { useProduct } from "@/hooks/use-product";
 import { formatNaira } from "@/lib/format";
+import { isSoldOut } from "@/lib/stock";
 import { vendorImage } from "@/lib/vendor-assets";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -39,6 +40,23 @@ export default function ProductScreen() {
     [],
   );
 
+  const sizeStock = product?.size_stock ?? [];
+  const hasSizes = sizeStock.length > 0;
+  const soldOut = product ? isSoldOut(product) : false;
+  // how many of the chosen size (or of the whole product) can be bought
+  const available = !product
+    ? 0
+    : hasSizes
+      ? (sizeStock.find((s) => s.size === size)?.stock ?? 0)
+      : Math.max(0, product.stock);
+  const needsChoice = hasSizes && !size;
+  const cartKey = product ? `${product.id}:${size ?? ""}` : "";
+  const inCartQty = items.find((i) => i.key === cartKey)?.qty ?? 0;
+  const sizeSoldOut = hasSizes && !!size && available <= 0;
+  const maxed = !needsChoice && available > 0 && inCartQty >= available;
+  const canAdd = !soldOut && !sizeSoldOut && !maxed;
+  const inCart = !!product && items.some((i) => i.productId === product.id);
+
   const remote = product
     ? [product.image_url, ...(product.gallery ?? [])].filter(
         (u): u is string => !!u,
@@ -53,21 +71,22 @@ export default function ProductScreen() {
     .split(/\n{2,}/)
     .map((p) => p.trim())
     .filter(Boolean);
-  const inCart = !!product && items.some((i) => i.productId === product.id);
 
   function onScrollEnd(e: NativeSyntheticEvent<NativeScrollEvent>) {
     setPage(Math.round(e.nativeEvent.contentOffset.x / width));
   }
 
   function handleAdd() {
-    if (!product || !product.in_stock) return;
-    if ((product.sizes ?? []).length > 0 && !size) {
+    if (!product || soldOut) return;
+    if (needsChoice) {
       setNeedSize(true);
       return;
     }
+    if (!canAdd) return;
     add({
       productId: product.id,
       size,
+      stock: available,
       name: product.name,
       brand: product.vendors.name,
       vendorSlug: product.vendors.slug,
@@ -78,6 +97,16 @@ export default function ProductScreen() {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setAdded(false), 2000);
   }
+
+  const buttonLabel = soldOut
+    ? "SOLD OUT"
+    : sizeSoldOut
+      ? "THIS SIZE IS SOLD OUT"
+      : maxed
+        ? "ALL AVAILABLE ADDED"
+        : added
+          ? "ADDED TO CART ✓"
+          : "ADD TO CART";
 
   return (
     <SafeAreaView style={s.safe}>
@@ -156,57 +185,68 @@ export default function ProductScreen() {
             <Text style={s.name}>{product.name}</Text>
             <View style={s.priceRow}>
               <Text style={s.price}>{formatNaira(product.price_ngn)}</Text>
-              {!product.in_stock && (
+              {soldOut && (
                 <View style={s.soldTag}>
                   <Text style={s.soldTagText}>SOLD OUT</Text>
                 </View>
               )}
             </View>
 
-            {(product.sizes ?? []).length > 0 && (
+            {hasSizes && (
               <>
                 <Text style={s.label}>SIZE</Text>
                 <View style={s.sizes}>
-                  {product.sizes.map((option) => (
-                    <Pressable
-                      key={option}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: size === option }}
-                      onPress={() => {
-                        setSize(option);
-                        setNeedSize(false);
-                      }}
-                      style={[s.size, size === option && s.sizeActive]}
-                    >
-                      <Text
-                        style={[s.sizeText, size === option && s.sizeTextActive]}
+                  {sizeStock.map((option) => {
+                    const out = option.stock <= 0;
+                    const selected = size === option.size;
+                    return (
+                      <Pressable
+                        key={option.size}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected, disabled: out }}
+                        disabled={out}
+                        onPress={() => {
+                          setSize(option.size);
+                          setNeedSize(false);
+                        }}
+                        style={[
+                          s.size,
+                          selected && s.sizeActive,
+                          out && s.sizeOut,
+                        ]}
                       >
-                        {option}
-                      </Text>
-                    </Pressable>
-                  ))}
+                        <Text
+                          style={[
+                            s.sizeText,
+                            selected && s.sizeTextActive,
+                            out && s.sizeTextOut,
+                          ]}
+                        >
+                          {option.size}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
                 </View>
                 {needSize && <Text style={s.error}>PLEASE CHOOSE A SIZE.</Text>}
               </>
             )}
 
+            {!soldOut && !needsChoice && available > 0 && available <= 5 && (
+              <Text style={s.low}>ONLY {available} LEFT</Text>
+            )}
+
             <Pressable
               accessibilityRole="button"
-              disabled={!product.in_stock}
+              disabled={soldOut || (!needsChoice && !canAdd)}
               onPress={handleAdd}
               style={[
                 s.add,
-                !product.in_stock && s.addDisabled,
+                (soldOut || (!needsChoice && !canAdd)) && s.addDisabled,
                 added && s.addDone,
               ]}
             >
-              <Text style={s.addText}>
-                {!product.in_stock
-                  ? "SOLD OUT"
-                  : added
-                    ? "ADDED TO CART ✓"
-                    : "ADD TO CART"}
-              </Text>
+              <Text style={s.addText}>{buttonLabel}</Text>
             </Pressable>
             {inCart && (
               <Pressable style={s.viewCart} onPress={() => router.push("/cart")}>
@@ -298,11 +338,14 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
   },
   sizeActive: { backgroundColor: C.neon, borderColor: C.neon },
+  sizeOut: { opacity: 0.4 },
   sizeText: { color: C.paper, fontFamily: F.mono, fontSize: 12 },
   sizeTextActive: { color: C.ink },
+  sizeTextOut: { textDecorationLine: "line-through", color: C.muted },
   error: { color: "#FF6B6B", fontFamily: F.mono, fontSize: 10, marginTop: 10 },
+  low: { color: "#FFB020", fontFamily: F.mono, fontSize: 11, marginTop: 14 },
   add: {
-    marginTop: 24,
+    marginTop: 20,
     height: 56,
     backgroundColor: C.neon,
     alignItems: "center",
