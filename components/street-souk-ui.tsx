@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
+import { useCart } from "@/context/cart-context";
 
 export const C = {
   bg: "#050505",
@@ -26,7 +27,15 @@ export const F = {
   bodyBold: "Archivo Narrow Bold",
   mono: "JetBrains Mono",
 } as const;
-
+export function CartBadge() {
+  const { count } = useCart();
+  if (count === 0) return null;
+  return (
+    <View style={ui.cartBadge}>
+      <Text style={ui.cartBadgeText}>{count > 9 ? "9+" : count}</Text>
+    </View>
+  );
+}
 export function Header({ title = "STREET SOUK" }: { title?: string }) {
   const router = useRouter();
   return (
@@ -53,7 +62,10 @@ export function Header({ title = "STREET SOUK" }: { title?: string }) {
         onPress={() => router.push("/cart")}
         style={[ui.headerSide, ui.cart]}
       >
-        <Ionicons name="cart-outline" size={23} color={C.paper} />
+        <View>
+          <Ionicons name="cart-outline" size={23} color={C.paper} />
+          <CartBadge />
+        </View>
       </Pressable>
     </View>
   );
@@ -87,7 +99,7 @@ export const ui = StyleSheet.create({
   },
   headerSide: { width: 62, height: 42, justifyContent: "center" },
   logoImage: { width: 58, height: 32 },
-   headerTitle: {
+  headerTitle: {
     color: C.neon,
     fontFamily: F.display,
     fontSize: 24,
@@ -110,4 +122,17 @@ export const ui = StyleSheet.create({
     letterSpacing: 1,
   },
   rule: { height: 2, backgroundColor: C.line },
+  cartBadge: {
+    position: "absolute",
+    top: -7,
+    right: -9,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: C.neon,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+  },
+  cartBadgeText: { color: C.ink, fontFamily: F.mono, fontSize: 9 },
 });

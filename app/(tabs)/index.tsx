@@ -181,8 +181,8 @@ export default function HomeScreen() {
                   product={item.product}
                   onPress={() =>
                     router.push({
-                      pathname: "/vendor/[slug]",
-                      params: { slug: item.product.vendors.slug },
+                      pathname: "/product/[id]",
+                      params: { id: item.id },
                     })
                   }
                 />

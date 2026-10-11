@@ -20,6 +20,11 @@ export type Product = {
   image_url: string | null;
   is_featured: boolean;
   department: "MENS" | "WOMENS" | "UNISEX";
+  topic_id: string | null;
+  description: string | null;
+  gallery: string[];
+  sizes: string[];
+  in_stock: boolean;
   created_at: string;
 };
 

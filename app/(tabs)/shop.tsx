@@ -69,6 +69,8 @@ export default function ShopScreen() {
   const openBrands = () => router.push("/vendors");
   const openVendor = (slug: string) =>
     router.push({ pathname: "/vendor/[slug]", params: { slug } });
+  const openProduct = (id: string) =>
+    router.push({ pathname: "/product/[id]", params: { id } });
   const note = {
     color: C.muted,
     fontFamily: F.mono,
@@ -182,7 +184,7 @@ export default function ShopScreen() {
                 <Pressable
                   key={p.id}
                   style={s.product}
-                  onPress={() => openVendor(p.vendors.slug)}
+                  onPress={() => openProduct(p.id)}
                 >
                   <View style={s.imageWrap}>
                     <Image

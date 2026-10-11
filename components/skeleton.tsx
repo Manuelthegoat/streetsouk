@@ -320,6 +320,29 @@ export function HomeFeedSkeleton({ count = 2 }: { count?: number }) {
     </Loading>
   );
 }
+// full product page
+export function ProductDetailSkeleton() {
+  return (
+    <Loading>
+      <Bone height={380} />
+      <View style={{ padding: 20, gap: 12 }}>
+        <Bone width="40%" height={12} />
+        <Bone width="75%" height={34} />
+        <Bone width="30%" height={20} />
+        <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
+          {range(4).map((i) => (
+            <Bone key={i} width={52} height={44} />
+          ))}
+        </View>
+        <Bone height={54} style={{ marginTop: 12 }} />
+        <Bone height={12} style={{ marginTop: 12 }} />
+        <Bone width="90%" height={12} />
+        <Bone width="70%" height={12} />
+      </View>
+    </Loading>
+  );
+}
+
 const s = StyleSheet.create({
   stack: { gap: 14, marginTop: 16 },
   card: {

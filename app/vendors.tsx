@@ -16,7 +16,7 @@ import { useStreetSoukStore } from "@/context/street-souk-store";
 import { useVendors } from "@/hooks/use-vendors";
 import { vendorImage } from "@/lib/vendor-assets";
 import { VendorListSkeleton } from "@/components/skeleton";
-   import { Image, ImageBackground } from "expo-image";
+import { Image, ImageBackground } from "expo-image";
 
 export default function VendorsScreen() {
   const router = useRouter();
@@ -103,17 +103,14 @@ export default function VendorsScreen() {
                       />
                     </Pressable>
                     <Text style={s.type}>{vendor.category}</Text>
-                    {vendor.booth && (
-                      <Text style={s.booth}>{vendor.booth}</Text>
-                    )}
                   </View>
                 </View>
                 <Text style={s.name}>{vendor.name}</Text>
                 {vendor.detail && <Text style={s.detail}>{vendor.detail}</Text>}
-                <Pressable onPress={() => router.push("/map")} style={s.show}>
-                  <Text style={s.showText}>SHOW ON MAP</Text>
+                <View style={s.show}>
+                  <Text style={s.showText}>VIEW BRAND</Text>
                   <Ionicons name="arrow-forward" size={20} color={C.ink} />
-                </Pressable>
+                </View>
               </View>
             </ImageBackground>
           </Pressable>

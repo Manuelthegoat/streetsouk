@@ -1,4 +1,4 @@
-import { C, F } from "@/components/street-souk-ui";
+import { C, CartBadge, F } from "@/components/street-souk-ui";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
@@ -77,7 +77,10 @@ export default function EventDetailScreen() {
           onPress={() => router.push("/cart")}
           style={[s.headerAction, s.cart]}
         >
-          <Ionicons name="cart-outline" size={23} color={C.paper} />
+          <View>
+            <Ionicons name="cart-outline" size={23} color={C.paper} />
+            <CartBadge />
+          </View>
         </Pressable>
       </View>
       <ScrollView
@@ -149,7 +152,10 @@ export default function EventDetailScreen() {
         )}
         {activeTab === "Schedule" && <ScheduleContent eventId={eventId} />}
         {activeTab === "Marketplace" && (
-          <MarketplaceContent eventId={eventId} />
+          <MarketplaceContent
+            eventId={eventId}
+            eventSlug={event?.slug ?? null}
+          />
         )}
         {activeTab === "Lineup" && <LineupContent eventId={eventId} />}
         {activeTab === "FAQ" && <Faq eventId={eventId} />}
@@ -286,7 +292,13 @@ function ScheduleContent({ eventId }: { eventId: string | null }) {
   );
 }
 
-function MarketplaceContent({ eventId }: { eventId: string | null }) {
+function MarketplaceContent({
+  eventId,
+  eventSlug,
+}: {
+  eventId: string | null;
+  eventSlug: string | null;
+}) {
   const router = useRouter();
   const { toggleFavorite, isFavorite } = useStreetSoukStore();
   const { vendors, loading, error, reload } = useEventVendors(eventId);
@@ -353,8 +365,8 @@ function MarketplaceContent({ eventId }: { eventId: string | null }) {
               accessibilityLabel={`Open ${vendor.name}`}
               onPress={() =>
                 router.push({
-                  pathname: "/vendor/[slug]",
-                  params: { slug: vendor.slug },
+                  pathname: "/event-vendor/[slug]",
+                  params: { slug: vendor.slug, event: eventSlug ?? "" },
                 })
               }
               style={s.brandCardMain}

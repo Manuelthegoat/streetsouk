@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Bump this number whenever you change the shape of a query's data,
 // so phones with old cached data start fresh instead of crashing.
-const PREFIX = "ss-cache:v2:";
+const PREFIX = "ss-cache:v3:";
 
 type Entry<T> = { data: T; savedAt: number };
 
