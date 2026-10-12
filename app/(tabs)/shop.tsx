@@ -357,7 +357,7 @@ const s = StyleSheet.create({
   brandLogo: {
     width: 46,
     height: 46,
-    backgroundColor: C.paper,
+    backgroundColor: C.bg,
     alignItems: "center",
     justifyContent: "center",
   },

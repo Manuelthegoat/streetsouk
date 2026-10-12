@@ -38,7 +38,7 @@ export default function SearchScreen() {
             accessibilityLabel="Search StreetSouk"
             value={query}
             onChangeText={setQuery}
-            placeholder="BRANDS, EVENTS, STORIES..."
+            placeholder="Search brands, events, stories"
             placeholderTextColor={C.muted}
             style={s.input}
           />

@@ -1,6 +1,8 @@
 import { C, F, Header } from "@/components/street-souk-ui";
 import { useAuth } from "@/context/auth-context";
+import { useProfile } from "@/context/profile-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import {
   Alert,
@@ -11,6 +13,7 @@ import {
   Text,
   View,
 } from "react-native";
+
 const rows = [
   ["MY SOUK", "Saved brands & plans", "heart-outline", "/my-souk"],
   [
@@ -28,9 +31,15 @@ const rows = [
   ],
   ["SETTINGS", "Make the app yours", "settings-outline", "/settings"],
 ] as const;
+
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { profile } = useProfile();
+
+  const fullName = [profile?.first_name, profile?.last_name]
+    .filter(Boolean)
+    .join(" ");
 
   const confirmSignOut = () =>
     Alert.alert("Sign out?", "You can sign back in any time with a new code.", [
@@ -46,27 +55,51 @@ export default function ProfileScreen() {
         <Text style={s.title}>PROFILE</Text>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={user ? "Signed in" : "Sign in"}
-          disabled={!!user}
-          onPress={() => router.push("/sign-in")}
+          accessibilityLabel={user ? "Edit profile" : "Sign in"}
+          onPress={() => router.push(user ? "/edit-profile" : "/sign-in")}
           style={s.identity}
         >
-          <View style={s.avatar}>
-            <Ionicons name="person" size={31} color={user ? C.neon : C.muted} />
+          <View style={[s.avatar, { overflow: "hidden" }]}>
+            {profile?.avatar_url ? (
+              <Image
+                source={{ uri: profile.avatar_url }}
+                contentFit="cover"
+                style={{ width: "100%", height: "100%" }}
+              />
+            ) : (
+              <Ionicons
+                name="person"
+                size={31}
+                color={user ? C.neon : C.muted}
+              />
+            )}
           </View>
           <View style={s.welcome}>
-            <Text style={s.name}>
-              {user ? "SIGNED IN" : "WELCOME TO THE SOUK"}
+            <Text style={s.name} numberOfLines={1}>
+              {user ? fullName || "SIGNED IN" : "WELCOME TO THE SOUK"}
             </Text>
             <Text style={s.detail} numberOfLines={1}>
-              {user ? user.email : "Sign in to keep your world in one place."}
+              {user
+                ? profile?.username
+                  ? `@${profile.username}`
+                  : user.email
+                : "Sign in to keep your world in one place."}
             </Text>
           </View>
-          {!user && (
-            <Ionicons name="chevron-forward" size={20} color={C.muted} />
-          )}
+          <Ionicons name="chevron-forward" size={20} color={C.muted} />
         </Pressable>
+
         <Text style={s.section}>YOUR ACCOUNT</Text>
+        {user && (
+          <Pressable style={s.row} onPress={() => router.push("/edit-profile")}>
+            <Ionicons name="create-outline" size={22} color={C.paper} />
+            <View style={s.copy}>
+              <Text style={s.rowTitle}>EDIT PROFILE</Text>
+              <Text style={s.rowDetail}>Picture, name, username and bio</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={19} color={C.muted} />
+          </Pressable>
+        )}
         {rows.map(([title, detail, icon, path]) => (
           <Pressable
             key={title}
