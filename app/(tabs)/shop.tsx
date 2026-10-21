@@ -1,9 +1,15 @@
+import { ImageRowSkeleton, ProductGridSkeleton } from "@/components/skeleton";
 import { C, F, Header } from "@/components/street-souk-ui";
+import { useCatalog, type CatalogProduct } from "@/hooks/use-catalog";
+import { useVendors } from "@/hooks/use-vendors";
+import { brandKey } from "@/lib/brand";
+import { formatNaira } from "@/lib/format";
+import { vendorImage } from "@/lib/vendor-assets";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -11,66 +17,79 @@ import {
   Text,
   View,
 } from "react-native";
-import { useState } from "react";
-import { useProducts } from "@/hooks/use-products";
-import { useVendors } from "@/hooks/use-vendors";
-import { formatNaira } from "@/lib/format";
-import { vendorImage } from "@/lib/vendor-assets";
-import { ImageRowSkeleton, ProductGridSkeleton } from "@/components/skeleton";
 
-const categories = [
-  "Explore",
-  "Brands",
-  "New Arrivals",
-  "Mens",
-  "Womens",
-  "Footwear",
-  "Accessories",
-] as const;
-type ShopCategory = (typeof categories)[number];
-const productTabs: ShopCategory[] = [
-  "Explore",
-  "New Arrivals",
-  "Mens",
-  "Womens",
-];
+const FALLBACK = require("@/assets/images/sslogo.png");
+const PAGE = 24;
+
+function ProductTile({
+  p,
+  onPress,
+}: {
+  p: CatalogProduct;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      style={s.product}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${p.brand} ${p.name}`}
+    >
+      <View style={s.imageWrap}>
+        <Image
+          source={p.images[0] ? { uri: p.images[0] } : FALLBACK}
+          contentFit={p.images[0] ? "cover" : "contain"}
+          style={s.image}
+        />
+        {!p.available ? (
+          <View style={[s.badge, { backgroundColor: C.muted }]}>
+            <Text style={s.badgeText}>SOLD OUT</Text>
+          </View>
+        ) : p.stockLabel ? (
+          <View style={s.badge}>
+            <Text style={s.badgeText}>{p.stockLabel.toUpperCase()}</Text>
+          </View>
+        ) : null}
+      </View>
+      <Text style={s.brand}>{p.brand}</Text>
+      <Text style={s.name} numberOfLines={2}>
+        {p.name}
+      </Text>
+      <Text style={s.price}>{formatNaira(p.price)}</Text>
+    </Pressable>
+  );
+}
 
 export default function ShopScreen() {
   const router = useRouter();
-  const [category, setCategory] = useState<ShopCategory>("Explore");
-  const {
-    products,
-    loading: loadingProducts,
-    error: productsError,
-    reload,
-  } = useProducts();
-  const { vendors, loading: loadingVendors } = useVendors();
+  const { catalog, loading, error, reload } = useCatalog();
+  const { vendors } = useVendors();
+  const [tab, setTab] = useState("Explore");
+  const [shown, setShown] = useState(PAGE);
 
-  const showProducts = productTabs.includes(category);
+  // EXPLORE and BRANDS, then one tab for every other menu you create in Zappie
+  const tabs = [
+    "Explore",
+    "Brands",
+    ...(catalog?.others.map((m) => m.name) ?? []),
+  ];
+  const activeTab = tabs.includes(tab) ? tab : "Explore";
+  const menu = catalog?.others.find((m) => m.name === activeTab);
 
-  let visibleProducts = products;
-  if (category === "Explore") {
-    const featured = products.filter((p) => p.is_featured);
-    visibleProducts = featured.length ? featured : products.slice(0, 6);
-  } else if (category === "Mens") {
-    visibleProducts = products.filter((p) => p.department !== "WOMENS");
-  } else if (category === "Womens") {
-    visibleProducts = products.filter((p) => p.department !== "MENS");
-  }
+  // available products first, in Zappie's order
+  const explore = useMemo(() => {
+    const all = catalog?.products ?? [];
+    return [
+      ...all.filter((p) => p.available),
+      ...all.filter((p) => !p.available),
+    ];
+  }, [catalog]);
 
-  const visibleBrands =
-    category === "Footwear"
-      ? vendors.filter((v) => v.category === "FOOTWEAR")
-      : category === "Accessories"
-        ? vendors.filter((v) => v.category === "ACCESSORIES")
-        : vendors;
-
-  const loading = showProducts ? loadingProducts : loadingVendors;
-  const openBrands = () => router.push("/vendors");
-  const openVendor = (slug: string) =>
-    router.push({ pathname: "/vendor/[slug]", params: { slug } });
   const openProduct = (id: string) =>
     router.push({ pathname: "/product/[id]", params: { id } });
+  const openBrand = (key: string) =>
+    router.push({ pathname: "/brand/[key]", params: { key } });
+  const openBrands = () => router.push("/vendors");
   const note = {
     color: C.muted,
     fontFamily: F.mono,
@@ -88,24 +107,25 @@ export default function ShopScreen() {
         contentContainerStyle={s.topTabsContent}
         showsHorizontalScrollIndicator={false}
       >
-        {categories.map((item) => (
+        {tabs.map((item) => (
           <Pressable
             key={item}
             accessibilityRole="tab"
-            accessibilityState={{ selected: category === item }}
-            onPress={() => setCategory(item)}
-            style={[s.topTab, category === item && s.topTabActive]}
+            accessibilityState={{ selected: activeTab === item }}
+            onPress={() => setTab(item)}
+            style={[s.topTab, activeTab === item && s.topTabActive]}
           >
             <Text
-              style={[s.topTabText, category === item && s.topTabTextActive]}
+              style={[s.topTabText, activeTab === item && s.topTabTextActive]}
             >
               {item.toUpperCase()}
             </Text>
           </Pressable>
         ))}
       </ScrollView>
+
       <ScrollView contentContainerStyle={s.content}>
-        {category === "Explore" && (
+        {activeTab === "Explore" && (
           <>
             <Text style={s.kicker}>INDEPENDENT BY NATURE</Text>
             <Text style={s.title}>THE STORE</Text>
@@ -113,160 +133,140 @@ export default function ShopScreen() {
               Discover the labels shaping the streets. Shop the latest from the
               StreetSouk community.
             </Text>
-            <Pressable style={s.banner} onPress={openBrands}>
+            <Pressable style={s.banner} onPress={() => setTab("Brands")}>
               <Text style={s.bannerEyebrow}>MEET THE MAKERS</Text>
               <Text style={s.bannerTitle}>SHOP THE{"\n"}COMMUNITY</Text>
               <Text style={s.bannerLink}>BROWSE BRANDS ↗</Text>
             </Pressable>
           </>
         )}
-        {category === "New Arrivals" && (
-          <>
-            <Text style={s.kicker}>JUST LANDED</Text>
-            <Text style={s.title}>NEW ARRIVALS</Text>
-            <Text style={s.copy}>
-              Fresh pieces from StreetSouk community brands.
-            </Text>
-          </>
-        )}
-        {(category === "Mens" || category === "Womens") && (
-          <>
-            <Text style={s.kicker}>SHOP THE COMMUNITY</Text>
-            <Text style={s.title}>{category.toUpperCase()}</Text>
-            <Text style={s.copy}>
-              Explore independent labels and discover their latest pieces.
-            </Text>
-          </>
-        )}
-        {(category === "Brands" ||
-          category === "Footwear" ||
-          category === "Accessories") && (
+        {activeTab === "Brands" && (
           <>
             <Text style={s.kicker}>INDEPENDENT LABELS</Text>
-            <Text style={s.title}>{category.toUpperCase()}</Text>
+            <Text style={s.title}>BRANDS</Text>
             <Text style={s.copy}>
-              {category === "Footwear"
-                ? "Discover footwear labels from the StreetSouk community."
-                : category === "Accessories"
-                  ? "Explore accessories and details from independent makers."
-                  : "Meet the brands shaping the StreetSouk community."}
+              Meet the brands shaping the StreetSouk community.
             </Text>
+          </>
+        )}
+        {!!menu && (
+          <>
+            <Text style={s.kicker}>SHOP THE COMMUNITY</Text>
+            <Text style={s.title}>{menu.name.toUpperCase()}</Text>
           </>
         )}
 
         {loading &&
-          (showProducts ? (
-            <ProductGridSkeleton />
+          !catalog &&
+          (activeTab === "Brands" ? (
+            <ImageRowSkeleton count={5} />
           ) : (
-            <ImageRowSkeleton count={4} />
+            <ProductGridSkeleton />
           ))}
-        {showProducts && productsError && (
+        {error && !catalog && (
           <Pressable onPress={reload}>
             <Text style={note}>COULD NOT LOAD THE STORE. TAP TO RETRY.</Text>
           </Pressable>
         )}
 
-        {showProducts ? (
+        {catalog && activeTab === "Explore" && (
           <>
-            {!loading && visibleProducts.length > 0 && (
-              <View style={s.head}>
-                <Text style={s.section}>
-                  {category === "Explore" ? "FEATURED DROPS" : "LATEST DROPS"}
-                </Text>
-                <Text style={s.count}>
-                  {String(visibleProducts.length).padStart(2, "0")}{" "}
-                  {visibleProducts.length === 1 ? "PIECE" : "PIECES"}
-                </Text>
-              </View>
-            )}
+            <View style={s.head}>
+              <Text style={s.section}>LATEST DROPS</Text>
+              <Text style={s.count}>{explore.length} PIECES</Text>
+            </View>
             <View style={s.grid}>
-              {visibleProducts.map((p) => (
-                <Pressable
+              {explore.slice(0, shown).map((p) => (
+                <ProductTile
                   key={p.id}
-                  style={s.product}
+                  p={p}
                   onPress={() => openProduct(p.id)}
-                >
-                  <View style={s.imageWrap}>
-                    <Image
-                      source={vendorImage(
-                        p.vendors.slug,
-                        "product",
-                        p.image_url,
-                      )}
-                      contentFit="cover"
-                      style={s.image}
-                    />
-                    {p.is_featured && (
-                      <View style={s.badge}>
-                        <Text style={s.badgeText}>STREET SOUK SELECT</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={s.brand}>{p.vendors.name}</Text>
-                  <Text style={s.name}>
-                    {p.vendors.name} / {p.name}
-                  </Text>
-                  <Text style={s.price}>{formatNaira(p.price_ngn)}</Text>
-                </Pressable>
+                />
               ))}
             </View>
-            {!loading && !productsError && visibleProducts.length === 0 && (
-              <Text style={note}>NOTHING HERE YET. CHECK BACK SOON.</Text>
+            {shown < explore.length && (
+              <Pressable
+                style={s.directory}
+                onPress={() => setShown((n) => n + PAGE)}
+              >
+                <Text style={s.directoryText}>SHOW MORE</Text>
+                <Ionicons name="arrow-down" size={19} color={C.ink} />
+              </Pressable>
             )}
           </>
-        ) : (
+        )}
+
+        {catalog && activeTab === "Brands" && (
           <View style={s.brandList}>
-            {visibleBrands.map((brand) => (
-              <Pressable
-                key={brand.id}
-                style={s.brandRow}
-                onPress={() => openVendor(brand.slug)}
-              >
-                <View style={s.brandLogo}>
-                  <Image
-                    source={vendorImage(brand.slug, "logo", brand.logo_url)}
-                    contentFit="contain"
-                    style={s.brandImage}
-                  />
-                </View>
-                <View style={s.brandInfo}>
-                  <Text style={s.brandName}>{brand.name}</Text>
-                  <Text style={s.brandType}>{brand.category}</Text>
-                </View>
-                <Ionicons name="arrow-forward" size={17} color={C.muted} />
-              </Pressable>
-            ))}
-            {!loading && visibleBrands.length === 0 && (
-              <Text style={note}>NO BRANDS IN THIS CATEGORY YET.</Text>
-            )}
+            {catalog.brands.map((b) => {
+              const vendor = vendors.find(
+                (v) => brandKey(v.name) === b.key || brandKey(v.slug) === b.key,
+              );
+              const first = b.products[0]?.images[0];
+              return (
+                <Pressable
+                  key={b.key}
+                  style={s.brandRow}
+                  onPress={() => openBrand(b.key)}
+                >
+                  <View style={[s.brandLogo, { backgroundColor: "#000000" }]}>
+                    <Image
+                      source={
+                        vendor
+                          ? vendorImage(vendor.slug, "logo", vendor.logo_url)
+                          : first
+                            ? { uri: first }
+                            : FALLBACK
+                      }
+                      contentFit={vendor || !first ? "contain" : "cover"}
+                      style={s.brandImage}
+                    />
+                  </View>
+                  <View style={s.brandInfo}>
+                    <Text style={s.brandName}>{b.name}</Text>
+                    <Text style={s.brandType}>
+                      {b.products.length}{" "}
+                      {b.products.length === 1 ? "PIECE" : "PIECES"}
+                    </Text>
+                  </View>
+                  <Ionicons name="arrow-forward" size={17} color={C.muted} />
+                </Pressable>
+              );
+            })}
+            <Pressable style={s.directory} onPress={openBrands}>
+              <Text style={s.directoryText}>OPEN BRAND DIRECTORY</Text>
+              <Ionicons name="arrow-forward" size={19} color={C.ink} />
+            </Pressable>
           </View>
         )}
 
-        {(category === "Mens" || category === "Womens") && (
-          <Pressable style={s.directory} onPress={openBrands}>
-            <Text style={s.directoryText}>BROWSE ALL BRANDS</Text>
-            <Ionicons name="arrow-forward" size={19} color={C.ink} />
-          </Pressable>
-        )}
-        {category === "Explore" && (
-          <Pressable style={s.directory} onPress={openBrands}>
-            <Text style={s.directoryText}>EXPLORE ALL BRANDS</Text>
-            <Ionicons name="arrow-forward" size={19} color={C.ink} />
-          </Pressable>
-        )}
-        {(category === "Brands" ||
-          category === "Footwear" ||
-          category === "Accessories") && (
-          <Pressable style={s.directory} onPress={openBrands}>
-            <Text style={s.directoryText}>OPEN BRAND DIRECTORY</Text>
-            <Ionicons name="arrow-forward" size={19} color={C.ink} />
-          </Pressable>
+        {catalog &&
+          !!menu &&
+          menu.groups.map((g) => (
+            <View key={g.name}>
+              <View style={s.head}>
+                <Text style={s.section}>{g.name.toUpperCase()}</Text>
+                <Text style={s.count}>{g.products.length} PIECES</Text>
+              </View>
+              <View style={s.grid}>
+                {g.products.map((p) => (
+                  <ProductTile
+                    key={p.id}
+                    p={p}
+                    onPress={() => openProduct(p.id)}
+                  />
+                ))}
+              </View>
+            </View>
+          ))}
+
+        {catalog && explore.length === 0 && activeTab === "Explore" && (
+          <Text style={note}>NOTHING HERE YET. CHECK BACK SOON.</Text>
         )}
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   topTabs: {

@@ -107,6 +107,8 @@ export default function RootLayout() {
                   name="edit-profile"
                   options={{ headerShown: false }}
                 />
+                <Stack.Screen name="zappie-debug" options={{ headerShown: false }} />
+                <Stack.Screen name="brand/[key]" options={{ headerShown: false }} />
               </Stack>
             </StreetSoukStore>
           </CartProvider>

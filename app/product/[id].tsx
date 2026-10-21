@@ -1,10 +1,9 @@
 import { ProductDetailSkeleton } from "@/components/skeleton";
 import { C, CartBadge, F } from "@/components/street-souk-ui";
 import { useCart } from "@/context/cart-context";
-import { useProduct } from "@/hooks/use-product";
+import { useCatalog } from "@/hooks/use-catalog";
+import { brandKey } from "@/lib/brand";
 import { formatNaira } from "@/lib/format";
-import { isSoldOut } from "@/lib/stock";
-import { vendorImage } from "@/lib/vendor-assets";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -21,14 +20,17 @@ import {
   View,
 } from "react-native";
 
+const FALLBACK = require("@/assets/images/sslogo.png");
+
 export default function ProductScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { product, loading } = useProduct(id);
+  const { catalog, loading } = useCatalog();
+  const product = catalog?.byId.get(id) ?? null;
   const { add, items } = useCart();
   const { width } = useWindowDimensions();
-  const [size, setSize] = useState<string | null>(null);
-  const [needSize, setNeedSize] = useState(false);
+  const [picked, setPicked] = useState<Record<string, string>>({});
+  const [needChoice, setNeedChoice] = useState(false);
   const [added, setAdded] = useState(false);
   const [page, setPage] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -40,32 +42,55 @@ export default function ProductScreen() {
     [],
   );
 
-  const sizeStock = product?.size_stock ?? [];
-  const hasSizes = sizeStock.length > 0;
-  const soldOut = product ? isSoldOut(product) : false;
-  // how many of the chosen size (or of the whole product) can be bought
-  const available = !product
-    ? 0
-    : hasSizes
-      ? (sizeStock.find((s) => s.size === size)?.stock ?? 0)
-      : Math.max(0, product.stock);
-  const needsChoice = hasSizes && !size;
-  const cartKey = product ? `${product.id}:${size ?? ""}` : "";
-  const inCartQty = items.find((i) => i.key === cartKey)?.qty ?? 0;
-  const sizeSoldOut = hasSizes && !!size && available <= 0;
-  const maxed = !needsChoice && available > 0 && inCartQty >= available;
-  const canAdd = !soldOut && !sizeSoldOut && !maxed;
-  const inCart = !!product && items.some((i) => i.productId === product.id);
+  const item = product?.item;
+  // "attribute" groups pick a variant, like Size
+  const groups = (item?.option_groups ?? []).filter((g) => g.kind === "attribute");
+  const unsupported = (item?.option_groups ?? []).some(
+    (g) => g.kind !== "attribute" && g.required,
+  );
+  const hasChoices = groups.length > 0;
+  const allPicked = groups.every((g) => !!picked[g.id]);
 
-  const remote = product
-    ? [product.image_url, ...(product.gallery ?? [])].filter(
-        (u): u is string => !!u,
-      )
-    : [];
+  const variant = !item
+    ? undefined
+    : !hasChoices
+      ? item.variants[0]
+      : allPicked
+        ? item.variants.find((v) =>
+            groups.every((g) => v.choice_ids.includes(picked[g.id])),
+          )
+        : undefined;
+
+  const soldOut = !!item && !item.available;
+  const variantSoldOut = !!variant && !variant.available;
+  const unitPrice = variant ? variant.price.amount_minor / 100 : (product?.price ?? 0);
+  const sizeLabel = hasChoices
+    ? groups
+        .map((g) => g.choices.find((c) => c.id === picked[g.id])?.name)
+        .filter(Boolean)
+        .join(" / ")
+    : null;
+  const lowStock = hasChoices
+    ? !!variant?.low_stock
+    : product?.stockLabel?.toLowerCase().includes("low") === true;
+
+  const choiceOut = (choice: { id: string; available: boolean }) =>
+    !choice.available ||
+    (groups.length === 1 &&
+      !!item &&
+      !item.variants.some((v) => v.choice_ids.includes(choice.id) && v.available));
+
+  const cartKey = item ? `${item.id}:${variant?.id ?? ""}` : "";
+  const inCartQty = items.find((i) => i.key === cartKey)?.qty ?? 0;
+  const maxQty = Math.min(10, item?.max_quantity ?? 10);
+  const maxed = inCartQty >= maxQty;
+  const inCart = !!item && items.some((i) => i.productId === item.id);
+  const blocked = soldOut || variantSoldOut || unsupported || maxed;
+
   const slides = product
-    ? remote.length > 0
-      ? remote.map((uri) => ({ uri }))
-      : [vendorImage(product.vendors.slug, "product", null)]
+    ? product.images.length > 0
+      ? product.images.map((uri) => ({ uri }))
+      : [FALLBACK]
     : [];
   const paragraphs = (product?.description ?? "")
     .split(/\n{2,}/)
@@ -77,21 +102,21 @@ export default function ProductScreen() {
   }
 
   function handleAdd() {
-    if (!product || soldOut) return;
-    if (needsChoice) {
-      setNeedSize(true);
+    if (!product || !item || soldOut || unsupported) return;
+    if (hasChoices && !allPicked) {
+      setNeedChoice(true);
       return;
     }
-    if (!canAdd) return;
+    if (variantSoldOut || maxed) return;
     add({
-      productId: product.id,
-      size,
-      stock: available,
+      productId: item.id,
+      variantId: variant?.id ?? null,
+      size: sizeLabel,
+      stock: maxQty,
       name: product.name,
-      brand: product.vendors.name,
-      vendorSlug: product.vendors.slug,
-      price: product.price_ngn,
-      image: product.image_url,
+      brand: product.brand,
+      price: unitPrice,
+      image: product.images[0] ?? null,
     });
     setAdded(true);
     if (timer.current) clearTimeout(timer.current);
@@ -100,13 +125,15 @@ export default function ProductScreen() {
 
   const buttonLabel = soldOut
     ? "SOLD OUT"
-    : sizeSoldOut
-      ? "THIS SIZE IS SOLD OUT"
-      : maxed
-        ? "ALL AVAILABLE ADDED"
-        : added
-          ? "ADDED TO CART ✓"
-          : "ADD TO CART";
+    : unsupported
+      ? "NOT AVAILABLE IN THE APP YET"
+      : variantSoldOut
+        ? "THIS SIZE IS SOLD OUT"
+        : maxed
+          ? "MAXIMUM ADDED"
+          : added
+            ? "ADDED TO CART ✓"
+            : "ADD TO CART";
 
   return (
     <SafeAreaView style={s.safe}>
@@ -133,9 +160,9 @@ export default function ProductScreen() {
         </Pressable>
       </View>
 
-      {loading ? (
+      {loading && !catalog ? (
         <ProductDetailSkeleton />
-      ) : !product ? (
+      ) : !product || !item ? (
         <Pressable onPress={() => router.back()}>
           <Text style={s.notFound}>
             THIS PRODUCT IS NO LONGER AVAILABLE. TAP TO GO BACK.
@@ -153,7 +180,7 @@ export default function ProductScreen() {
               <Image
                 key={i}
                 source={source}
-                contentFit="cover"
+                contentFit={product.images.length > 0 ? "cover" : "contain"}
                 style={{ width, height: width * 1.1, backgroundColor: C.panel }}
               />
             ))}
@@ -169,22 +196,25 @@ export default function ProductScreen() {
           <View style={s.content}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`View ${product.vendors.name}`}
+              accessibilityLabel={`View ${product.brand}`}
               style={s.brandRow}
               onPress={() =>
                 router.push({
-                  pathname: "/vendor/[slug]",
-                  params: { slug: product.vendors.slug },
+                  pathname: "/brand/[key]",
+                  params: { key: brandKey(product.brand) },
                 })
               }
             >
-              <Text style={s.brand}>{product.vendors.name}</Text>
+              <Text style={s.brand}>{product.brand}</Text>
               <Text style={s.brandLink}>VIEW BRAND ↗</Text>
             </Pressable>
 
             <Text style={s.name}>{product.name}</Text>
             <View style={s.priceRow}>
-              <Text style={s.price}>{formatNaira(product.price_ngn)}</Text>
+              <Text style={s.price}>{formatNaira(unitPrice)}</Text>
+              {!!product.previousPrice && product.previousPrice > unitPrice && (
+                <Text style={s.was}>{formatNaira(product.previousPrice)}</Text>
+              )}
               {soldOut && (
                 <View style={s.soldTag}>
                   <Text style={s.soldTagText}>SOLD OUT</Text>
@@ -192,28 +222,24 @@ export default function ProductScreen() {
               )}
             </View>
 
-            {hasSizes && (
-              <>
-                <Text style={s.label}>SIZE</Text>
+            {groups.map((group) => (
+              <View key={group.id}>
+                <Text style={s.label}>{group.name.toUpperCase()}</Text>
                 <View style={s.sizes}>
-                  {sizeStock.map((option) => {
-                    const out = option.stock <= 0;
-                    const selected = size === option.size;
+                  {group.choices.map((choice) => {
+                    const out = choiceOut(choice);
+                    const selected = picked[group.id] === choice.id;
                     return (
                       <Pressable
-                        key={option.size}
+                        key={choice.id}
                         accessibilityRole="button"
                         accessibilityState={{ selected, disabled: out }}
                         disabled={out}
                         onPress={() => {
-                          setSize(option.size);
-                          setNeedSize(false);
+                          setPicked((cur) => ({ ...cur, [group.id]: choice.id }));
+                          setNeedChoice(false);
                         }}
-                        style={[
-                          s.size,
-                          selected && s.sizeActive,
-                          out && s.sizeOut,
-                        ]}
+                        style={[s.size, selected && s.sizeActive, out && s.sizeOut]}
                       >
                         <Text
                           style={[
@@ -222,29 +248,24 @@ export default function ProductScreen() {
                             out && s.sizeTextOut,
                           ]}
                         >
-                          {option.size}
+                          {choice.name}
                         </Text>
                       </Pressable>
                     );
                   })}
                 </View>
-                {needSize && <Text style={s.error}>PLEASE CHOOSE A SIZE.</Text>}
-              </>
-            )}
-
-            {!soldOut && !needsChoice && available > 0 && available <= 5 && (
-              <Text style={s.low}>ONLY {available} LEFT</Text>
+              </View>
+            ))}
+            {needChoice && <Text style={s.error}>PLEASE CHOOSE AN OPTION.</Text>}
+            {lowStock && !soldOut && !variantSoldOut && (
+              <Text style={s.low}>LOW STOCK</Text>
             )}
 
             <Pressable
               accessibilityRole="button"
-              disabled={soldOut || (!needsChoice && !canAdd)}
+              disabled={blocked}
               onPress={handleAdd}
-              style={[
-                s.add,
-                (soldOut || (!needsChoice && !canAdd)) && s.addDisabled,
-                added && s.addDone,
-              ]}
+              style={[s.add, blocked && s.addDisabled, added && s.addDone]}
             >
               <Text style={s.addText}>{buttonLabel}</Text>
             </Pressable>
@@ -318,6 +339,12 @@ const s = StyleSheet.create({
   },
   priceRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 8 },
   price: { color: C.neon, fontFamily: F.mono, fontSize: 18 },
+  was: {
+    color: C.muted,
+    fontFamily: F.mono,
+    fontSize: 13,
+    textDecorationLine: "line-through",
+  },
   soldTag: { backgroundColor: C.muted, paddingHorizontal: 8, paddingVertical: 4 },
   soldTagText: { color: C.ink, fontFamily: F.mono, fontSize: 9 },
   label: {

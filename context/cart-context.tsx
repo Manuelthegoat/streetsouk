@@ -11,15 +11,15 @@ import {
 } from "react";
 
 export type CartItem = {
-  key: string; // product + size
-  productId: string;
+  key: string; // item + variant
+  productId: string; // Zappie item id
+  variantId: string | null;
   size: string | null;
   qty: number;
-  stock: number; // how many were available when it was added
+  stock: number; // the most that can be added in one line
   name: string;
   brand: string;
-  vendorSlug: string;
-  price: number;
+  price: number; // naira, for display until Zappie prices the cart
   image: string | null;
 };
 
@@ -35,13 +35,12 @@ type CartValue = {
   clear: () => void;
 };
 
-const STORAGE_KEY = "ss-cart:v1";
+const STORAGE_KEY = "ss-cart:v2";
 const MAX_QTY = 10;
 const Ctx = createContext<CartValue | null>(null);
 
-// carts saved before stock existed have no limit stored
 const limitOf = (item: { stock?: number }) =>
-  Math.min(MAX_QTY, item.stock ?? MAX_QTY);
+  Math.max(1, Math.min(MAX_QTY, item.stock ?? MAX_QTY));
 
 export function CartProvider({ children }: PropsWithChildren) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -73,21 +72,16 @@ export function CartProvider({ children }: PropsWithChildren) {
   }, [items]);
 
   const add = useCallback((item: NewItem) => {
-    const key = `${item.productId}:${item.size ?? ""}`;
+    const key = `${item.productId}:${item.variantId ?? ""}`;
     setItems((cur) => {
       const existing = cur.find((i) => i.key === key);
       if (existing) {
         return cur.map((i) =>
           i.key === key
-            ? {
-                ...i,
-                stock: item.stock,
-                qty: Math.min(limitOf(item), i.qty + 1),
-              }
+            ? { ...i, price: item.price, qty: Math.min(limitOf(item), i.qty + 1) }
             : i,
         );
       }
-      if (item.stock <= 0) return cur;
       return [...cur, { ...item, key, qty: 1 }];
     });
   }, []);

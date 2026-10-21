@@ -1,13 +1,11 @@
-import { VendorDetailSkeleton } from "@/components/skeleton";
+import { ProductGridSkeleton, VendorDetailSkeleton } from "@/components/skeleton";
 import { C, F } from "@/components/street-souk-ui";
 import { useStreetSoukStore } from "@/context/street-souk-store";
-import type { VendorWithProducts } from "@/hooks/use-vendor";
+import type { GridProduct } from "@/hooks/use-catalog";
 import { formatNaira } from "@/lib/format";
-import { vendorImage } from "@/lib/vendor-assets";
 import { Ionicons } from "@expo/vector-icons";
-import { Image, ImageBackground } from "expo-image";
+import { Image, ImageBackground, type ImageSource } from "expo-image";
 import { useRouter } from "expo-router";
-import { isSoldOut } from "@/lib/stock";
 import {
   Pressable,
   SafeAreaView,
@@ -17,30 +15,47 @@ import {
   View,
 } from "react-native";
 
+type Asset = ImageSource | number;
+
 type Props = {
-  vendor: VendorWithProducts | null;
-  loading: boolean;
-  error: string | null;
-  reload: () => void;
   label: string; // header title
+  name: string;
+  kicker?: string | null;
+  logo: Asset;
+  campaign: Asset;
+  about?: string | null;
+  favoriteSlug?: string | null; // only brands that have a brand page in Supabase can be hearted
+  products: GridProduct[];
+  loading: boolean;
+  productsLoading?: boolean;
+  notFound?: boolean;
+  error?: string | null;
+  reload?: () => void;
   convention?: boolean; // true = opened from an event: show booth + map
   booth?: string | null;
   eventTitle?: string | null;
 };
 
 export default function VendorView({
-  vendor,
+  label,
+  name,
+  kicker,
+  logo,
+  campaign,
+  about,
+  favoriteSlug,
+  products,
   loading,
+  productsLoading = false,
+  notFound = false,
   error,
   reload,
-  label,
   convention = false,
   booth,
   eventTitle,
 }: Props) {
   const router = useRouter();
   const { toggleFavorite, isFavorite } = useStreetSoukStore();
-  const products = vendor?.products ?? [];
 
   return (
     <SafeAreaView style={s.safe}>
@@ -65,15 +80,15 @@ export default function VendorView({
               <Ionicons name="map-outline" size={19} color={C.neon} />
             </Pressable>
           )}
-          {vendor ? (
+          {favoriteSlug ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`${isFavorite(vendor.slug) ? "Remove" : "Save"} ${vendor.name} from favorites`}
-              onPress={() => toggleFavorite(vendor.slug)}
+              accessibilityLabel={`${isFavorite(favoriteSlug) ? "Remove" : "Save"} ${name} from favorites`}
+              onPress={() => toggleFavorite(favoriteSlug)}
               style={s.iconBtn}
             >
               <Ionicons
-                name={isFavorite(vendor.slug) ? "heart" : "heart-outline"}
+                name={isFavorite(favoriteSlug) ? "heart" : "heart-outline"}
                 size={19}
                 color={C.neon}
               />
@@ -86,8 +101,8 @@ export default function VendorView({
 
       {loading ? (
         <VendorDetailSkeleton />
-      ) : !vendor ? (
-        <Pressable onPress={error ? reload : () => router.back()}>
+      ) : notFound ? (
+        <Pressable onPress={error && reload ? reload : () => router.back()}>
           <Text style={s.note}>
             {error
               ? "COULD NOT LOAD THIS BRAND. TAP TO RETRY."
@@ -96,24 +111,19 @@ export default function VendorView({
         </Pressable>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
-          <ImageBackground
-            source={vendorImage(vendor.slug, "campaign", vendor.campaign_url)}
-            style={s.hero}
-          >
+          <ImageBackground source={campaign} style={s.hero}>
             <View style={s.heroShade}>
               <View style={s.heroTop}>
-                <Text style={s.kicker}>{vendor.category}</Text>
+                <Text style={s.kicker}>{kicker ?? "BRAND"}</Text>
                 {convention && !!booth && (
                   <Text style={s.boothTag}>BOOTH {booth}</Text>
                 )}
               </View>
               <View>
-                <Image
-                  source={vendorImage(vendor.slug, "logo", vendor.logo_url)}
-                  contentFit="contain"
-                  style={s.logo}
-                />
-                <Text style={s.name}>{vendor.name}</Text>
+                <View style={s.logoBox}>
+                  <Image source={logo} contentFit="contain" style={s.logo} />
+                </View>
+                <Text style={s.name}>{name}</Text>
               </View>
             </View>
           </ImageBackground>
@@ -121,7 +131,7 @@ export default function VendorView({
           {convention && (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Get directions to ${vendor.name}`}
+              accessibilityLabel={`Get directions to ${name}`}
               style={s.directions}
               onPress={() => router.push("/map")}
             >
@@ -135,53 +145,64 @@ export default function VendorView({
           )}
 
           <View style={s.content}>
-            {!!vendor.about && (
+            {!!about && (
               <>
                 <Text style={s.section}>ABOUT THE BRAND</Text>
-                <Text style={s.about}>{vendor.about}</Text>
+                <Text style={s.about}>{about}</Text>
               </>
             )}
 
             <View style={s.sectionRow}>
               <Text style={s.section}>THE COLLECTION</Text>
-              <Text style={s.count}>
-                {products.length} {products.length === 1 ? "PIECE" : "PIECES"}
-              </Text>
+              {!productsLoading && (
+                <Text style={s.count}>
+                  {products.length} {products.length === 1 ? "PIECE" : "PIECES"}
+                </Text>
+              )}
             </View>
-            <View style={s.grid}>
-              {products.map((p) => (
-                <Pressable
-                  key={p.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${p.name}, ${formatNaira(p.price_ngn)}`}
-                  style={s.tile}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/product/[id]",
-                      params: { id: p.id },
-                    })
-                  }
-                >
-                  <View>
-                    <Image
-                      source={vendorImage(vendor.slug, "product", p.image_url)}
-                      contentFit="cover"
-                      style={s.tileImage}
-                    />
-                    {isSoldOut(p) && (
-                      <View style={s.soldTag}>
-                        <Text style={s.soldTagText}>SOLD OUT</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text numberOfLines={2} style={s.tileName}>
-                    {p.name}
-                  </Text>
-                  <Text style={s.tilePrice}>{formatNaira(p.price_ngn)}</Text>
-                </Pressable>
-              ))}
-            </View>
-            {products.length === 0 && (
+
+            {productsLoading && products.length === 0 ? (
+              <ProductGridSkeleton />
+            ) : (
+              <View style={s.grid}>
+                {products.map((p) => (
+                  <Pressable
+                    key={p.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${p.name}, ${formatNaira(p.price)}`}
+                    style={s.tile}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/product/[id]",
+                        params: { id: p.id },
+                      })
+                    }
+                  >
+                    <View>
+                      <Image
+                        source={
+                          p.image
+                            ? { uri: p.image }
+                            : require("@/assets/images/sslogo.png")
+                        }
+                        contentFit={p.image ? "cover" : "contain"}
+                        style={s.tileImage}
+                      />
+                      {p.soldOut && (
+                        <View style={s.soldTag}>
+                          <Text style={s.soldTagText}>SOLD OUT</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text numberOfLines={2} style={s.tileName}>
+                      {p.name}
+                    </Text>
+                    <Text style={s.tilePrice}>{formatNaira(p.price)}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+            {!productsLoading && products.length === 0 && (
               <Text style={s.note}>NO PRODUCTS YET. CHECK BACK SOON.</Text>
             )}
 
@@ -260,7 +281,17 @@ const s = StyleSheet.create({
     paddingVertical: 4,
     overflow: "hidden",
   },
-  logo: { width: 64, height: 64, marginBottom: 8 },
+  logoBox: {
+    width: 68,
+    height: 68,
+    backgroundColor: "#000000",
+    borderWidth: 1,
+    borderColor: C.line,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  logo: { width: 56, height: 56 },
   name: { color: C.paper, fontFamily: F.display, fontSize: 40, lineHeight: 44 },
   directions: {
     backgroundColor: C.neon,

@@ -118,7 +118,7 @@ export default function SettingsScreen() {
           </View>
           <Ionicons name="chevron-forward" size={20} color={C.muted} />
         </Pressable>
-                <Pressable
+        <Pressable
           onPress={handleClearCache}
           disabled={clearing}
           style={s.action}
@@ -130,6 +130,15 @@ export default function SettingsScreen() {
             </Text>
             <Text style={s.rowDetail}>
               Remove saved content and images. Everything reloads fresh.
+            </Text>
+          </View>
+        </Pressable>
+                <Pressable onPress={() => router.push("/zappie-debug")} style={s.action}>
+          <Ionicons name="cube-outline" size={20} color={C.neon} />
+          <View style={s.rowCopy}>
+            <Text style={s.rowTitle}>ZAPPIE CATALOG CHECK</Text>
+            <Text style={s.rowDetail}>
+              Temporary: shows how your Zappie store is organised.
             </Text>
           </View>
         </Pressable>

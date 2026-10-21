@@ -1,39 +1,45 @@
 import { C, F } from "@/components/street-souk-ui";
-import type { ShopProduct } from "@/hooks/use-products";
 import { formatDate, formatNaira } from "@/lib/format";
 import type { NewsPost } from "@/lib/types";
-import { vendorImage } from "@/lib/vendor-assets";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export function ShopCard({
-  product,
+  name,
+  brand,
+  price,
+  image,
+  soldOut,
   onPress,
 }: {
-  product: ShopProduct;
+  name: string;
+  brand: string;
+  price: number;
+  image: string | null;
+  soldOut: boolean;
   onPress: () => void;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${product.vendors.name} ${product.name}`}
+      accessibilityLabel={`${brand} ${name}`}
       onPress={onPress}
       style={s.card}
     >
       <View>
         <Image
-          source={vendorImage(product.vendors.slug, "product", product.image_url)}
-          contentFit="cover"
+          source={image ? { uri: image } : require("@/assets/images/sslogo.png")}
+          contentFit={image ? "cover" : "contain"}
           style={s.image}
         />
-        <View style={s.tag}>
-          <Text style={s.tagText}>SHOP</Text>
+        <View style={[s.tag, soldOut && { backgroundColor: C.muted }]}>
+          <Text style={s.tagText}>{soldOut ? "SOLD OUT" : "SHOP"}</Text>
         </View>
       </View>
       <View style={s.body}>
-        <Text style={s.kicker}>{product.vendors.name}</Text>
-        <Text style={s.title}>{product.name}</Text>
-        <Text style={s.price}>{formatNaira(product.price_ngn)}</Text>
+        <Text style={s.kicker}>{brand}</Text>
+        <Text style={s.title}>{name}</Text>
+        <Text style={s.price}>{formatNaira(price)}</Text>
       </View>
     </Pressable>
   );
@@ -101,7 +107,7 @@ const s = StyleSheet.create({
   tagText: { color: C.ink, fontFamily: F.mono, fontSize: 9 },
   body: { padding: 16, gap: 6 },
   kicker: { color: C.muted, fontFamily: F.mono, fontSize: 10 },
-  title: { color: C.neon, fontFamily: F.display, fontSize: 24, lineHeight: 28 },
+  title: { color: C.paper, fontFamily: F.display, fontSize: 24, lineHeight: 28 },
   excerpt: { color: C.muted, fontFamily: F.body, fontSize: 15, lineHeight: 21 },
   price: { color: C.neon, fontFamily: F.mono, fontSize: 12 },
   meta: { color: C.muted, fontFamily: F.mono, fontSize: 10, marginTop: 2 },

@@ -1,9 +1,15 @@
+import { VendorListSkeleton } from "@/components/skeleton";
 import { C, F, Header, PageTitle } from "@/components/street-souk-ui";
+import { useStreetSoukStore } from "@/context/street-souk-store";
+import { useCatalog } from "@/hooks/use-catalog";
+import { useVendors } from "@/hooks/use-vendors";
+import { brandKey } from "@/lib/brand";
+import { vendorImage } from "@/lib/vendor-assets";
 import { Ionicons } from "@expo/vector-icons";
+import { Image, ImageBackground } from "expo-image";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -12,40 +18,41 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useStreetSoukStore } from "@/context/street-souk-store";
-import { useVendors } from "@/hooks/use-vendors";
-import { vendorImage } from "@/lib/vendor-assets";
-import { VendorListSkeleton } from "@/components/skeleton";
-import { Image, ImageBackground } from "expo-image";
+
+const FALLBACK = require("@/assets/images/sslogo.png");
 
 export default function VendorsScreen() {
   const router = useRouter();
   const { toggleFavorite, isFavorite } = useStreetSoukStore();
-  const { vendors, loading, error, reload } = useVendors();
+  const { catalog, loading, error, reload } = useCatalog();
+  const { vendors } = useVendors();
   const [query, setQuery] = useState("");
 
-  const visible = useMemo(() => {
+  const brands = useMemo(() => {
     const q = query.toLowerCase();
-    return vendors.filter(
-      (vendor) =>
-        vendor.name.toLowerCase().includes(q) ||
-        vendor.category.toLowerCase().includes(q),
-    );
-  }, [vendors, query]);
+    return (catalog?.brands ?? [])
+      .filter((b) => b.name.toLowerCase().includes(q))
+      .map((b) => ({
+        ...b,
+        vendor: vendors.find(
+          (v) => brandKey(v.name) === b.key || brandKey(v.slug) === b.key,
+        ),
+      }));
+  }, [catalog, vendors, query]);
 
   return (
     <SafeAreaView style={s.safe}>
-      <Header title="BRANDS" back/>
+      <Header title="BRANDS" back />
       <ScrollView
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        <PageTitle title="VENDORS" />
+        <PageTitle title="BRANDS" />
         <View style={s.search}>
           <Ionicons name="search" size={23} color={C.paper} />
           <TextInput
-            accessibilityLabel="Search vendor directory"
-            placeholder="SEARCH DIRECTORY..."
+            accessibilityLabel="Search brands"
+            placeholder="SEARCH BRANDS..."
             placeholderTextColor={C.muted}
             value={query}
             onChangeText={setQuery}
@@ -53,71 +60,90 @@ export default function VendorsScreen() {
           />
         </View>
 
-        {loading && <VendorListSkeleton />}
-        {error && (
+        {loading && !catalog && <VendorListSkeleton />}
+        {error && !catalog && (
           <Pressable onPress={reload}>
-            <Text style={s.empty}>COULD NOT LOAD VENDORS. TAP TO RETRY.</Text>
+            <Text style={s.empty}>COULD NOT LOAD BRANDS. TAP TO RETRY.</Text>
           </Pressable>
         )}
 
-        {visible.map((vendor) => (
-          <Pressable
-            key={vendor.id}
-            accessibilityRole="button"
-            accessibilityLabel={`Open ${vendor.name}`}
-            onPress={() =>
-              router.push({
-                pathname: "/vendor/[slug]",
-                params: { slug: vendor.slug },
-              })
-            }
-          >
-            <ImageBackground
-              source={vendorImage(vendor.slug, "campaign", vendor.campaign_url)}
-              imageStyle={s.vendorImageBackground}
-              style={s.vendor}
+        {brands.map((brand) => {
+          const vendor = brand.vendor;
+          const photo = brand.products[0]?.images[0]
+            ? { uri: brand.products[0].images[0] }
+            : FALLBACK;
+          return (
+            <Pressable
+              key={brand.key}
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${brand.name}`}
+              onPress={() =>
+                router.push({
+                  pathname: "/brand/[key]",
+                  params: { key: brand.key },
+                })
+              }
             >
-              <View style={s.vendorOverlay}>
-                <View style={s.vendorTop}>
-                  <View style={s.vendorIcon}>
-                    <Image
-                      source={vendorImage(vendor.slug, "logo", vendor.logo_url)}
-                      style={s.vendorImage}
-                      contentFit="contain"
-                    />
-                  </View>
-                  <View style={s.vendorMeta}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`${isFavorite(vendor.slug) ? "Remove" : "Save"} ${vendor.name} from favorites`}
-                      onPress={() => toggleFavorite(vendor.slug)}
-                      hitSlop={8}
-                      style={s.favorite}
-                    >
-                      <Ionicons
-                        name={
-                          isFavorite(vendor.slug) ? "heart" : "heart-outline"
+              <ImageBackground
+                source={
+                  vendor
+                    ? vendorImage(vendor.slug, "campaign", vendor.campaign_url)
+                    : photo
+                }
+                imageStyle={s.vendorImageBackground}
+                style={s.vendor}
+              >
+                <View style={s.vendorOverlay}>
+                  <View style={s.vendorTop}>
+                    <View style={s.vendorIcon}>
+                      <Image
+                        source={
+                          vendor
+                            ? vendorImage(vendor.slug, "logo", vendor.logo_url)
+                            : photo
                         }
-                        size={18}
-                        color={C.neon}
+                        style={s.vendorImage}
+                        contentFit={vendor ? "contain" : "cover"}
                       />
-                    </Pressable>
-                    <Text style={s.type}>{vendor.category}</Text>
+                    </View>
+                    <View style={s.vendorMeta}>
+                      {vendor && (
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`${isFavorite(vendor.slug) ? "Remove" : "Save"} ${vendor.name} from favorites`}
+                          onPress={() => toggleFavorite(vendor.slug)}
+                          hitSlop={8}
+                          style={s.favorite}
+                        >
+                          <Ionicons
+                            name={
+                              isFavorite(vendor.slug) ? "heart" : "heart-outline"
+                            }
+                            size={18}
+                            color={C.neon}
+                          />
+                        </Pressable>
+                      )}
+                      <Text style={s.type}>{vendor?.category ?? "BRAND"}</Text>
+                    </View>
+                  </View>
+                  <Text style={s.name}>{brand.name}</Text>
+                  <Text style={s.detail}>
+                    {vendor?.detail ??
+                      `${brand.products.length} ${brand.products.length === 1 ? "PIECE" : "PIECES"}`}
+                  </Text>
+                  <View style={s.show}>
+                    <Text style={s.showText}>VIEW BRAND</Text>
+                    <Ionicons name="arrow-forward" size={20} color={C.ink} />
                   </View>
                 </View>
-                <Text style={s.name}>{vendor.name}</Text>
-                {vendor.detail && <Text style={s.detail}>{vendor.detail}</Text>}
-                <View style={s.show}>
-                  <Text style={s.showText}>VIEW BRAND</Text>
-                  <Ionicons name="arrow-forward" size={20} color={C.ink} />
-                </View>
-              </View>
-            </ImageBackground>
-          </Pressable>
-        ))}
+              </ImageBackground>
+            </Pressable>
+          );
+        })}
 
-        {!loading && !error && visible.length === 0 && (
-          <Text style={s.empty}>NO VENDORS FOUND</Text>
+        {!loading && !error && brands.length === 0 && (
+          <Text style={s.empty}>NO BRANDS FOUND</Text>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -165,7 +191,7 @@ const s = StyleSheet.create({
   vendorIcon: {
     width: 100,
     height: 100,
-    backgroundColor: C.panel,
+    backgroundColor: "#000000",
     borderWidth: 1,
     borderColor: C.line,
     alignItems: "center",
@@ -185,15 +211,6 @@ const s = StyleSheet.create({
   type: {
     backgroundColor: C.neon,
     color: C.ink,
-    fontFamily: F.mono,
-    fontSize: 11,
-    paddingHorizontal: 9,
-    paddingVertical: 7,
-  },
-  booth: {
-    borderWidth: 1,
-    borderColor: C.neon,
-    color: C.neon,
     fontFamily: F.mono,
     fontSize: 11,
     paddingHorizontal: 9,

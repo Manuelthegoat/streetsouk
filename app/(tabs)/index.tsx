@@ -1,10 +1,10 @@
 import { NewsCard, ShopCard } from "@/components/feed-cards";
 import { Bone, HomeFeedSkeleton } from "@/components/skeleton";
 import { C, F, Header } from "@/components/street-souk-ui";
+import { useCatalog, type CatalogProduct } from "@/hooks/use-catalog";
 import { useEvents } from "@/hooks/use-events";
 import { useTopics } from "@/hooks/use-home";
 import { useNews } from "@/hooks/use-news";
-import { useProducts, type ShopProduct } from "@/hooks/use-products";
 import { isPastEvent } from "@/lib/event-dates";
 import type { NewsPost } from "@/lib/types";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,12 +20,22 @@ import {
   View,
 } from "react-native";
 
-type Mode = "All" | "Shop" | "Read";
-const modes: Mode[] = ["All", "Shop", "Read"];
+type Mode = "All" | "Shop" | "Watch";
+const modes: Mode[] = ["All", "Shop", "Watch"];
 
 type Item =
-  | { kind: "shop"; id: string; date: number; product: ShopProduct }
-  | { kind: "read"; id: string; date: number; post: NewsPost };
+  | { kind: "shop"; id: string; product: CatalogProduct }
+  | { kind: "read"; id: string; post: NewsPost };
+
+// news and shop items take turns, so the feed doesn't end up as one long block of either
+function interleave<A, B>(a: A[], b: B[]): (A | B)[] {
+  const out: (A | B)[] = [];
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    if (i < a.length) out.push(a[i]);
+    if (i < b.length) out.push(b[i]);
+  }
+  return out;
+}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -33,7 +43,7 @@ export default function HomeScreen() {
   const [mode, setMode] = useState<Mode>("All");
   const { topics } = useTopics();
   const { events, loading: eventsLoading } = useEvents();
-  const { products, loading: productsLoading } = useProducts();
+  const { catalog, loading: catalogLoading } = useCatalog();
   const { posts: news, loading: newsLoading } = useNews();
 
   const featured = events.find((e) => !isPastEvent(e));
@@ -52,33 +62,26 @@ export default function HomeScreen() {
   ];
 
   const items = useMemo(() => {
+    // shop items have no topic in Zappie, so they only appear under FOR YOU
     const shop: Item[] =
-      mode === "Read"
+      mode === "Watch" || activeTopic
         ? []
-        : products
-            .filter((p) => !activeTopic || p.topic_id === activeTopic)
-            .map((p) => ({
-              kind: "shop" as const,
-              id: p.id,
-              date: new Date(p.created_at).getTime(),
-              product: p,
-            }));
+        : (catalog?.products ?? [])
+            .filter((p) => p.available)
+            .slice(0, 24)
+            .map((p) => ({ kind: "shop" as const, id: p.id, product: p }));
     const read: Item[] =
       mode === "Shop"
         ? []
         : news
             .filter((n) => !activeTopic || n.topic_id === activeTopic)
-            .map((n) => ({
-              kind: "read" as const,
-              id: n.id,
-              date: new Date(n.published_at).getTime(),
-              post: n,
-            }));
-    return [...shop, ...read].sort((a, b) => b.date - a.date);
-  }, [products, news, activeTopic, mode]);
+            .map((n) => ({ kind: "read" as const, id: n.id, post: n }));
+    return interleave(read, shop);
+  }, [catalog, news, activeTopic, mode]);
 
   const loading =
-    (mode !== "Read" && productsLoading) || (mode !== "Shop" && newsLoading);
+    (mode !== "Watch" && !activeTopic && catalogLoading && !catalog) ||
+    (mode !== "Shop" && newsLoading);
 
   return (
     <SafeAreaView style={s.safe}>
@@ -178,11 +181,15 @@ export default function HomeScreen() {
               item.kind === "shop" ? (
                 <ShopCard
                   key={`p-${item.id}`}
-                  product={item.product}
+                  name={item.product.name}
+                  brand={item.product.brand}
+                  price={item.product.price}
+                  image={item.product.images[0] ?? null}
+                  soldOut={!item.product.available}
                   onPress={() =>
                     router.push({
                       pathname: "/product/[id]",
-                      params: { id: item.id },
+                      params: { id: item.product.id },
                     })
                   }
                 />
