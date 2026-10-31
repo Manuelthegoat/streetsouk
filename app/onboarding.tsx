@@ -40,9 +40,6 @@ export default function OnboardingScreen() {
   const [emailUpdates, setEmailUpdates] = useState(
     profile?.email_updates ?? false,
   );
-  const [pushUpdates, setPushUpdates] = useState(
-    profile?.push_updates ?? false,
-  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const status = useUsernameCheck(username, profile?.username);
@@ -64,7 +61,7 @@ export default function OnboardingScreen() {
       last_name: last.trim(),
       username,
       email_updates: emailUpdates,
-      push_updates: pushUpdates,
+      push_updates: false,
       onboarded_at: new Date().toISOString(),
     });
     setSaving(false);
@@ -163,8 +160,7 @@ export default function OnboardingScreen() {
           {step === 3 && (
             <>
               <Text style={s.copy}>
-                Choose what you'd like to hear about. You can change this any
-                time in your profile.
+                Choose the email updates you want. You can enable push alerts from Settings after setup.
               </Text>
               <SwitchRow
                 title="EMAIL UPDATES"
@@ -172,12 +168,9 @@ export default function OnboardingScreen() {
                 value={emailUpdates}
                 onChange={setEmailUpdates}
               />
-              <SwitchRow
-                title="PUSH NOTIFICATIONS"
-                detail="A heads-up when something goes live."
-                value={pushUpdates}
-                onChange={setPushUpdates}
-              />
+              <Text style={s.copy}>
+                Turn on push alerts later from Settings to get festival updates on this device.
+              </Text>
             </>
           )}
 

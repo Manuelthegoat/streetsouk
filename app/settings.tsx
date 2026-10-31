@@ -13,6 +13,14 @@ import {
 import { C, F } from "@/components/street-souk-ui";
 import { Image as CachedImage } from "expo-image";
 import { clearCache } from "@/lib/cache";
+import { useAuth } from "@/context/auth-context";
+import { useProfile } from "@/context/profile-context";
+import {
+  registerForPushNotifications,
+  removePushToken,
+  removePushTokens,
+  savePushToken,
+} from "@/lib/push-notifications";
 
 function SettingRow({
   icon,
@@ -50,10 +58,46 @@ function SettingRow({
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const [notifications, setNotifications] = useState(true);
+  const { user } = useAuth();
+  const { profile, save } = useProfile();
+  const [savingNotifications, setSavingNotifications] = useState(false);
   const [guidance, setGuidance] = useState(true);
   const [motion, setMotion] = useState(false);
   const [clearing, setClearing] = useState(false);
+
+  async function togglePushUpdates() {
+    if (!user) {
+      Alert.alert("Sign in required", "Sign in to connect festival alerts to your account.", [
+        { text: "Not now", style: "cancel" },
+        { text: "Sign in", onPress: () => router.push("/sign-in") },
+      ]);
+      return;
+    }
+    if (savingNotifications) return;
+    setSavingNotifications(true);
+    try {
+      if (profile?.push_updates) {
+        const error = await save({ push_updates: false });
+        if (error) throw new Error(error);
+        await removePushTokens(user.id);
+      } else {
+        const token = await registerForPushNotifications();
+        await savePushToken(user.id, token);
+        const error = await save({ push_updates: true });
+        if (error) {
+          await removePushToken(token);
+          throw new Error(error);
+        }
+      }
+    } catch (error) {
+      Alert.alert(
+        "Notification setting not updated",
+        error instanceof Error ? error.message : "Please try again.",
+      );
+    } finally {
+      setSavingNotifications(false);
+    }
+  }
 
   async function handleClearCache() {
     setClearing(true);
@@ -77,21 +121,29 @@ export default function SettingsScreen() {
         <View style={s.headerSpacer} />
       </View>
       <ScrollView contentContainerStyle={s.content}>
-        <Text style={s.kicker}>STREET SOUK / PREFERENCES</Text>
-        <Text style={s.title}>YOUR SETUP</Text>
+        <Text style={s.kicker}>STREET SOUK / SETTINGS</Text>
+        <Text style={s.title}>YOUR ACCOUNT</Text>
         <View style={s.rule} />
         <Pressable onPress={() => router.push("/my-souk")} style={s.mySouk}>
           <Ionicons name="heart-outline" size={20} color={C.ink} />
           <Text style={s.mySoukText}>OPEN MY SOUK</Text>
           <Ionicons name="arrow-forward" size={18} color={C.ink} />
         </Pressable>
-        <Text style={s.section}>APP EXPERIENCE</Text>
+        <Pressable onPress={() => router.push("/edit-profile")} style={s.action}>
+          <Ionicons name="person-outline" size={20} color={C.neon} />
+          <View style={s.rowCopy}>
+            <Text style={s.rowTitle}>EDIT PROFILE</Text>
+            <Text style={s.rowDetail}>Update your Street Souk account details.</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={C.muted} />
+        </Pressable>
+        <Text style={s.section}>ACCOUNT PREFERENCES</Text>
         <SettingRow
           icon="notifications-outline"
           title="FESTIVAL ALERTS"
-          detail="Get live updates about drops and stages."
-          value={notifications}
-          onPress={() => setNotifications((v) => !v)}
+          detail={savingNotifications ? "Updating notification permission…" : "Get live updates about drops and stages."}
+          value={profile?.push_updates ?? false}
+          onPress={togglePushUpdates}
         />
         <SettingRow
           icon="navigate-outline"
@@ -107,7 +159,7 @@ export default function SettingsScreen() {
           value={motion}
           onPress={() => setMotion((v) => !v)}
         />
-        <Text style={s.section}>MAP & DATA</Text>
+        <Text style={s.section}>SUPPORT</Text>
         <Pressable onPress={() => router.push("/scan")} style={s.action}>
           <Ionicons name="qr-code-outline" size={20} color={C.neon} />
           <View style={s.rowCopy}>
@@ -117,30 +169,6 @@ export default function SettingsScreen() {
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={C.muted} />
-        </Pressable>
-        <Pressable
-          onPress={handleClearCache}
-          disabled={clearing}
-          style={s.action}
-        >
-          <Ionicons name="trash-outline" size={20} color={C.neon} />
-          <View style={s.rowCopy}>
-            <Text style={s.rowTitle}>
-              {clearing ? "CLEARING..." : "CLEAR CACHE"}
-            </Text>
-            <Text style={s.rowDetail}>
-              Remove saved content and images. Everything reloads fresh.
-            </Text>
-          </View>
-        </Pressable>
-                <Pressable onPress={() => router.push("/zappie-debug")} style={s.action}>
-          <Ionicons name="cube-outline" size={20} color={C.neon} />
-          <View style={s.rowCopy}>
-            <Text style={s.rowTitle}>ZAPPIE CATALOG CHECK</Text>
-            <Text style={s.rowDetail}>
-              Temporary: shows how your Zappie store is organised.
-            </Text>
-          </View>
         </Pressable>
         <Pressable style={s.action}>
           <Ionicons
@@ -153,6 +181,25 @@ export default function SettingsScreen() {
             <Text style={s.rowDetail}>
               Festival map data and app information.
             </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={C.muted} />
+        </Pressable>
+        <Text style={s.section}>PRIVACY</Text>
+        <View style={s.privacyNote}>
+          <Ionicons name="lock-closed-outline" size={20} color={C.neon} />
+          <Text style={s.rowDetail}>
+            Manage saved app data on this device. Clearing the cache removes saved content and images; they reload when you browse again.
+          </Text>
+        </View>
+        <Pressable
+          onPress={handleClearCache}
+          disabled={clearing}
+          style={s.action}
+        >
+          <Ionicons name="trash-outline" size={20} color={C.neon} />
+          <View style={s.rowCopy}>
+            <Text style={s.rowTitle}>{clearing ? "CLEARING..." : "CLEAR SAVED APP DATA"}</Text>
+            <Text style={s.rowDetail}>Remove cached content and images from this device.</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={C.muted} />
         </Pressable>
@@ -240,5 +287,13 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+  },
+  privacyNote: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: C.line,
   },
 });

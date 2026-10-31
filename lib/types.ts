@@ -45,6 +45,7 @@ export type ScheduleItem = {
 
 export type FeedPost = {
   id: string;
+  event_id: string | null;
   category: "DROPS" | "SCHEDULE" | "CROWD" | "INFO";
   title: string;
   detail: string;

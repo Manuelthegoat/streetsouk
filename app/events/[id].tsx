@@ -165,9 +165,11 @@ export default function EventDetailScreen() {
             icon="ticket-outline"
             eyebrow="YOUR WAY IN"
             title="TICKETS"
-            body="Ticket details for the next Street Souk Convention will be announced here."
-            action="VIEW TICKET INFO"
-            onPress={() => router.push("/tickets")}
+            body="Choose your ticket and check out securely with Jetron."
+            action="BUY TICKETS"
+            onPress={() =>
+              router.push({ pathname: "/tickets", params: { eventSlug: event?.slug ?? "" } })
+            }
           />
         )}
       </ScrollView>

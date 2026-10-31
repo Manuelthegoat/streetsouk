@@ -14,12 +14,43 @@ import { StreetSoukStore } from "@/context/street-souk-store";
 import { CartProvider } from "@/context/cart-context";
 import OnboardingGate from "@/components/onboarding-gate";
 import { ProfileProvider } from "@/context/profile-context";
+import * as Notifications from "expo-notifications";
+import { router, type Href } from "expo-router";
+import { useEffect } from "react";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
+function useNotificationNavigation() {
+  useEffect(() => {
+    const openNotification = (response: Notifications.NotificationResponse) => {
+      const url = response.notification.request.content.data?.url;
+      if (typeof url === "string" && url.startsWith("/") && !url.startsWith("//")) {
+        router.push(url as Href);
+        Notifications.clearLastNotificationResponse();
+      }
+    };
+
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) openNotification(response);
+    });
+    const subscription = Notifications.addNotificationResponseReceivedListener(openNotification);
+    return () => subscription.remove();
+  }, []);
+}
 
 export const unstable_settings = {
   anchor: "(tabs)",
 };
 
 export default function RootLayout() {
+  useNotificationNavigation();
   const [fontsLoaded] = useFonts({
     Anton: Anton_400Regular,
     "Archivo Narrow": ArchivoNarrow_400Regular,

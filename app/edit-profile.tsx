@@ -42,9 +42,6 @@ export default function EditProfileScreen() {
   const [emailUpdates, setEmailUpdates] = useState(
     profile?.email_updates ?? false,
   );
-  const [pushUpdates, setPushUpdates] = useState(
-    profile?.push_updates ?? false,
-  );
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +71,6 @@ export default function EditProfileScreen() {
       bio: bio.trim() || null,
       avatar_url: avatar,
       email_updates: emailUpdates,
-      push_updates: pushUpdates,
     });
     setSaving(false);
     if (err) {
@@ -222,12 +218,9 @@ export default function EditProfileScreen() {
             value={emailUpdates}
             onChange={setEmailUpdates}
           />
-          <SwitchRow
-            title="PUSH NOTIFICATIONS"
-            detail="A heads-up when something goes live."
-            value={pushUpdates}
-            onChange={setPushUpdates}
-          />
+          <Pressable onPress={() => router.push("/settings")} style={{ marginTop: 14 }}>
+            <Text style={s.linkText}>MANAGE PUSH ALERTS IN SETTINGS →</Text>
+          </Pressable>
 
           {error && <Text style={s.error}>{error}</Text>}
 
@@ -292,7 +285,7 @@ const s = StyleSheet.create({
   },
   avatarImage: { width: "100%", height: "100%" },
   avatarBusy: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.6)",
     alignItems: "center",
     justifyContent: "center",
