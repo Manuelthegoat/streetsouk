@@ -28,6 +28,7 @@ export default function MapScreen() {
   const [selected, setSelected] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
   const [located, setLocated] = useState(false);
+  const [zoom, setZoom] = useState(1);
   const { startingPoint, setStartingPoint } = useStreetSoukStore();
   const visible = useMemo(
     () =>
@@ -64,13 +65,13 @@ export default function MapScreen() {
         </View>
         <View style={s.heading}>
           <View>
-            <Text style={s.eyebrow}>DEC 15 - 17 / MAIN HALL</Text>
-            <Text style={s.title}>LIVE MAP</Text>
+            <Text style={s.eyebrow}>STREET SOUK 2026 / MAIN HALL</Text>
+            <Text style={s.title}>VENUE MAP</Text>
           </View>
-          <Text style={s.live}>● LIVE</Text>
+          <Text style={s.live}>MAP PREVIEW</Text>
         </View>
         <View style={s.mapFrame}>
-          <View style={s.map}>
+          <View style={[s.map, { transform: [{ scale: zoom }] }]}>
             <View style={s.grid} />
             <View style={[s.road, s.v]} />
             <View style={[s.road, s.h]} />
@@ -121,10 +122,18 @@ export default function MapScreen() {
                 color={located ? C.neon : C.paper}
               />
             </Pressable>
-            <Pressable style={s.tool}>
+            <Pressable
+              accessibilityLabel="Zoom in"
+              onPress={() => setZoom((value) => Math.min(2, value + 0.2))}
+              style={s.tool}
+            >
               <Ionicons name="add" size={19} color={C.paper} />
             </Pressable>
-            <Pressable style={s.tool}>
+            <Pressable
+              accessibilityLabel="Zoom out"
+              onPress={() => setZoom((value) => Math.max(1, value - 0.2))}
+              style={s.tool}
+            >
               <Ionicons name="remove" size={19} color={C.paper} />
             </Pressable>
           </View>
@@ -158,7 +167,7 @@ export default function MapScreen() {
               onPress={() => setStartingPoint(selected)}
               style={s.route}
             >
-              <Text style={s.routeText}>ROUTE</Text>
+              <Text style={s.routeText}>SET START</Text>
               <Ionicons name="arrow-forward" size={18} color={C.ink} />
             </Pressable>
           </View>
@@ -169,19 +178,21 @@ export default function MapScreen() {
 }
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
-  content: { flex: 1, padding: 16 },
+  content: { flex: 1, paddingHorizontal: 18, paddingTop: 10 },
   search: {
-    height: 50,
-    borderWidth: 2,
-    borderColor: C.paper,
+    height: 52,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 13,
     backgroundColor: C.panel,
-    shadowColor: C.neon,
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.24,
+    shadowRadius: 12,
+    elevation: 4,
   },
   input: {
     flex: 1,
@@ -194,61 +205,61 @@ const s = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    marginVertical: 20,
+    marginVertical: 17,
   },
-  eyebrow: { color: C.muted, fontFamily: F.mono, fontSize: 10 },
-  title: { color: C.neon, fontFamily: F.display, fontSize: 32 },
-  live: { color: C.neon, fontFamily: F.mono, fontSize: 11 },
+  eyebrow: { color: C.paper, fontFamily: F.mono, fontSize: 10, letterSpacing: 1.2 },
+  title: { color: C.neon, fontFamily: F.display, fontSize: 34, letterSpacing: 0.6 },
+  live: { color: C.neon, fontFamily: F.mono, fontSize: 10, letterSpacing: 1 },
   mapFrame: {
-    height: 390,
-    borderWidth: 2,
-    borderColor: C.paper,
+    height: 405,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 20,
     position: "relative",
-    shadowColor: C.neon,
-    shadowOffset: { width: 5, height: 5 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
+    overflow: "hidden",
+    backgroundColor: C.mapBg,
   },
   map: {
     flex: 1,
     overflow: "hidden",
-    backgroundColor: C.mapBg,
+    backgroundColor: "#0A100C",
     position: "relative",
   },
   grid: {
     ...StyleSheet.absoluteFill,
     borderWidth: 1,
     borderColor: C.mapGrid,
-    opacity: 0.55,
+    opacity: 0.32,
   },
   road: {
     position: "absolute",
-    backgroundColor: C.mapRoad,
+    backgroundColor: "#173323",
     borderWidth: 1,
-    borderColor: C.mapGrid,
+    borderColor: "#28563B",
   },
-  v: { width: 34, top: -20, bottom: -20, left: "49%" },
-  h: { height: 32, left: -20, right: -20, top: "48%" },
+  v: { width: 42, top: -20, bottom: -20, left: "49%" },
+  h: { height: 38, left: -20, right: -20, top: "48%" },
   zone: {
     position: "absolute",
-    backgroundColor: C.mapZone,
+    backgroundColor: "#111D14",
     borderWidth: 1,
-    borderColor: C.mapZoneBorder,
+    borderColor: "#2D6946",
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
   z1: { width: "34%", height: "22%", left: "7%", top: "7%" },
   z2: { width: "30%", height: "23%", left: "5%", top: "54%" },
-  zoneText: { color: C.mapText, fontFamily: F.mono, fontSize: 9 },
+  zoneText: { color: C.paper, fontFamily: F.mono, fontSize: 9, letterSpacing: 0.8 },
   here: { position: "absolute", left: "47%", top: "43%", alignItems: "center" },
   ring: {
     position: "absolute",
     width: 35,
     height: 35,
     borderRadius: 20,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: C.neon,
-    opacity: 0.4,
+    opacity: 0.35,
     top: -9,
     left: -9,
   },
@@ -258,90 +269,96 @@ const s = StyleSheet.create({
     borderRadius: 9,
     backgroundColor: C.neon,
     borderWidth: 2,
-    borderColor: C.ink,
+    borderColor: C.mapBg,
   },
   hereLabel: {
     marginTop: 7,
     color: C.paper,
     backgroundColor: C.bg,
-    borderWidth: 2,
-    borderColor: C.paper,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 6,
     padding: 5,
     fontFamily: F.mono,
     fontSize: 9,
   },
   marker: {
     position: "absolute",
-    width: 43,
-    height: 43,
-    marginLeft: -21,
-    marginTop: -21,
-    backgroundColor: C.bg,
-    borderWidth: 2,
-    borderColor: C.paper,
+    width: 44,
+    height: 44,
+    marginLeft: -22,
+    marginTop: -22,
+    backgroundColor: "#0A100C",
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: C.paper,
-    shadowOffset: { width: 3, height: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.36,
+    shadowRadius: 7,
+    elevation: 4,
   },
-  active: { backgroundColor: C.neon, borderColor: C.ink },
+  active: { backgroundColor: C.neon, borderColor: C.neon },
   callout: {
     position: "absolute",
     top: 47,
     minWidth: 100,
     color: C.paper,
-    backgroundColor: C.bg,
-    borderWidth: 2,
-    borderColor: C.paper,
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 7,
     padding: 5,
     fontFamily: F.mono,
     fontSize: 9,
     textAlign: "center",
   },
-  tools: { position: "absolute", right: 9, bottom: 9, gap: 5 },
+  tools: { position: "absolute", right: 12, bottom: 12, gap: 7 },
   tool: {
-    width: 33,
-    height: 33,
-    backgroundColor: C.bg,
+    width: 42,
+    height: 42,
+    backgroundColor: C.panel,
     borderWidth: 1,
-    borderColor: C.paper,
+    borderColor: C.line,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
-  categories: { gap: 9, paddingVertical: 17 },
+  categories: { gap: 9, paddingVertical: 15 },
   category: {
-    height: 37,
+    height: 36,
     paddingHorizontal: 14,
-    borderWidth: 2,
-    borderColor: C.paper,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 18,
     justifyContent: "center",
   },
   categoryActive: {
     backgroundColor: C.neon,
-    borderColor: C.ink,
-    shadowColor: C.neon,
-    shadowOffset: { width: 3, height: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
+    borderColor: C.neon,
   },
   categoryText: { color: C.paper, fontFamily: F.mono, fontSize: 10 },
   categoryTextActive: { color: C.ink },
   prompt: {
     padding: 12,
-    backgroundColor: C.paper,
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  promptText: { color: C.ink, fontFamily: F.display, fontSize: 17 },
+  promptText: { color: C.paper, fontFamily: F.display, fontSize: 17 },
   route: {
-    backgroundColor: C.green,
+    backgroundColor: C.neon,
+    borderRadius: 9,
     padding: 10,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  routeText: { color: C.ink, fontFamily: F.mono, fontSize: 11 },
+  routeText: { color: C.ink, fontFamily: F.mono, fontSize: 11, fontWeight: "700" },
 });

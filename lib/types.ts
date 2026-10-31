@@ -9,6 +9,8 @@ export type Vendor = {
   logo_url: string | null;
   campaign_url: string | null;
   is_sponsor: boolean;
+  is_featured: boolean;
+  is_published: boolean;
   sort_order: number;
 };
 

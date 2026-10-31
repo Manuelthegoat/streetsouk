@@ -1,0 +1,2 @@
+[functions.jetron-ticket-webhook]
+verify_jwt = false

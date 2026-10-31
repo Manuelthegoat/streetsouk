@@ -60,6 +60,9 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { profile, save } = useProfile();
+  const displayName = [profile?.first_name, profile?.last_name]
+    .filter(Boolean)
+    .join(" ");
   const [savingNotifications, setSavingNotifications] = useState(false);
   const [guidance, setGuidance] = useState(true);
   const [motion, setMotion] = useState(false);
@@ -124,18 +127,40 @@ export default function SettingsScreen() {
         <Text style={s.kicker}>STREET SOUK / SETTINGS</Text>
         <Text style={s.title}>YOUR ACCOUNT</Text>
         <View style={s.rule} />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Edit profile"
+          onPress={() => router.push("/edit-profile")}
+          style={s.profileCard}
+        >
+          <View style={s.profileImageFrame}>
+            {profile?.avatar_url ? (
+              <CachedImage
+                source={{ uri: profile.avatar_url }}
+                contentFit="cover"
+                style={s.profileImage}
+              />
+            ) : (
+              <View style={s.profileImagePlaceholder}>
+                <Ionicons name="person" size={42} color={C.muted} />
+              </View>
+            )}
+          </View>
+          <Text style={s.profileUsername}>
+            {profile?.username ? `@${profile.username}` : "CHOOSE A USERNAME"}
+          </Text>
+          <Text style={s.profileDisplayName}>
+            {displayName || (user ? "ADD YOUR DISPLAY NAME" : "YOUR PROFILE")}
+          </Text>
+          <View style={s.profileEdit}>
+            <Text style={s.profileEditText}>EDIT PROFILE</Text>
+            <Ionicons name="arrow-forward" size={15} color={C.neon} />
+          </View>
+        </Pressable>
         <Pressable onPress={() => router.push("/my-souk")} style={s.mySouk}>
           <Ionicons name="heart-outline" size={20} color={C.ink} />
           <Text style={s.mySoukText}>OPEN MY SOUK</Text>
           <Ionicons name="arrow-forward" size={18} color={C.ink} />
-        </Pressable>
-        <Pressable onPress={() => router.push("/edit-profile")} style={s.action}>
-          <Ionicons name="person-outline" size={20} color={C.neon} />
-          <View style={s.rowCopy}>
-            <Text style={s.rowTitle}>EDIT PROFILE</Text>
-            <Text style={s.rowDetail}>Update your Street Souk account details.</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={C.muted} />
         </Pressable>
         <Text style={s.section}>ACCOUNT PREFERENCES</Text>
         <SettingRow
@@ -233,6 +258,52 @@ const s = StyleSheet.create({
   kicker: { color: C.muted, fontFamily: F.mono, fontSize: 10 },
   title: { color: C.neon, fontFamily: F.display, fontSize: 38, marginTop: 5 },
   rule: { height: 2, backgroundColor: C.line, marginTop: 10, marginBottom: 30 },
+  profileCard: {
+    alignItems: "center",
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.line,
+    paddingHorizontal: 18,
+    paddingTop: 22,
+    paddingBottom: 17,
+    marginBottom: 20,
+  },
+  profileImageFrame: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    borderWidth: 2,
+    borderColor: C.neon,
+    overflow: "hidden",
+    marginBottom: 14,
+  },
+  profileImage: { width: "100%", height: "100%" },
+  profileImagePlaceholder: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: C.bg,
+  },
+  profileUsername: {
+    color: C.neon,
+    fontFamily: F.mono,
+    fontSize: 12,
+    letterSpacing: 0.7,
+  },
+  profileDisplayName: {
+    color: C.paper,
+    fontFamily: F.display,
+    fontSize: 24,
+    textAlign: "center",
+    marginTop: 5,
+  },
+  profileEdit: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    marginTop: 12,
+  },
+  profileEditText: { color: C.neon, fontFamily: F.mono, fontSize: 9 },
   mySouk: {
     backgroundColor: C.green,
     padding: 14,

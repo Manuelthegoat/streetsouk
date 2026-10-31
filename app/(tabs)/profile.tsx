@@ -15,7 +15,7 @@ import {
 } from "react-native";
 
 const rows = [
-  ["MY SOUK", "Saved brands & plans", "heart-outline", "/my-souk"],
+  ["MY SOUK", "Wishlist, saved brands & plans", "heart-outline", "/my-souk"],
   [
     "SS PASSPORT",
     "Your convention brand stamps",
@@ -59,6 +59,10 @@ export default function ProfileScreen() {
           onPress={() => router.push(user ? "/edit-profile" : "/sign-in")}
           style={s.identity}
         >
+          <View style={s.identityTop}>
+            <Text style={s.identityEyebrow}>YOUR STREET SOUK ID</Text>
+            <Ionicons name="arrow-up-right" size={19} color={C.neon} />
+          </View>
           <View style={[s.avatar, { overflow: "hidden" }]}>
             {profile?.avatar_url ? (
               <Image
@@ -74,19 +78,17 @@ export default function ProfileScreen() {
               />
             )}
           </View>
-          <View style={s.welcome}>
-            <Text style={s.name} numberOfLines={1}>
-              {user ? fullName || "SIGNED IN" : "WELCOME TO THE SOUK"}
-            </Text>
-            <Text style={s.detail} numberOfLines={1}>
-              {user
-                ? profile?.username
-                  ? `@${profile.username}`
-                  : user.email
-                : "Sign in to keep your world in one place."}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={C.muted} />
+          <Text style={s.identityUsername} numberOfLines={1}>
+            {user
+              ? profile?.username
+                ? `@${profile.username}`
+                : "CHOOSE A USERNAME"
+              : "SIGN IN TO CREATE YOUR PROFILE"}
+          </Text>
+          <Text style={s.name} numberOfLines={1}>
+            {user ? fullName || "ADD YOUR DISPLAY NAME" : "WELCOME TO THE SOUK"}
+          </Text>
+          <Text style={s.identityAction}>VIEW OR EDIT PROFILE</Text>
         </Pressable>
 
         <Text style={s.section}>YOUR ACCOUNT</Text>
@@ -145,24 +147,59 @@ const s = StyleSheet.create({
   title: { color: C.neon, fontFamily: F.display, fontSize: 43, marginTop: 4 },
   identity: {
     marginTop: 18,
-    minHeight: 88,
-    padding: 13,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 19,
     backgroundColor: C.panel,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  identityTop: {
+    width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    gap: 13,
+    justifyContent: "space-between",
+    marginBottom: 17,
+  },
+  identityEyebrow: {
+    color: C.muted,
+    fontFamily: F.mono,
+    fontSize: 9,
+    letterSpacing: 1,
   },
   avatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 30,
-    backgroundColor: "#393939",
+    width: 112,
+    height: 112,
+    borderRadius: 56,
+    borderWidth: 2,
+    borderColor: C.neon,
+    backgroundColor: C.bg,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 14,
   },
-  welcome: { flex: 1 },
-  name: { color: C.neon, fontFamily: F.display, fontSize: 16 },
-  detail: { color: C.muted, fontFamily: F.body, fontSize: 13, marginTop: 4 },
+  identityUsername: {
+    color: C.neon,
+    fontFamily: F.mono,
+    fontSize: 11,
+    letterSpacing: 0.7,
+    textAlign: "center",
+  },
+  name: {
+    color: C.paper,
+    fontFamily: F.display,
+    fontSize: 25,
+    textAlign: "center",
+    marginTop: 5,
+  },
+  identityAction: {
+    color: C.muted,
+    fontFamily: F.mono,
+    fontSize: 8,
+    letterSpacing: 0.8,
+    marginTop: 12,
+  },
   section: {
     color: C.neon,
     fontFamily: F.mono,

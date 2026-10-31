@@ -1,7 +1,7 @@
 import { C, CartBadge, F } from "@/components/street-souk-ui";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Image } from "expo-image";
+import { Image, ImageBackground } from "expo-image";
 import { useState } from "react";
 import {
   Pressable,
@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
   ActivityIndicator,
+  Share,
 } from "react-native";
 import { useStreetSoukStore } from "@/context/street-souk-store";
 import { useVendors } from "@/hooks/use-vendors";
@@ -20,7 +21,7 @@ import { groupByDay, useSchedule } from "@/hooks/use-schedule";
 import { useFaqs } from "@/hooks/use-faqs";
 import { formatTimeRange } from "@/lib/format";
 import { scheduleImage } from "@/lib/vendor-assets";
-import { isPastEvent } from "@/lib/event-dates";
+import { isPastEvent, isUpcomingEvent } from "@/lib/event-dates";
 import {
   FaqSkeleton,
   ImageRowSkeleton,
@@ -37,11 +38,11 @@ import { useEventVendors } from "@/hooks/use-event-vendors";
 
 const tabs = [
   "Event Map",
+  "Tickets",
   "Live",
   "Schedule",
   "Marketplace",
   "Lineup",
-  "Tickets",
   "FAQ",
 ] as const;
 type EventTab = (typeof tabs)[number];
@@ -51,6 +52,19 @@ export default function EventDetailScreen() {
   const { id, tab } = useLocalSearchParams<{ id: string; tab?: string }>();
   const { event, loading: eventLoading } = useEvent(id);
   const eventId = event?.id ?? null;
+  const pastEvent = !!event && isPastEvent(event);
+  const showUpcomingPreview = !!event && isUpcomingEvent(event);
+  const ticketsUnavailable = eventLoading || !event || pastEvent;
+  const ticketUnavailableLabel = eventLoading
+    ? "CHECKING EVENT"
+    : event
+      ? "SALES ENDED"
+      : "TICKETS UNAVAILABLE";
+  const ticketUnavailableMessage = eventLoading
+    ? "Checking whether ticket sales are open."
+    : event
+      ? "Ticket sales are closed because this event has ended."
+      : "Ticket sales are unavailable for this event.";
   const [activeTab, setActiveTab] = useState<EventTab>(
     tabs.find((t) => t === tab) ?? "Event Map",
   );
@@ -83,6 +97,27 @@ export default function EventDetailScreen() {
           </View>
         </Pressable>
       </View>
+      {pastEvent && (
+        <View style={s.pastEventBanner} accessibilityRole="text">
+          <Ionicons name="time-outline" size={16} color={C.ink} />
+          <Text style={s.pastEventBannerText}>PAST EVENT · SALES ENDED</Text>
+        </View>
+      )}
+      {showUpcomingPreview && event ? (
+        <UpcomingEventPreview
+          event={event}
+          onGetTickets={() =>
+            router.push({
+              pathname: "/tickets",
+              params: {
+                eventSlug: "streetsouk-2026",
+                pastEvent: "false",
+              },
+            })
+          }
+        />
+      ) : (
+        <>
       <ScrollView
         horizontal
         style={s.tabs}
@@ -122,11 +157,6 @@ export default function EventDetailScreen() {
                     .filter(Boolean)
                     .join(" / ")}
                 </Text>
-                {event && isPastEvent(event) && (
-                  <View style={s.pastTag}>
-                    <Text style={s.pastTagText}>PAST EVENT</Text>
-                  </View>
-                )}
               </>
             )}
             <View style={s.rule} />
@@ -161,19 +191,144 @@ export default function EventDetailScreen() {
         {activeTab === "FAQ" && <Faq eventId={eventId} />}
         {activeTab === "Live" && <LiveContent eventId={eventId} />}
         {activeTab === "Tickets" && (
-          <Feature
-            icon="ticket-outline"
-            eyebrow="YOUR WAY IN"
-            title="TICKETS"
-            body="Choose your ticket and check out securely with Jetron."
-            action="BUY TICKETS"
+          <TicketFeature
+            eventName={event?.title ?? "STREET SOUK 2026"}
+            eventDetail={[event?.date_label, event?.location]
+              .filter(Boolean)
+              .join("  ·  ")}
+            unavailable={ticketsUnavailable}
+            unavailableLabel={ticketUnavailableLabel}
+            unavailableMessage={ticketUnavailableMessage}
             onPress={() =>
-              router.push({ pathname: "/tickets", params: { eventSlug: event?.slug ?? "" } })
+              router.push({
+                pathname: "/tickets",
+                params: {
+                  eventSlug: "streetsouk-2026",
+                  pastEvent: event && isPastEvent(event) ? "true" : "false",
+                },
+              })
             }
           />
         )}
       </ScrollView>
+        </>
+      )}
     </SafeAreaView>
+  );
+}
+
+function UpcomingEventPreview({
+  event,
+  onGetTickets,
+}: {
+  event: NonNullable<ReturnType<typeof useEvent>["event"]>;
+  onGetTickets: () => void;
+}) {
+  const shareEvent = async () => {
+    const details = [event.date_label, event.location].filter(Boolean).join(" · ");
+    const link = `streetsouk://events/${encodeURIComponent(event.slug)}`;
+    await Share.share({
+      title: event.title,
+      message: [event.title, details, event.description, link]
+        .filter(Boolean)
+        .join("\n\n"),
+    });
+  };
+  const actionLabel = event.badge?.toLowerCase().includes("rsvp")
+    ? "RSVP NOW"
+    : "GET TICKETS";
+
+  return (
+    <>
+      <ScrollView
+        contentContainerStyle={s.previewContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <ImageBackground
+          source={
+            event.cover_url
+              ? { uri: event.cover_url }
+              : require("@/assets/brands/bolacampaign.jpg")
+          }
+          style={s.previewHero}
+        >
+          <View style={s.previewScrim} />
+          <View style={s.previewBadge}>
+            <View style={s.previewBadgeDot} />
+            <Text style={s.previewBadgeText}>
+              {event.badge?.toUpperCase() || "UPCOMING EVENT"}
+            </Text>
+          </View>
+          <View style={s.previewHeroCopy}>
+            <Text style={s.previewKicker}>
+              THE NEXT STREET SOUK
+            </Text>
+            <Text style={s.previewTitle}>{event.title}</Text>
+          </View>
+        </ImageBackground>
+
+        <View style={s.previewMetaRow}>
+          <View style={s.previewMetaCard}>
+            <Ionicons name="calendar-outline" size={18} color={C.neon} />
+            <View style={s.previewMetaCopy}>
+              <Text style={s.previewMetaLabel}>WHEN</Text>
+              <Text style={s.previewMetaValue}>
+                {event.date_label || "Date to be announced"}
+              </Text>
+            </View>
+          </View>
+          <View style={s.previewMetaCard}>
+            <Ionicons name="location-outline" size={18} color={C.neon} />
+            <View style={s.previewMetaCopy}>
+              <Text style={s.previewMetaLabel}>WHERE</Text>
+              <Text style={s.previewMetaValue}>
+                {event.location || "Location to be announced"}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={s.previewDescriptionCard}>
+          <View style={s.previewDescriptionHeading}>
+            <Text style={s.previewSectionLabel}>ABOUT THIS EVENT</Text>
+            <View style={s.previewSectionRule} />
+          </View>
+          <Text style={s.previewDescription}>
+            {event.description || "More event details will be announced soon."}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={shareEvent}
+            style={s.shareButton}
+          >
+            <Ionicons name="share-social-outline" size={19} color={C.neon} />
+            <Text style={s.shareButtonText}>SHARE EVENT</Text>
+            <Ionicons name="arrow-up-outline" size={16} color={C.neon} />
+          </Pressable>
+        </View>
+      </ScrollView>
+
+      <View style={s.previewFooter}>
+        <View style={s.previewFooterCopy}>
+          <Text style={s.previewFooterLabel}>
+            SAVE YOUR SPOT
+          </Text>
+          <Text style={s.previewFooterHint}>
+            Be there when it goes down.
+          </Text>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onGetTickets}
+          style={s.previewTicketButton}
+        >
+          <Text style={s.previewTicketButtonText}>
+            {actionLabel}
+          </Text>
+          <Ionicons name="arrow-forward" size={19} color={C.ink} />
+        </Pressable>
+      </View>
+    </>
   );
 }
 
@@ -204,6 +359,85 @@ function Feature({
         <Text style={s.buttonText}>{action}</Text>
         <Ionicons name="arrow-forward" size={18} color={C.ink} />
       </Pressable>
+    </View>
+  );
+}
+
+function TicketFeature({
+  eventName,
+  eventDetail,
+  unavailable,
+  unavailableLabel,
+  unavailableMessage,
+  onPress,
+}: {
+  eventName: string;
+  eventDetail: string;
+  unavailable: boolean;
+  unavailableLabel: string;
+  unavailableMessage: string;
+  onPress: () => void;
+}) {
+  return (
+    <View style={s.ticketFeature}>
+      <View style={s.ticketFeatureTop}>
+        <View style={s.ticketFeatureIcon}>
+          <Ionicons name="ticket" size={25} color={C.ink} />
+        </View>
+        <View style={s.ticketSecureBadge}>
+          <View style={s.ticketSecureDot} />
+          <Text style={s.ticketSecureText}>OFFICIAL TICKETS</Text>
+        </View>
+      </View>
+      <Text style={s.ticketFeatureEyebrow}>YOUR WAY IN STARTS HERE</Text>
+      <Text style={s.ticketFeatureTitle}>
+        {unavailable ? "TICKETS\nUNAVAILABLE." : "GET YOUR\nSTREET SOUK PASS."}
+      </Text>
+      <Text style={s.ticketFeatureBody}>
+        {unavailable
+          ? unavailableMessage
+          : "Pick your pass, add your details, and check out securely with Jetron."}
+      </Text>
+      <View style={s.ticketEventStrip}>
+        <View style={s.ticketEventMark}>
+          <Ionicons name="sparkles-outline" size={18} color={C.neon} />
+        </View>
+        <View style={s.ticketEventCopy}>
+          <Text style={s.ticketEventLabel}>YOU’RE BOOKING FOR</Text>
+          <Text numberOfLines={1} style={s.ticketEventName}>
+            {eventName}
+          </Text>
+          {!!eventDetail && (
+            <Text numberOfLines={1} style={s.ticketEventDetail}>
+              {eventDetail}
+            </Text>
+          )}
+        </View>
+        <Ionicons name="arrow-forward" size={17} color={C.neon} />
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: unavailable }}
+        disabled={unavailable}
+        style={[s.ticketFeatureButton, unavailable && s.ticketFeatureButtonDisabled]}
+        onPress={onPress}
+      >
+        <Text
+          style={[
+            s.ticketFeatureButtonText,
+            unavailable && s.ticketFeatureButtonTextDisabled,
+          ]}
+        >
+          {unavailable ? unavailableLabel : "BUY TICKETS"}
+        </Text>
+        {!unavailable && <Ionicons name="arrow-forward" size={20} color={C.ink} />}
+      </Pressable>
+      <View style={s.ticketFeatureFoot}>
+        <Ionicons name="shield-checkmark-outline" size={15} color={C.muted} />
+        <Text style={s.ticketFeatureFootText}>
+          Secure payment · Tickets delivered by email
+        </Text>
+      </View>
     </View>
   );
 }
@@ -606,6 +840,21 @@ const s = StyleSheet.create({
   headerAction: { width: 45, height: 42, justifyContent: "center" },
   cart: { alignItems: "flex-end" },
   logo: { width: 92, height: 38 },
+  pastEventBanner: {
+    minHeight: 38,
+    paddingHorizontal: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: C.muted,
+  },
+  pastEventBannerText: {
+    color: C.ink,
+    fontFamily: F.mono,
+    fontSize: 10,
+    letterSpacing: 0.8,
+  },
   tabs: {
     height: 49,
     borderBottomWidth: 1,
@@ -623,6 +872,176 @@ const s = StyleSheet.create({
   tabText: { color: C.muted, fontFamily: F.display, fontSize: 13 },
   tabTextActive: { color: C.neon },
   content: { padding: 18, paddingBottom: 40 },
+  previewContent: { padding: 16, paddingBottom: 18 },
+  previewHero: {
+    height: 330,
+    justifyContent: "space-between",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 19,
+    backgroundColor: C.panel,
+  },
+  previewScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.34)",
+  },
+  previewBadge: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    margin: 15,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+    backgroundColor: C.ink,
+    borderWidth: 1,
+    borderColor: C.neon,
+    borderRadius: 20,
+  },
+  previewBadgeDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: C.neon,
+  },
+  previewBadgeText: {
+    color: C.neon,
+    fontFamily: F.mono,
+    fontSize: 9,
+    letterSpacing: 0.8,
+  },
+  previewHeroCopy: {
+    paddingHorizontal: 17,
+    paddingBottom: 20,
+    paddingTop: 54,
+    backgroundColor: "rgba(5, 5, 5, 0.58)",
+  },
+  previewKicker: {
+    color: C.neon,
+    fontFamily: F.mono,
+    fontSize: 9,
+    letterSpacing: 1.4,
+  },
+  previewTitle: {
+    color: C.paper,
+    fontFamily: F.display,
+    fontSize: 36,
+    lineHeight: 40,
+    marginTop: 5,
+  },
+  previewMetaRow: { flexDirection: "row", gap: 10, marginTop: 12 },
+  previewMetaCard: {
+    minHeight: 76,
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    paddingHorizontal: 11,
+    paddingVertical: 10,
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 13,
+  },
+  previewMetaCopy: { flex: 1 },
+  previewMetaLabel: {
+    color: C.muted,
+    fontFamily: F.mono,
+    fontSize: 8,
+    letterSpacing: 0.9,
+  },
+  previewMetaValue: {
+    color: C.paper,
+    fontFamily: F.bodyBold,
+    fontSize: 13,
+    marginTop: 4,
+  },
+  previewDescriptionCard: {
+    padding: 16,
+    marginTop: 12,
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 15,
+  },
+  previewDescriptionHeading: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  previewSectionLabel: {
+    color: C.neon,
+    fontFamily: F.mono,
+    fontSize: 9,
+    letterSpacing: 1,
+  },
+  previewSectionRule: { height: 1, flex: 1, backgroundColor: C.line },
+  previewDescription: {
+    color: C.paper,
+    fontFamily: F.body,
+    fontSize: 16,
+    lineHeight: 23,
+    marginTop: 13,
+  },
+  shareButton: {
+    minHeight: 46,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 9,
+    marginTop: 17,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 11,
+  },
+  shareButtonText: {
+    color: C.neon,
+    fontFamily: F.mono,
+    fontSize: 10,
+    letterSpacing: 0.7,
+  },
+  previewFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 10,
+    backgroundColor: C.panel,
+    borderTopWidth: 1,
+    borderTopColor: C.line,
+  },
+  previewFooterCopy: { flex: 1 },
+  previewFooterLabel: {
+    color: C.neon,
+    fontFamily: F.mono,
+    fontSize: 8,
+    letterSpacing: 0.8,
+  },
+  previewFooterHint: {
+    color: C.paper,
+    fontFamily: F.body,
+    fontSize: 13,
+    marginTop: 3,
+  },
+  previewTicketButton: {
+    minHeight: 50,
+    minWidth: 145,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    paddingHorizontal: 13,
+    backgroundColor: C.neon,
+    borderRadius: 11,
+  },
+  previewTicketButtonText: {
+    color: C.ink,
+    fontFamily: F.mono,
+    fontSize: 10,
+    fontWeight: "700",
+  },
   eventName: {
     color: C.neon,
     fontFamily: F.display,
@@ -631,14 +1050,6 @@ const s = StyleSheet.create({
   },
   eventMeta: { color: C.neon, fontFamily: F.mono, fontSize: 9, marginTop: 5 },
   rule: { height: 1, backgroundColor: C.line, marginTop: 17, marginBottom: 21 },
-  pastTag: {
-    alignSelf: "flex-start",
-    marginTop: 10,
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    backgroundColor: C.muted,
-  },
-  pastTagText: { color: C.ink, fontFamily: F.mono, fontSize: 9 },
   feature: {
     minHeight: 280,
     justifyContent: "center",
@@ -679,6 +1090,126 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
   },
   buttonText: { color: C.ink, fontFamily: F.mono, fontSize: 10 },
+  ticketFeature: {
+    padding: 17,
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.line,
+    overflow: "hidden",
+  },
+  ticketFeatureTop: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  ticketFeatureIcon: {
+    width: 53,
+    height: 53,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: C.neon,
+    transform: [{ rotate: "-5deg" }],
+  },
+  ticketSecureBadge: {
+    minHeight: 28,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 9,
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  ticketSecureDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: C.neon,
+  },
+  ticketSecureText: { color: C.neon, fontFamily: F.mono, fontSize: 7 },
+  ticketFeatureEyebrow: {
+    color: C.neon,
+    fontFamily: F.mono,
+    fontSize: 8,
+    letterSpacing: 0.8,
+  },
+  ticketFeatureTitle: {
+    color: C.paper,
+    fontFamily: F.display,
+    fontSize: 31,
+    lineHeight: 35,
+    marginTop: 7,
+  },
+  ticketFeatureBody: {
+    color: C.muted,
+    fontFamily: F.body,
+    fontSize: 15,
+    lineHeight: 21,
+    marginTop: 8,
+  },
+  ticketEventStrip: {
+    minHeight: 68,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 10,
+    marginTop: 21,
+    backgroundColor: C.bg,
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  ticketEventMark: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  ticketEventCopy: { flex: 1 },
+  ticketEventLabel: {
+    color: C.muted,
+    fontFamily: F.mono,
+    fontSize: 7,
+    letterSpacing: 0.4,
+  },
+  ticketEventName: {
+    color: C.paper,
+    fontFamily: F.bodyBold,
+    fontSize: 15,
+    marginTop: 2,
+  },
+  ticketEventDetail: {
+    color: C.muted,
+    fontFamily: F.body,
+    fontSize: 11,
+    marginTop: 1,
+  },
+  ticketFeatureButton: {
+    minHeight: 54,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 15,
+    marginTop: 12,
+    backgroundColor: C.neon,
+  },
+  ticketFeatureButtonDisabled: { backgroundColor: "#27332A" },
+  ticketFeatureButtonText: {
+    color: C.ink,
+    fontFamily: F.mono,
+    fontSize: 11,
+    letterSpacing: 0.3,
+  },
+  ticketFeatureButtonTextDisabled: { color: C.muted },
+  ticketFeatureFoot: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 13,
+  },
+  ticketFeatureFootText: { color: C.muted, fontFamily: F.body, fontSize: 12 },
   sectionEyebrow: { color: C.muted, fontFamily: F.mono, fontSize: 9 },
   scheduleFilters: { gap: 8, paddingVertical: 15 },
   scheduleFilter: {

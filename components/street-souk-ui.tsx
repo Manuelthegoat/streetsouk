@@ -121,7 +121,7 @@ export const ui = StyleSheet.create({
   headerTitle: {
     color: C.neon,
     fontFamily: F.display,
-    fontSize: 24,
+    fontSize: 16,
     textAlign: "center",
     flex: 1,
     letterSpacing: 1,

@@ -1,5 +1,6 @@
 const API_BASE = "https://fluid.jetronticket.com/api/v1";
 const API_KEY = process.env.EXPO_PUBLIC_JETRON_API_KEY;
+const CHECKOUT_CALLBACK_URL = "streetsouk://tickets";
 
 export type JetronEvent = {
   slug: string;
@@ -74,6 +75,10 @@ export async function listJetronEvents() {
   return Array.isArray(result) ? result : result.items ?? [];
 }
 
+export async function getJetronEvent(slug: string) {
+  return request<JetronEvent>(`/events/${encodeURIComponent(slug)}`);
+}
+
 export async function listJetronTickets(slug: string) {
   const result = await request<{ items?: JetronTicket[] } | JetronTicket[]>(
     `/events/${encodeURIComponent(slug)}/tickets`,
@@ -100,14 +105,27 @@ export async function reserveJetronTickets(
 export async function createJetronOrder(
   slug: string,
   reservation: JetronReservation,
-  buyer: { email: string; firstName: string; lastName: string },
+  buyer: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    eventName?: string;
+    ticketNames?: Record<string, string>;
+  },
 ) {
+  const { eventName, ticketNames, ...customer } = buyer;
   return request<JetronOrder>(`/events/${encodeURIComponent(slug)}/orders`, {
     method: "POST",
     headers: { "X-Device-ID": reservation.reservationToken },
     body: JSON.stringify({
       quoteReference: reservation.quoteReference,
-      ...buyer,
+      ...customer,
+      callbackUrl: CHECKOUT_CALLBACK_URL,
+      metadata: {
+        eventSlug: slug,
+        eventName: eventName ?? slug,
+        ticketNames: ticketNames ?? {},
+      },
     }),
   });
 }

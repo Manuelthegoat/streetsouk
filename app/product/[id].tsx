@@ -1,6 +1,7 @@
 import { ProductDetailSkeleton } from "@/components/skeleton";
 import { C, CartBadge, F } from "@/components/street-souk-ui";
 import { useCart } from "@/context/cart-context";
+import { useStreetSoukStore } from "@/context/street-souk-store";
 import { useCatalog } from "@/hooks/use-catalog";
 import { brandKey } from "@/lib/brand";
 import { formatNaira } from "@/lib/format";
@@ -28,6 +29,7 @@ export default function ProductScreen() {
   const { catalog, loading } = useCatalog();
   const product = catalog?.byId.get(id) ?? null;
   const { add, items } = useCart();
+  const { isProductWishlisted, toggleWishlistedProduct } = useStreetSoukStore();
   const { width } = useWindowDimensions();
   const [picked, setPicked] = useState<Record<string, string>>({});
   const [needChoice, setNeedChoice] = useState(false);
@@ -147,17 +149,31 @@ export default function ProductScreen() {
           <Ionicons name="arrow-back" size={22} color={C.paper} />
         </Pressable>
         <Text style={s.headerTitle}>THE STORE</Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Open cart"
-          onPress={() => router.push("/cart")}
-          style={s.iconBtn}
-        >
-          <View>
-            <Ionicons name="cart-outline" size={22} color={C.paper} />
-            <CartBadge />
-          </View>
-        </Pressable>
+        <View style={s.headerActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${isProductWishlisted(id) ? "Remove from" : "Add to"} wishlist`}
+            onPress={() => toggleWishlistedProduct(id)}
+            style={s.iconBtn}
+          >
+            <Ionicons
+              name={isProductWishlisted(id) ? "heart" : "heart-outline"}
+              size={21}
+              color={C.neon}
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open cart"
+            onPress={() => router.push("/cart")}
+            style={s.iconBtn}
+          >
+            <View>
+              <Ionicons name="cart-outline" size={22} color={C.paper} />
+              <CartBadge />
+            </View>
+          </Pressable>
+        </View>
       </View>
 
       {loading && !catalog ? (
@@ -312,6 +328,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   headerTitle: {
     color: C.neon,
     fontFamily: F.display,

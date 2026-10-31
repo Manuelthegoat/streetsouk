@@ -1,8 +1,11 @@
 import { C, F } from "@/components/street-souk-ui";
 import { useStreetSoukStore } from "@/context/street-souk-store";
 import { useAllSchedule } from "@/hooks/use-schedule";
+import { useCatalog, type CatalogProduct } from "@/hooks/use-catalog";
 import { useVendors } from "@/hooks/use-vendors";
+import { formatNaira } from "@/lib/format";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import {
   Pressable,
@@ -16,10 +19,20 @@ import { ListRowSkeleton } from "@/components/skeleton";
 
 export default function MySoukScreen() {
   const router = useRouter();
-  const { favorites, savedEvents, startingPoint } = useStreetSoukStore();
+  const {
+    favorites,
+    savedEvents,
+    startingPoint,
+    wishlistedProducts,
+    toggleWishlistedProduct,
+  } = useStreetSoukStore();
   const { vendors, loading: vendorsLoading } = useVendors();
   const favoriteVendors = vendors.filter((v) => favorites.includes(v.slug));
   const { items: scheduleItems, loading: scheduleLoading } = useAllSchedule();
+  const { catalog, loading: catalogLoading } = useCatalog();
+  const wishlist = wishlistedProducts
+    .map((id) => catalog?.byId.get(id))
+    .filter((product): product is CatalogProduct => !!product);
   const savedScheduleItems = scheduleItems.filter((i) =>
     savedEvents.includes(i.id),
   );
@@ -50,7 +63,49 @@ export default function MySoukScreen() {
             <Text style={s.statValue}>{savedScheduleItems.length}</Text>
             <Text style={s.statLabel}>SAVED EVENTS</Text>
           </View>
+          <View>
+            <Text style={s.statValue}>{wishlistedProducts.length}</Text>
+            <Text style={s.statLabel}>WISHLIST</Text>
+          </View>
         </View>
+        <Text style={s.section}>WISHLIST</Text>
+        {catalogLoading && wishlistedProducts.length > 0 ? (
+          <ListRowSkeleton count={Math.min(wishlistedProducts.length, 3)} />
+        ) : wishlist.length ? (
+          wishlist.map((product) => (
+            <View key={product.id} style={s.productRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`View ${product.name}`}
+                style={s.productInfo}
+                onPress={() =>
+                  router.push({ pathname: "/product/[id]", params: { id: product.id } })
+                }
+              >
+                <Image
+                  source={product.images[0] ? { uri: product.images[0] } : require("@/assets/images/sslogo.png")}
+                  contentFit={product.images[0] ? "cover" : "contain"}
+                  style={s.productImage}
+                />
+                <View style={s.productCopy}>
+                  <Text numberOfLines={1} style={s.productName}>{product.name}</Text>
+                  <Text numberOfLines={1} style={s.productBrand}>{product.brand}</Text>
+                  <Text style={s.productPrice}>{formatNaira(product.price)}</Text>
+                </View>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Remove ${product.name} from wishlist`}
+                onPress={() => toggleWishlistedProduct(product.id)}
+                style={s.removeWish}
+              >
+                <Ionicons name="heart" size={20} color={C.neon} />
+              </Pressable>
+            </View>
+          ))
+        ) : (
+          <Empty text="SAVE PRODUCTS YOU LOVE TO FIND THEM HERE." />
+        )}
         <Text style={s.section}>SAVED VENDORS</Text>
         {vendorsLoading && favorites.length > 0 ? (
           <ListRowSkeleton count={Math.min(favorites.length, 3)} />
@@ -153,6 +208,22 @@ const s = StyleSheet.create({
     marginTop: 14,
     marginBottom: 10,
   },
+  productRow: {
+    minHeight: 82,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: C.line,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  productInfo: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12 },
+  productImage: { width: 54, height: 62, backgroundColor: C.panel },
+  productCopy: { flex: 1, gap: 3 },
+  productName: { color: C.paper, fontFamily: F.display, fontSize: 16 },
+  productBrand: { color: C.muted, fontFamily: F.mono, fontSize: 9 },
+  productPrice: { color: C.neon, fontFamily: F.mono, fontSize: 11 },
+  removeWish: { width: 42, height: 48, alignItems: "center", justifyContent: "center" },
   row: {
     minHeight: 54,
     borderTopWidth: 1,

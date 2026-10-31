@@ -18,6 +18,7 @@ export function useVendors() {
   const { data, loading, error, reload } = useCachedQuery(
     "vendors",
     fetchVendors,
+    { ttl: 60_000 },
   );
   return { vendors: data ?? EMPTY, loading, error, reload };
 }

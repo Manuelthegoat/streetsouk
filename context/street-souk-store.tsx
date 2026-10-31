@@ -20,6 +20,9 @@ type SoukStore = {
   savedEvents: string[]; // schedule item ids
   toggleSavedEvent: (eventId: string) => void;
   isEventSaved: (eventId: string) => boolean;
+  wishlistedProducts: string[]; // Zappie product ids
+  toggleWishlistedProduct: (productId: string) => void;
+  isProductWishlisted: (productId: string) => boolean;
   passportStamps: string[];
   addPassportStamp: (brand: string) => void;
   startingPoint: string;
@@ -39,6 +42,7 @@ export function StreetSoukStore({ children }: PropsWithChildren) {
 
   const [favorites, setFavorites] = useState<string[]>([]);
   const [savedEvents, setSavedEvents] = useState<string[]>([]);
+  const [wishlistedProducts, setWishlistedProducts] = useState<string[]>([]);
   const [passportStamps, setPassportStamps] = useState<string[]>([]);
   const [startingPoint, setStartingPoint] = useState("NORTH ENTRANCE");
   const hydrated = useRef(false);
@@ -75,13 +79,15 @@ export function StreetSoukStore({ children }: PropsWithChildren) {
     if (!userId) {
       setFavorites([]);
       setSavedEvents([]);
+      setWishlistedProducts([]);
       return;
     }
     let cancelled = false;
     (async () => {
-      const [fav, saved] = await Promise.all([
+      const [fav, saved, wishlist] = await Promise.all([
         supabase.from("favorites").select("vendors(slug)"),
         supabase.from("saved_items").select("schedule_item_id"),
+        supabase.from("wishlisted_products").select("product_id"),
       ]);
       if (cancelled) return;
       const favRows = (fav.data ?? []) as unknown as FavoriteRow[];
@@ -94,6 +100,8 @@ export function StreetSoukStore({ children }: PropsWithChildren) {
       );
       const savedRows = (saved.data ?? []) as { schedule_item_id: string }[];
       setSavedEvents(savedRows.map((row) => row.schedule_item_id));
+      const wishlistRows = (wishlist.data ?? []) as { product_id: string }[];
+      setWishlistedProducts(wishlistRows.map((row) => row.product_id));
     })();
     return () => {
       cancelled = true;
@@ -142,6 +150,37 @@ export function StreetSoukStore({ children }: PropsWithChildren) {
     [userId, savedEvents],
   );
 
+  const toggleWishlistedProduct = useCallback(
+    (productId: string) => {
+      if (!userId) {
+        router.push("/sign-in");
+        return;
+      }
+      const on = !wishlistedProducts.includes(productId);
+      setWishlistedProducts((current) =>
+        on ? [...current, productId] : current.filter((id) => id !== productId),
+      );
+      (async () => {
+        const { error } = on
+          ? await supabase
+              .from("wishlisted_products")
+              .insert({ product_id: productId })
+          : await supabase
+              .from("wishlisted_products")
+              .delete()
+              .eq("product_id", productId);
+        if (error) {
+          setWishlistedProducts((current) =>
+            on
+              ? current.filter((id) => id !== productId)
+              : [...current, productId],
+          );
+        }
+      })();
+    },
+    [userId, wishlistedProducts],
+  );
+
   const value = useMemo<SoukStore>(
     () => ({
       favorites,
@@ -150,6 +189,9 @@ export function StreetSoukStore({ children }: PropsWithChildren) {
       savedEvents,
       toggleSavedEvent,
       isEventSaved: (id) => savedEvents.includes(id),
+      wishlistedProducts,
+      toggleWishlistedProduct,
+      isProductWishlisted: (id) => wishlistedProducts.includes(id),
       passportStamps,
       addPassportStamp: (brand) =>
         setPassportStamps((current) =>
@@ -163,6 +205,8 @@ export function StreetSoukStore({ children }: PropsWithChildren) {
       toggleFavorite,
       savedEvents,
       toggleSavedEvent,
+      wishlistedProducts,
+      toggleWishlistedProduct,
       startingPoint,
       passportStamps,
     ],

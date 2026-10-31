@@ -1,12 +1,13 @@
 import { ImageRowSkeleton, ProductGridSkeleton } from "@/components/skeleton";
 import { C, F, Header } from "@/components/street-souk-ui";
+import { useStreetSoukStore } from "@/context/street-souk-store";
 import { useCatalog, type CatalogProduct } from "@/hooks/use-catalog";
 import { useVendors } from "@/hooks/use-vendors";
 import { brandKey } from "@/lib/brand";
 import { formatNaira } from "@/lib/format";
 import { vendorImage } from "@/lib/vendor-assets";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { Image, ImageBackground } from "expo-image";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
@@ -24,39 +25,58 @@ const PAGE = 24;
 function ProductTile({
   p,
   onPress,
+  compact = false,
 }: {
   p: CatalogProduct;
   onPress: () => void;
+  compact?: boolean;
 }) {
+  const { isProductWishlisted, toggleWishlistedProduct } = useStreetSoukStore();
+  const wishlisted = isProductWishlisted(p.id);
+
   return (
-    <Pressable
-      style={s.product}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${p.brand} ${p.name}`}
-    >
-      <View style={s.imageWrap}>
-        <Image
-          source={p.images[0] ? { uri: p.images[0] } : FALLBACK}
-          contentFit={p.images[0] ? "cover" : "contain"}
-          style={s.image}
+    <View style={[s.product, compact && s.sliderProduct]}>
+      <Pressable
+        style={s.productTap}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${p.brand} ${p.name}`}
+      >
+        <View style={[s.imageWrap, compact && s.sliderImageWrap]}>
+          <Image
+            source={p.images[0] ? { uri: p.images[0] } : FALLBACK}
+            contentFit={p.images[0] ? "cover" : "contain"}
+            style={s.image}
+          />
+          {!p.available ? (
+            <View style={[s.badge, { backgroundColor: C.muted }]}>
+              <Text style={s.badgeText}>SOLD OUT</Text>
+            </View>
+          ) : p.stockLabel ? (
+            <View style={s.badge}>
+              <Text style={s.badgeText}>{p.stockLabel.toUpperCase()}</Text>
+            </View>
+          ) : null}
+        </View>
+        <Text style={s.brand}>{p.brand}</Text>
+        <Text style={s.name} numberOfLines={2}>
+          {p.name}
+        </Text>
+        <Text style={s.price}>{formatNaira(p.price)}</Text>
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${wishlisted ? "Remove" : "Add"} ${p.name} ${wishlisted ? "from" : "to"} wishlist`}
+        onPress={() => toggleWishlistedProduct(p.id)}
+        style={s.wishlistButton}
+      >
+        <Ionicons
+          name={wishlisted ? "heart" : "heart-outline"}
+          size={18}
+          color={C.neon}
         />
-        {!p.available ? (
-          <View style={[s.badge, { backgroundColor: C.muted }]}>
-            <Text style={s.badgeText}>SOLD OUT</Text>
-          </View>
-        ) : p.stockLabel ? (
-          <View style={s.badge}>
-            <Text style={s.badgeText}>{p.stockLabel.toUpperCase()}</Text>
-          </View>
-        ) : null}
-      </View>
-      <Text style={s.brand}>{p.brand}</Text>
-      <Text style={s.name} numberOfLines={2}>
-        {p.name}
-      </Text>
-      <Text style={s.price}>{formatNaira(p.price)}</Text>
-    </Pressable>
+      </Pressable>
+    </View>
   );
 }
 
@@ -66,15 +86,32 @@ export default function ShopScreen() {
   const { vendors } = useVendors();
   const [tab, setTab] = useState("Explore");
   const [shown, setShown] = useState(PAGE);
+  const featuredVendor = vendors.find(
+    (vendor) => vendor.is_featured && vendor.is_published,
+  );
+  const featuredVendorKey = featuredVendor
+    ? brandKey(featuredVendor.name)
+    : null;
+  const featuredProducts = (catalog?.products ?? []).filter(
+    (product) => product.brandKey === featuredVendorKey,
+  );
+  const newArrivalsMenu = catalog?.others.find((item) =>
+    /^new arrivals$/i.test(item.name.trim()),
+  );
 
   // EXPLORE and BRANDS, then one tab for every other menu you create in Zappie
   const tabs = [
     "Explore",
+    "New Arrivals",
     "Brands",
-    ...(catalog?.others.map((m) => m.name) ?? []),
+    ...(catalog?.others
+      .filter((item) => item !== newArrivalsMenu)
+      .map((item) => item.name) ?? []),
   ];
   const activeTab = tabs.includes(tab) ? tab : "Explore";
-  const menu = catalog?.others.find((m) => m.name === activeTab);
+  const menu = catalog?.others.find(
+    (item) => item.name === activeTab && item !== newArrivalsMenu,
+  );
 
   // available products first, in Zappie's order
   const explore = useMemo(() => {
@@ -84,6 +121,15 @@ export default function ShopScreen() {
       ...all.filter((p) => !p.available),
     ];
   }, [catalog]);
+  const newArrivals = useMemo(() => {
+    if (newArrivalsMenu) {
+      return newArrivalsMenu.groups.flatMap((group) => group.products);
+    }
+    return explore.filter((product) => product.available).slice(0, PAGE);
+  }, [explore, newArrivalsMenu]);
+  const latestProducts = featuredVendor
+    ? featuredProducts.slice(0, 8)
+    : explore.filter((product) => product.available).slice(0, 8);
 
   const openProduct = (id: string) =>
     router.push({ pathname: "/product/[id]", params: { id } });
@@ -127,17 +173,57 @@ export default function ShopScreen() {
       <ScrollView contentContainerStyle={s.content}>
         {activeTab === "Explore" && (
           <>
-            <Text style={s.kicker}>INDEPENDENT BY NATURE</Text>
-            <Text style={s.title}>THE STORE</Text>
+            <Text style={s.kicker}>STREET SOUK SELECTS</Text>
+            <Text style={s.title}>SHOP THE CULTURE</Text>
             <Text style={s.copy}>
-              Discover the labels shaping the streets. Shop the latest from the
-              StreetSouk community.
+              Discover independent labels, limited drops, and pieces made to be
+              worn your way.
             </Text>
-            <Pressable style={s.banner} onPress={() => setTab("Brands")}>
-              <Text style={s.bannerEyebrow}>MEET THE MAKERS</Text>
-              <Text style={s.bannerTitle}>SHOP THE{"\n"}COMMUNITY</Text>
-              <Text style={s.bannerLink}>BROWSE BRANDS ↗</Text>
-            </Pressable>
+            {featuredVendor ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Shop featured vendor ${featuredVendor.name}`}
+                style={s.featuredVendor}
+                onPress={() => openBrand(brandKey(featuredVendor.name))}
+              >
+                <ImageBackground
+                  source={vendorImage(
+                    featuredVendor.slug,
+                    "campaign",
+                    featuredVendor.campaign_url,
+                  )}
+                  contentFit="cover"
+                  blurRadius={3}
+                  style={s.featuredVendorImage}
+                />
+                <View style={s.featuredVendorShade} />
+                <View style={s.featuredVendorCopy}>
+                  <Text style={s.featuredVendorEyebrow}>FEATURED VENDOR</Text>
+                  <Text numberOfLines={2} style={s.featuredVendorName}>
+                    {featuredVendor.name}
+                  </Text>
+                  <Text style={s.featuredVendorCategory}>
+                    {featuredVendor.category.toUpperCase()}  ·  SHOP THE EDIT
+                  </Text>
+                </View>
+                <View style={s.featuredVendorArrow}>
+                  <Ionicons name="arrow-forward" size={18} color={C.ink} />
+                </View>
+              </Pressable>
+            ) : (
+              <Pressable style={s.featuredEmpty} onPress={openBrands}>
+                <View style={s.featuredEmptyIcon}>
+                  <Ionicons name="sparkles-outline" size={20} color={C.neon} />
+                </View>
+                <View style={s.featuredEmptyCopy}>
+                  <Text style={s.featuredVendorEyebrow}>FEATURED VENDOR</Text>
+                  <Text style={s.featuredEmptyText}>
+                    A fresh label is coming into focus.
+                  </Text>
+                </View>
+                <Ionicons name="arrow-forward" size={18} color={C.neon} />
+              </Pressable>
+            )}
           </>
         )}
         {activeTab === "Brands" && (
@@ -146,6 +232,15 @@ export default function ShopScreen() {
             <Text style={s.title}>BRANDS</Text>
             <Text style={s.copy}>
               Meet the brands shaping the StreetSouk community.
+            </Text>
+          </>
+        )}
+        {activeTab === "New Arrivals" && (
+          <>
+            <Text style={s.kicker}>JUST DROPPED</Text>
+            <Text style={s.title}>NEW ARRIVALS</Text>
+            <Text style={s.copy}>
+              Fresh pieces from the Street Souk community.
             </Text>
           </>
         )}
@@ -166,13 +261,59 @@ export default function ShopScreen() {
         {error && !catalog && (
           <Pressable onPress={reload}>
             <Text style={note}>COULD NOT LOAD THE STORE. TAP TO RETRY.</Text>
+            <Text numberOfLines={3} style={[note, s.errorDetail]}>
+              {error}
+            </Text>
           </Pressable>
         )}
 
         {catalog && activeTab === "Explore" && (
           <>
+            <View style={s.latestHeading}>
+              <View>
+                <Text style={s.latestEyebrow}>FRESH FINDS</Text>
+                <Text style={s.section}>THE LATEST</Text>
+              </View>
+              <Text style={s.count}>
+                {featuredVendor?.name.toUpperCase() ?? "NEW DROPS"}
+              </Text>
+            </View>
+            {latestProducts.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.productSlider}
+              >
+                {latestProducts.map((p) => (
+                  <ProductTile
+                    compact
+                    key={`latest-${p.id}`}
+                    p={p}
+                    onPress={() => openProduct(p.id)}
+                  />
+                ))}
+              </ScrollView>
+            ) : (
+              <Text style={note}>NO PRODUCTS AVAILABLE YET.</Text>
+            )}
+            <Pressable
+              style={s.seeAll}
+              onPress={() =>
+                featuredVendor
+                  ? openBrand(brandKey(featuredVendor.name))
+                  : openBrands()
+              }
+            >
+              <Text style={s.seeAllText}>
+                {featuredVendor
+                  ? `SEE ALL ${featuredVendor.name.toUpperCase()}`
+                  : "SEE ALL BRANDS"}
+              </Text>
+              <Ionicons name="arrow-forward" size={18} color={C.ink} />
+            </Pressable>
+
             <View style={s.head}>
-              <Text style={s.section}>LATEST DROPS</Text>
+              <Text style={s.section}>SHOP ALL</Text>
               <Text style={s.count}>{explore.length} PIECES</Text>
             </View>
             <View style={s.grid}>
@@ -192,6 +333,50 @@ export default function ShopScreen() {
                 <Text style={s.directoryText}>SHOW MORE</Text>
                 <Ionicons name="arrow-down" size={19} color={C.ink} />
               </Pressable>
+            )}
+          </>
+        )}
+
+        {catalog && activeTab === "New Arrivals" && (
+          <>
+            {newArrivalsMenu ? (
+              newArrivalsMenu.groups.map((group) => (
+                <View key={group.name}>
+                  <View style={s.head}>
+                    <Text style={s.section}>{group.name.toUpperCase()}</Text>
+                    <Text style={s.count}>{group.products.length} PIECES</Text>
+                  </View>
+                  <View style={s.grid}>
+                    {group.products.map((p) => (
+                      <ProductTile
+                        key={`arrival-${p.id}`}
+                        p={p}
+                        onPress={() => openProduct(p.id)}
+                      />
+                    ))}
+                  </View>
+                </View>
+              ))
+            ) : (
+              <>
+                <View style={s.head}>
+                  <Text style={s.section}>LATEST PIECES</Text>
+                  <Text style={s.count}>{newArrivals.length} PIECES</Text>
+                </View>
+                <View style={s.grid}>
+                  {newArrivals.map((p) => (
+                    <ProductTile
+                      key={`arrival-${p.id}`}
+                      p={p}
+                      onPress={() => openProduct(p.id)}
+                    />
+                  ))}
+                </View>
+                <Text style={s.arrivalHint}>
+                  For a curated arrivals list, add a “New Arrivals” menu in
+                  Zappie.
+                </Text>
+              </>
             )}
           </>
         )}
@@ -285,33 +470,141 @@ const s = StyleSheet.create({
   topTabActive: { borderBottomColor: C.neon },
   topTabText: { color: C.muted, fontFamily: F.display, fontSize: 14 },
   topTabTextActive: { color: C.neon },
-  content: { padding: 17, paddingBottom: 40 },
-  kicker: { fontFamily: F.mono, color: C.neon, fontSize: 9, marginTop: 19 },
-  title: { fontFamily: F.display, color: C.neon, fontSize: 39, marginTop: 4 },
+  content: { paddingHorizontal: 17, paddingTop: 17, paddingBottom: 40 },
+  errorDetail: { marginTop: 8, color: C.paper },
+  kicker: { fontFamily: F.mono, color: C.paper, fontSize: 9, marginTop: 15, letterSpacing: 1.2 },
+  title: { fontFamily: F.display, color: C.neon, fontSize: 36, marginTop: 4, letterSpacing: 0.3 },
   copy: {
     fontFamily: F.body,
-    color: C.muted,
+    color: C.paper,
     fontSize: 16,
     lineHeight: 22,
     marginTop: 5,
     marginBottom: 19,
   },
-  banner: {
-    height: 175,
+  featuredVendor: {
+    height: 222,
+    marginTop: 15,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 17,
+    backgroundColor: C.panel,
+  },
+  featuredVendorImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
+  },
+  featuredVendorShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(4, 8, 5, 0.34)",
+  },
+  featuredVendorCopy: {
+    position: "absolute",
+    left: 16,
+    right: 60,
+    bottom: 18,
+  },
+  featuredVendorEyebrow: {
+    color: C.paper,
+    fontFamily: F.mono,
+    fontSize: 9,
+    letterSpacing: 1.1,
+  },
+  featuredVendorName: {
+    color: C.neon,
+    fontFamily: F.display,
+    fontSize: 31,
+    lineHeight: 35,
+    marginTop: 4,
+  },
+  featuredVendorCategory: {
+    color: C.paper,
+    fontFamily: F.mono,
+    fontSize: 8,
+    letterSpacing: 0.5,
+    marginTop: 7,
+  },
+  featuredVendorArrow: {
+    position: "absolute",
+    right: 15,
+    bottom: 17,
+    width: 39,
+    height: 39,
+    borderRadius: 20,
+    backgroundColor: C.neon,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  featuredEmpty: {
+    minHeight: 100,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 14,
+    marginTop: 15,
     backgroundColor: C.panel,
     borderWidth: 1,
     borderColor: C.line,
-    padding: 17,
+    borderRadius: 15,
+  },
+  featuredEmptyIcon: {
+    width: 42,
+    height: 42,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    backgroundColor: "#111D14",
+  },
+  featuredEmptyCopy: { flex: 1 },
+  featuredEmptyText: {
+    color: C.paper,
+    fontFamily: F.body,
+    fontSize: 14,
+    marginTop: 5,
+  },
+  latestHeading: {
+    flexDirection: "row",
+    alignItems: "flex-end",
     justifyContent: "space-between",
+    marginTop: 28,
+    marginBottom: 11,
   },
-  bannerEyebrow: { color: C.neon, fontFamily: F.mono, fontSize: 9 },
-  bannerTitle: {
-    color: C.neon,
-    fontFamily: F.display,
-    fontSize: 32,
-    lineHeight: 34,
+  latestEyebrow: {
+    color: C.muted,
+    fontFamily: F.mono,
+    fontSize: 8,
+    letterSpacing: 1,
+    marginBottom: 3,
   },
-  bannerLink: { color: C.neon, fontFamily: F.mono, fontSize: 10 },
+  productSlider: { gap: 12, paddingRight: 17 },
+  sliderProduct: { width: 172 },
+  sliderImageWrap: { height: 190, borderRadius: 12, overflow: "hidden" },
+  seeAll: {
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    marginTop: 14,
+    borderRadius: 11,
+    backgroundColor: C.neon,
+  },
+  seeAllText: {
+    flex: 1,
+    color: C.ink,
+    fontFamily: F.mono,
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  arrivalHint: {
+    color: C.muted,
+    fontFamily: F.body,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 15,
+  },
   head: {
     marginTop: 27,
     marginBottom: 12,
@@ -332,7 +625,21 @@ const s = StyleSheet.create({
     rowGap: 20,
   },
   product: { width: "48%" },
-  imageWrap: { height: 205, backgroundColor: C.bg, position: "relative" },
+  productTap: { width: "100%" },
+  wishlistButton: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.78)",
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  imageWrap: { height: 205, backgroundColor: C.bg, position: "relative", borderRadius: 12, overflow: "hidden" },
   image: { width: "100%", height: "100%" },
   badge: {
     position: "absolute",

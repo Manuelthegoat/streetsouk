@@ -13,3 +13,7 @@ export function isPastEvent(event: Dated) {
   const last = event.ends_on ?? event.starts_on;
   return !!last && last < today();
 }
+
+export function isUpcomingEvent(event: Dated) {
+  return !!event.starts_on && event.starts_on > today();
+}

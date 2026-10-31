@@ -32,7 +32,12 @@ export function useZappieMenus() {
     branch,
     menus: data,
     loading: storeLoading || (!!branch && loading),
-    error: storeError ?? error,
+    error:
+      storeError ??
+      error ??
+      (!storeLoading && store && !branch
+        ? "Zappie store has no branch available for its menu."
+        : null),
     reload: async () => {
       await reloadStore();
       await reload();
