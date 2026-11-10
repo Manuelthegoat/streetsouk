@@ -22,7 +22,8 @@ const visibleTabs = new Set(["index", "shop", "search", "events", "profile"]);
 export function StreetSoukTabBar({
   state,
   descriptors,
-  navigation,
+  emitter,
+  navigateToTab,
 }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
 
@@ -49,10 +50,17 @@ export function StreetSoukTabBar({
                 LayoutAnimation.configureNext(
                   LayoutAnimation.Presets.easeInEaseOut,
                 );
-                navigation.navigate(route.name);
+                const event = emitter.emit({
+                  type: "tabPress",
+                  target: route.key,
+                  canPreventDefault: true,
+                });
+                if (!focused && !event.defaultPrevented) {
+                  navigateToTab(route.key);
+                }
               }}
               onLongPress={() =>
-                navigation.emit({
+                emitter.emit({
                   type: "tabLongPress",
                   target: route.key,
                 })

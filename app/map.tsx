@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import * as Location from "expo-location";
-import { useMemo, useState } from "react";
+import { Image } from "expo-image";
+import { useEffect, useMemo, useState } from "react";
 import {
   Pressable,
   SafeAreaView,
@@ -9,176 +9,337 @@ import {
   Text,
   TextInput,
   View,
+  type LayoutChangeEvent,
 } from "react-native";
 import { C, F, Header } from "@/components/street-souk-ui";
 import { useStreetSoukStore } from "@/context/street-souk-store";
+import { useVendors } from "@/hooks/use-vendors";
+import {
+  getDirections,
+  MAP_HEIGHT,
+  MAP_WIDTH,
+  placesWithVendors,
+  type MapCategory,
+  type MapPlace,
+} from "@/lib/festival-map";
 
-const points = [
-  ["MAIN STAGE", "STAGE", "29%", "18%", "volume-high"],
-  ["HYPE BRAND A", "APPAREL", "59%", "30%", "shirt-outline"],
-  ["SNEAKER ZONE", "APPAREL", "65%", "43%", "shirt-outline"],
-  ["FOOD COURT", "FOOD", "22%", "64%", "restaurant-outline"],
-  ["SOUND SYSTEM B", "STAGE", "74%", "59%", "stats-chart-outline"],
-  ["TOILETS", "TOILET", "50%", "79%", "male-female-outline"],
+const categoryFilters: { label: string; value: MapCategory | "ALL" }[] = [
+  { label: "ALL", value: "ALL" },
+  { label: "STAGES", value: "STAGE" },
+  { label: "VENDORS", value: "VENDOR" },
+  { label: "FOOD", value: "FOOD" },
+  { label: "ACTIVITIES", value: "ACTIVITY" },
+  { label: "SERVICES", value: "SERVICE" },
+  { label: "AMENITIES", value: "AMENITY" },
+  { label: "ACCESS", value: "ACCESSIBILITY" },
+  { label: "ENTRANCES", value: "ENTRANCE" },
+  { label: "EXITS", value: "EXIT" },
+  { label: "WATER", value: "WATER" },
+  { label: "TRANSPORT", value: "TRANSPORT" },
 ];
-const categories = ["ALL", "STAGE", "APPAREL", "FOOD", "TOILET"];
+
+const defaultPlace = (places: MapPlace[]) =>
+  places.find((place) => place.id === "main-entry") ?? places[0];
+
 export default function MapScreen() {
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("ALL");
-  const [selected, setSelected] = useState<string | null>(null);
-  const [locating, setLocating] = useState(false);
-  const [located, setLocated] = useState(false);
-  const [zoom, setZoom] = useState(1);
+  const { vendors } = useVendors();
+  const places = useMemo(() => placesWithVendors(vendors), [vendors]);
   const { startingPoint, setStartingPoint } = useStreetSoukStore();
-  const visible = useMemo(
-    () =>
-      points.filter(
-        (p) =>
-          (category === "ALL" || p[1] === category) &&
-          (!query || p[0].toLowerCase().includes(query.toLowerCase())),
-      ),
-    [category, query],
+  const [startId, setStartId] = useState("main-entry");
+  const [destinationId, setDestinationId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<MapCategory | "ALL">("ALL");
+  const [zoom, setZoom] = useState(1);
+  const [mapSize, setMapSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const savedPlace = places.find(
+      (place) => place.name.toLowerCase() === startingPoint.toLowerCase(),
+    );
+    const savedAliases: Record<string, string> = {
+      "NORTH ENTRANCE": "main-entry",
+      "MAIN HALL CHECK-IN": "main-entry",
+      "EAST ENTRANCE": "east-exit",
+      "YOU ARE HERE": "main-entry",
+    };
+    const savedId = savedPlace?.id ?? savedAliases[startingPoint.toUpperCase()];
+    if (savedId) setStartId(savedId);
+  }, [places, startingPoint]);
+
+  const start = places.find((place) => place.id === startId) ?? defaultPlace(places);
+  const destination = places.find((place) => place.id === destinationId);
+  const filteredPlaces = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return places.filter((place) => {
+      const matchesCategory = category === "ALL" || place.category === category;
+      const searchable = `${place.name} ${place.category} ${place.detail ?? ""} ${place.boothCode ?? ""}`.toLowerCase();
+      return matchesCategory && (!normalizedQuery || searchable.includes(normalizedQuery));
+    });
+  }, [category, places, query]);
+  const route = useMemo(
+    () => (start && destination ? getDirections(start, destination) : null),
+    [destination, start],
   );
-  const locate = async () => {
-    setLocating(true);
-    const permission = await Location.requestForegroundPermissionsAsync();
-    if (permission.granted) {
-      await Location.getCurrentPositionAsync({});
-      setLocated(true);
-      setStartingPoint("YOU ARE HERE");
-    }
-    setLocating(false);
+
+  const onMapLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setMapSize((current) =>
+      current.width === width && current.height === height
+        ? current
+        : { width, height },
+    );
   };
+
+  const selectStart = (place: MapPlace) => {
+    setStartId(place.id);
+    setStartingPoint(place.name);
+    setDestinationId(null);
+  };
+
+  const zoomBy = (delta: number) =>
+    setZoom((value) => Math.max(1, Math.min(2.4, Number((value + delta).toFixed(1)))));
+
+  const displayedPlaces = useMemo(() => {
+    const byId = new Map(filteredPlaces.map((place) => [place.id, place]));
+    if (start) byId.set(start.id, start);
+    if (destination) byId.set(destination.id, destination);
+    return [...byId.values()];
+  }, [destination, filteredPlaces, start]);
+
+  const mapWidth = mapSize.width * zoom;
+  const mapHeight = mapSize.height * zoom;
+
   return (
     <SafeAreaView style={s.safe}>
-      <Header title="MAP" back/>
-      <View style={s.content}>
+      <Header title="MAP" back />
+      <ScrollView
+        style={s.content}
+        contentContainerStyle={s.contentInner}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={s.search}>
           <Ionicons name="search" size={20} color={C.paper} />
           <TextInput
-            placeholder="FIND VENDOR OR STAGE"
+            accessibilityLabel="Search map locations"
+            placeholder="FIND A PLACE, BRAND OR BOOTH"
             placeholderTextColor={C.muted}
             value={query}
             onChangeText={setQuery}
             style={s.input}
+            returnKeyType="search"
           />
+          {!!query && (
+            <Pressable accessibilityLabel="Clear search" onPress={() => setQuery("")}>
+              <Ionicons name="close-circle" size={19} color={C.muted} />
+            </Pressable>
+          )}
         </View>
+
+        {query.trim().length > 0 && (
+          <ScrollView
+            horizontal
+            keyboardShouldPersistTaps="handled"
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.searchResults}
+          >
+            {filteredPlaces.slice(0, 12).map((place) => (
+              <Pressable
+                key={place.id}
+                onPress={() => setDestinationId(place.id)}
+                style={s.resultChip}
+              >
+                <Ionicons name={place.icon as keyof typeof Ionicons.glyphMap} size={14} color={C.neon} />
+                <Text numberOfLines={1} style={s.resultText}>{place.name}</Text>
+              </Pressable>
+            ))}
+            {filteredPlaces.length === 0 && (
+              <Text style={s.noResults}>NO MATCHING PLACES</Text>
+            )}
+          </ScrollView>
+        )}
+
         <View style={s.heading}>
           <View>
-            <Text style={s.eyebrow}>STREET SOUK 2026 / MAIN HALL</Text>
+            <Text style={s.eyebrow}>STREET SOUK 2026 / EVENT GROUNDS</Text>
             <Text style={s.title}>VENUE MAP</Text>
           </View>
-          <Text style={s.live}>MAP PREVIEW</Text>
+          <Text style={s.live}>WAYFINDING</Text>
         </View>
-        <View style={s.mapFrame}>
-          <View style={[s.map, { transform: [{ scale: zoom }] }]}>
-            <View style={s.grid} />
-            <View style={[s.road, s.v]} />
-            <View style={[s.road, s.h]} />
-            <View style={[s.zone, s.z1]}>
-              <Text style={s.zoneText}>NORTH LOT</Text>
-            </View>
-            <View style={[s.zone, s.z2]}>
-              <Text style={s.zoneText}>MARKET ROW</Text>
-            </View>
-            <View style={s.here}>
-              <View style={s.ring} />
-              <View style={s.dot} />
-              <Text style={s.hereLabel}>
-                {located ? "YOU ARE HERE" : startingPoint}
-              </Text>
-            </View>
-            {visible.map((p) => {
-              const active = p[0] === selected;
-              return (
-                <Pressable
-                  key={p[0]}
-                  onPress={() => setSelected(active ? null : p[0])}
-                  style={[
-                    s.marker,
-                    { left: p[2] as `${number}%`, top: p[3] as `${number}%` },
-                    active && s.active,
-                  ]}
-                >
-                  <Ionicons
-                    name={p[4] as keyof typeof Ionicons.glyphMap}
-                    size={20}
-                    color={p[0] === "MAIN STAGE" ? C.neon : C.paper}
+
+        <View style={s.mapFrame} onLayout={onMapLayout}>
+          {mapSize.width > 0 && (
+            <ScrollView
+              horizontal
+              nestedScrollEnabled
+              showsHorizontalScrollIndicator={false}
+              style={StyleSheet.absoluteFill}
+              contentContainerStyle={{ width: mapWidth, height: mapSize.height }}
+            >
+              <ScrollView
+                nestedScrollEnabled
+                showsVerticalScrollIndicator={false}
+                style={{ width: mapWidth, height: mapSize.height }}
+                contentContainerStyle={{ width: mapWidth, height: mapHeight }}
+              >
+                <View style={[s.mapCanvas, { width: mapWidth, height: mapHeight }]}>
+                  <Image
+                    source={require("@/assets/maps/street-souk-floor-plan.svg")}
+                    contentFit="fill"
+                    style={StyleSheet.absoluteFill}
+                    accessibilityLabel="Street Souk event floor plan"
                   />
-                  {active && <Text style={s.callout}>{p[0]}</Text>}
-                </Pressable>
-              );
-            })}
-          </View>
+
+                  {route && route.points.length > 1 && mapWidth > 0 && (
+                    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+                      {route.points.slice(1).map((point, index) => {
+                        const previous = route.points[index];
+                        const x1 = (previous.x / MAP_WIDTH) * mapWidth;
+                        const y1 = (previous.y / MAP_HEIGHT) * mapHeight;
+                        const x2 = (point.x / MAP_WIDTH) * mapWidth;
+                        const y2 = (point.y / MAP_HEIGHT) * mapHeight;
+                        const length = Math.hypot(x2 - x1, y2 - y1);
+                        const angle = Math.atan2(y2 - y1, x2 - x1);
+                        return (
+                          <View
+                            key={`route-${index}`}
+                            style={[
+                              s.routeSegment,
+                              {
+                                left: (x1 + x2) / 2 - length / 2,
+                                top: (y1 + y2) / 2 - 2,
+                                width: length,
+                                transform: [{ rotate: `${angle}rad` }],
+                              },
+                            ]}
+                          />
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {displayedPlaces.map((place) => {
+                    const isStart = place.id === start?.id;
+                    const isDestination = place.id === destination?.id;
+                    return (
+                      <Pressable
+                        key={place.id}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${place.name}${isStart ? ", route start" : ""}${isDestination ? ", selected destination" : ""}`}
+                        onPress={() => setDestinationId(place.id)}
+                        style={[
+                          s.marker,
+                          { left: `${(place.x / MAP_WIDTH) * 100}%`, top: `${(place.y / MAP_HEIGHT) * 100}%` },
+                          isStart && s.startMarker,
+                          isDestination && s.destinationMarker,
+                        ]}
+                      >
+                        <Ionicons
+                          name={place.icon as keyof typeof Ionicons.glyphMap}
+                          size={isStart || isDestination ? 16 : 11}
+                          color={isStart || isDestination ? C.ink : C.paper}
+                        />
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+            </ScrollView>
+          )}
+
           <View style={s.tools}>
-            <Pressable
-              accessibilityLabel="Use my location"
-              onPress={locate}
-              style={s.tool}
-            >
-              <Ionicons
-                name={locating ? "sync-outline" : "locate-outline"}
-                size={19}
-                color={located ? C.neon : C.paper}
-              />
-            </Pressable>
-            <Pressable
-              accessibilityLabel="Zoom in"
-              onPress={() => setZoom((value) => Math.min(2, value + 0.2))}
-              style={s.tool}
-            >
+            <Pressable accessibilityLabel="Zoom in" onPress={() => zoomBy(0.2)} style={s.tool}>
               <Ionicons name="add" size={19} color={C.paper} />
             </Pressable>
-            <Pressable
-              accessibilityLabel="Zoom out"
-              onPress={() => setZoom((value) => Math.max(1, value - 0.2))}
-              style={s.tool}
-            >
+            <Pressable accessibilityLabel="Zoom out" onPress={() => zoomBy(-0.2)} style={s.tool}>
               <Ionicons name="remove" size={19} color={C.paper} />
+            </Pressable>
+            <Pressable accessibilityLabel="Reset map zoom" onPress={() => setZoom(1)} style={s.tool}>
+              <Ionicons name="scan-outline" size={17} color={C.paper} />
             </Pressable>
           </View>
         </View>
+
+        <Text style={s.mapHint}>
+          ZOOM TO PAN · TAP A MARKER FOR DIRECTIONS · BLUE IS YOUR ROUTE
+        </Text>
+
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={s.categories}
         >
-          {categories.map((item) => (
+          {categoryFilters.map((item) => (
             <Pressable
-              key={item}
-              onPress={() => setCategory(item)}
-              style={[s.category, category === item && s.categoryActive]}
+              key={item.value}
+              accessibilityRole="button"
+              accessibilityState={{ selected: category === item.value }}
+              onPress={() => setCategory(item.value)}
+              style={[s.category, category === item.value && s.categoryActive]}
             >
-              <Text
-                style={[
-                  s.categoryText,
-                  category === item && s.categoryTextActive,
-                ]}
-              >
-                {item}
+              <Text style={[s.categoryText, category === item.value && s.categoryTextActive]}>
+                {item.label}
               </Text>
             </Pressable>
           ))}
         </ScrollView>
-        {selected && (
-          <View style={s.prompt}>
-            <Text style={s.promptText}>{selected}</Text>
-            <Pressable
-              onPress={() => setStartingPoint(selected)}
-              style={s.route}
-            >
-              <Text style={s.routeText}>SET START</Text>
-              <Ionicons name="arrow-forward" size={18} color={C.ink} />
-            </Pressable>
+
+        {destination ? (
+          <View style={s.directionsCard}>
+            <View style={s.directionsHeader}>
+              <View style={s.directionsTitles}>
+                <Text style={s.directionEyebrow}>DIRECTIONS</Text>
+                <Text style={s.directionTitle} numberOfLines={2}>{destination.name}</Text>
+                <Text style={s.directionFrom}>FROM {start?.name ?? "MAIN ENTRY"}</Text>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Set ${destination.name} as route start`}
+                onPress={() => selectStart(destination)}
+                style={s.setStartButton}
+              >
+                <Text style={s.setStartText}>SET START</Text>
+              </Pressable>
+            </View>
+            {destination.id === start?.id ? (
+              <Text style={s.routeNote}>This is already your starting point.</Text>
+            ) : route ? (
+              <View style={s.steps}>
+                {route.steps.map((step, index) => (
+                  <View key={`${index}-${step}`} style={s.stepRow}>
+                    <View style={s.stepNumber}>
+                      <Text style={s.stepNumberText}>{String(index + 1).padStart(2, "0")}</Text>
+                    </View>
+                    <Text style={s.stepText}>{step}</Text>
+                  </View>
+                ))}
+                <Text style={s.routeNote}>Illustrative route · the floor plan is not to scale.</Text>
+              </View>
+            ) : (
+              <Text style={s.routeNote}>No walkable route was found between these map points.</Text>
+            )}
+          </View>
+        ) : (
+          <View style={s.emptyHint}>
+            <Ionicons name="navigate-outline" size={20} color={C.neon} />
+            <Text style={s.emptyHintText}>
+              Starting at {start?.name ?? "Main Entry"}. Tap a place on the map or search above to get directions.
+            </Text>
           </View>
         )}
-      </View>
+
+        <Text style={s.disclaimer}>
+          Routes follow the generated floor plan. Follow event staff instructions for exits and accessible paths.
+        </Text>
+      </ScrollView>
     </SafeAreaView>
   );
 }
+
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
-  content: { flex: 1, paddingHorizontal: 18, paddingTop: 10 },
+  content: { flex: 1 },
+  contentInner: { paddingHorizontal: 18, paddingTop: 10, paddingBottom: 28 },
   search: {
     height: 52,
     borderWidth: 1,
@@ -188,177 +349,162 @@ const s = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 13,
     backgroundColor: C.panel,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.24,
-    shadowRadius: 12,
-    elevation: 4,
+    gap: 9,
   },
-  input: {
-    flex: 1,
-    color: C.paper,
-    fontFamily: F.mono,
-    marginLeft: 10,
-    fontSize: 13,
+  input: { flex: 1, color: C.paper, fontFamily: F.mono, fontSize: 12 },
+  searchResults: { gap: 8, paddingTop: 10 },
+  resultChip: {
+    minHeight: 34,
+    maxWidth: 220,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 17,
+    backgroundColor: C.panel,
   },
+  resultText: { color: C.paper, fontFamily: F.mono, fontSize: 9, flexShrink: 1 },
+  noResults: { color: C.muted, fontFamily: F.mono, fontSize: 9, padding: 9 },
   heading: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    marginVertical: 17,
+    marginVertical: 15,
   },
-  eyebrow: { color: C.paper, fontFamily: F.mono, fontSize: 10, letterSpacing: 1.2 },
-  title: { color: C.neon, fontFamily: F.display, fontSize: 34, letterSpacing: 0.6 },
-  live: { color: C.neon, fontFamily: F.mono, fontSize: 10, letterSpacing: 1 },
+  eyebrow: { color: C.paper, fontFamily: F.mono, fontSize: 9, letterSpacing: 0.8 },
+  title: { color: C.neon, fontFamily: F.display, fontSize: 32, letterSpacing: 0.6 },
+  live: { color: C.neon, fontFamily: F.mono, fontSize: 9, letterSpacing: 0.8 },
   mapFrame: {
-    height: 405,
+    width: "100%",
+    aspectRatio: MAP_WIDTH / MAP_HEIGHT,
     borderWidth: 1,
     borderColor: C.line,
-    borderRadius: 20,
+    borderRadius: 14,
     position: "relative",
     overflow: "hidden",
-    backgroundColor: C.mapBg,
+    backgroundColor: "#F7F9FA",
   },
-  map: {
-    flex: 1,
-    overflow: "hidden",
-    backgroundColor: "#0A100C",
-    position: "relative",
-  },
-  grid: {
-    ...StyleSheet.absoluteFill,
-    borderWidth: 1,
-    borderColor: C.mapGrid,
-    opacity: 0.32,
-  },
-  road: {
+  mapCanvas: { position: "relative", overflow: "hidden", backgroundColor: "#F7F9FA" },
+  marker: {
     position: "absolute",
-    backgroundColor: "#173323",
-    borderWidth: 1,
-    borderColor: "#28563B",
+    width: 20,
+    height: 20,
+    marginLeft: -10,
+    marginTop: -10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(29,44,54,0.88)",
+    borderWidth: 1.5,
+    borderColor: C.paper,
+    borderRadius: 10,
+    zIndex: 2,
   },
-  v: { width: 42, top: -20, bottom: -20, left: "49%" },
-  h: { height: 38, left: -20, right: -20, top: "48%" },
-  zone: {
+  startMarker: {
+    width: 30,
+    height: 30,
+    marginLeft: -15,
+    marginTop: -15,
+    backgroundColor: "#54D6A0",
+    borderRadius: 15,
+    zIndex: 4,
+  },
+  destinationMarker: {
+    width: 30,
+    height: 30,
+    marginLeft: -15,
+    marginTop: -15,
+    backgroundColor: "#5DB5FF",
+    borderRadius: 15,
+    zIndex: 5,
+  },
+  routeSegment: {
     position: "absolute",
-    backgroundColor: "#111D14",
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#2674C7",
+    opacity: 0.88,
+    zIndex: 1,
+  },
+  tools: { position: "absolute", right: 8, bottom: 8, gap: 6, zIndex: 10 },
+  tool: {
+    width: 36,
+    height: 36,
+    backgroundColor: C.panel,
     borderWidth: 1,
-    borderColor: "#2D6946",
+    borderColor: C.line,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  z1: { width: "34%", height: "22%", left: "7%", top: "7%" },
-  z2: { width: "30%", height: "23%", left: "5%", top: "54%" },
-  zoneText: { color: C.paper, fontFamily: F.mono, fontSize: 9, letterSpacing: 0.8 },
-  here: { position: "absolute", left: "47%", top: "43%", alignItems: "center" },
-  ring: {
-    position: "absolute",
-    width: 35,
-    height: 35,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: C.neon,
-    opacity: 0.35,
-    top: -9,
-    left: -9,
-  },
-  dot: {
-    width: 17,
-    height: 17,
-    borderRadius: 9,
-    backgroundColor: C.neon,
-    borderWidth: 2,
-    borderColor: C.mapBg,
-  },
-  hereLabel: {
-    marginTop: 7,
-    color: C.paper,
-    backgroundColor: C.bg,
-    borderWidth: 1,
-    borderColor: C.line,
-    borderRadius: 6,
-    padding: 5,
+  mapHint: {
+    color: C.muted,
     fontFamily: F.mono,
-    fontSize: 9,
+    fontSize: 8,
+    letterSpacing: 0.45,
+    marginTop: 8,
   },
-  marker: {
-    position: "absolute",
-    width: 44,
-    height: 44,
-    marginLeft: -22,
-    marginTop: -22,
-    backgroundColor: "#0A100C",
-    borderWidth: 1,
-    borderColor: C.line,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.36,
-    shadowRadius: 7,
-    elevation: 4,
-  },
-  active: { backgroundColor: C.neon, borderColor: C.neon },
-  callout: {
-    position: "absolute",
-    top: 47,
-    minWidth: 100,
-    color: C.paper,
-    backgroundColor: C.panel,
-    borderWidth: 1,
-    borderColor: C.line,
-    borderRadius: 7,
-    padding: 5,
-    fontFamily: F.mono,
-    fontSize: 9,
-    textAlign: "center",
-  },
-  tools: { position: "absolute", right: 12, bottom: 12, gap: 7 },
-  tool: {
-    width: 42,
-    height: 42,
-    backgroundColor: C.panel,
-    borderWidth: 1,
-    borderColor: C.line,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  categories: { gap: 9, paddingVertical: 15 },
+  categories: { gap: 8, paddingVertical: 13 },
   category: {
-    height: 36,
-    paddingHorizontal: 14,
+    height: 34,
+    paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: C.line,
-    borderRadius: 18,
+    borderRadius: 17,
     justifyContent: "center",
   },
-  categoryActive: {
-    backgroundColor: C.neon,
-    borderColor: C.neon,
-  },
-  categoryText: { color: C.paper, fontFamily: F.mono, fontSize: 10 },
+  categoryActive: { backgroundColor: C.neon, borderColor: C.neon },
+  categoryText: { color: C.paper, fontFamily: F.mono, fontSize: 9 },
   categoryTextActive: { color: C.ink },
-  prompt: {
-    padding: 12,
+  directionsCard: {
+    padding: 14,
     backgroundColor: C.panel,
     borderWidth: 1,
     borderColor: C.line,
     borderRadius: 14,
+  },
+  directionsHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 10,
   },
-  promptText: { color: C.paper, fontFamily: F.display, fontSize: 17 },
-  route: {
+  directionsTitles: { flex: 1, gap: 4 },
+  directionEyebrow: { color: C.neon, fontFamily: F.mono, fontSize: 9, letterSpacing: 1 },
+  directionTitle: { color: C.paper, fontFamily: F.display, fontSize: 21, lineHeight: 24 },
+  directionFrom: { color: C.muted, fontFamily: F.mono, fontSize: 8 },
+  setStartButton: {
+    minHeight: 38,
+    justifyContent: "center",
+    paddingHorizontal: 11,
     backgroundColor: C.neon,
     borderRadius: 9,
-    padding: 10,
+  },
+  setStartText: { color: C.ink, fontFamily: F.mono, fontSize: 9, fontWeight: "700" },
+  steps: { gap: 10, marginTop: 14 },
+  stepRow: { flexDirection: "row", alignItems: "flex-start", gap: 9 },
+  stepNumber: {
+    width: 27,
+    height: 27,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2674C7",
+    borderRadius: 14,
+  },
+  stepNumberText: { color: "#FFFFFF", fontFamily: F.mono, fontSize: 8, fontWeight: "700" },
+  stepText: { flex: 1, color: C.paper, fontFamily: F.body, fontSize: 13, lineHeight: 18, paddingTop: 3 },
+  routeNote: { color: C.muted, fontFamily: F.mono, fontSize: 8, lineHeight: 13, marginTop: 10 },
+  emptyHint: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 10,
+    padding: 13,
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 12,
   },
-  routeText: { color: C.ink, fontFamily: F.mono, fontSize: 11, fontWeight: "700" },
+  emptyHintText: { flex: 1, color: C.paper, fontFamily: F.body, fontSize: 13, lineHeight: 18 },
+  disclaimer: { color: C.muted, fontFamily: F.body, fontSize: 11, lineHeight: 15, marginTop: 13 },
 });

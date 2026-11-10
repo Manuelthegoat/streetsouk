@@ -83,7 +83,7 @@ export default function MySoukScreen() {
                 }
               >
                 <Image
-                  source={product.images[0] ? { uri: product.images[0] } : require("@/assets/images/sslogo.png")}
+                  source={product.images[0] ? { uri: product.images[0] } : require("@/assets/images/ss-logo.png")}
                   contentFit={product.images[0] ? "cover" : "contain"}
                   style={s.productImage}
                 />

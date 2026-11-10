@@ -5,7 +5,7 @@ import { brandKey } from "@/lib/brand";
 import { vendorImage } from "@/lib/vendor-assets";
 import { useLocalSearchParams } from "expo-router";
 
-const FALLBACK = require("@/assets/images/sslogo.png");
+const FALLBACK = require("@/assets/images/ss-logo.png");
 
 export default function ZappieBrandScreen() {
   const { key } = useLocalSearchParams<{ key: string }>();

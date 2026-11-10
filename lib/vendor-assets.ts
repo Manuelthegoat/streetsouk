@@ -31,7 +31,7 @@ const assets: Record<string, Record<Kind, number>> = {
   },
 };
 
-const placeholder: number = require("@/assets/images/sslogo.png");
+const placeholder: number = require("@/assets/images/ss-logo.png");
 
 export function vendorImage(
   slug: string,

@@ -183,7 +183,7 @@ export default function VendorView({
                         source={
                           p.image
                             ? { uri: p.image }
-                            : require("@/assets/images/sslogo.png")
+                            : require("@/assets/images/ss-logo.png")
                         }
                         contentFit={p.image ? "cover" : "contain"}
                         style={s.tileImage}

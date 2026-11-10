@@ -66,7 +66,7 @@ export function Header({
         >
           <Image
             accessibilityLabel="Street Souk"
-            source={require("@/assets/images/sslogo.png")}
+            source={require("@/assets/images/ss-logo.png")}
             contentFit="contain"
             style={ui.logoImage}
           />

@@ -8,7 +8,7 @@ import { useNews } from "@/hooks/use-news";
 import { isPastEvent } from "@/lib/event-dates";
 import type { NewsPost } from "@/lib/types";
 import { Ionicons } from "@expo/vector-icons";
-import { ImageBackground } from "expo-image";
+import { Image, ImageBackground } from "expo-image";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
@@ -87,44 +87,51 @@ export default function HomeScreen() {
     <SafeAreaView style={s.safe}>
       <Header title="HOME" />
       <ScrollView
-        horizontal
-        style={s.topTabs}
-        contentContainerStyle={s.topTabsContent}
-        showsHorizontalScrollIndicator={false}
-      >
-        {tabs.map((item) => {
-          const selected = activeTopic === item.id;
-          return (
-            <Pressable
-              key={item.id ?? "for-you"}
-              accessibilityRole="tab"
-              accessibilityState={{ selected }}
-              onPress={() => setTopicId(item.id)}
-              style={[s.topTab, selected && s.topTabActive]}
-            >
-              <Text style={[s.topTabText, selected && s.topTabTextActive]}>
-                {item.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-
-      <ScrollView
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
+        <Image
+          source={require("@/assets/images/ss-closed.png")}
+          style={s.homeBanner}
+          contentFit="cover"
+          accessibilityLabel="Street Souk"
+        />
+
+        <ScrollView
+          horizontal
+          style={s.topTabs}
+          contentContainerStyle={s.topTabsContent}
+          showsHorizontalScrollIndicator={false}
+        >
+          {tabs.map((item) => {
+            const selected = activeTopic === item.id;
+            return (
+              <Pressable
+                key={item.id ?? "for-you"}
+                accessibilityRole="tab"
+                accessibilityState={{ selected }}
+                onPress={() => setTopicId(item.id)}
+                style={[s.topTab, selected && s.topTabActive]}
+              >
+                <Text style={[s.topTabText, selected && s.topTabTextActive]}>
+                  {item.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
         {activeTopic === null &&
           (eventsLoading && !featured ? (
             <Bone height={320} />
           ) : featured ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Open ${featured.title}`}
+              accessibilityLabel={`Get tickets for ${featured.title}`}
               onPress={() =>
                 router.push({
-                  pathname: "/events/[id]",
-                  params: { id: featured.slug },
+                  pathname: "/tickets",
+                  params: { eventSlug: featured.slug, pastEvent: "false" },
                 })
               }
             >
@@ -145,10 +152,9 @@ export default function HomeScreen() {
                     </Text>
                   </View>
                   <View>
-                    <Text style={s.heroTitle}>{featured.title}</Text>
                     {!!meta && <Text style={s.heroMeta}>{meta}</Text>}
                     <View style={s.cta}>
-                      <Text style={s.ctaText}>VIEW EVENT</Text>
+                      <Text style={s.ctaText}>GET TICKETS</Text>
                       <Ionicons name="arrow-forward" size={18} color={C.ink} />
                     </View>
                   </View>
@@ -234,6 +240,7 @@ const s = StyleSheet.create({
   topTabText: { color: C.muted, fontFamily: F.display, fontSize: 15 },
   topTabTextActive: { color: C.neon },
   content: { padding: 18, paddingBottom: 38 },
+  homeBanner: { width: "100%", aspectRatio: 2.5, marginBottom: 18 },
   kicker: {
     color: C.neon,
     fontFamily: F.mono,
@@ -262,12 +269,12 @@ const s = StyleSheet.create({
     borderWidth: 2,
     borderColor: C.paper,
   },
-  heroImage: { opacity: 0.64 },
+  heroImage: { opacity: 1 },
   heroShade: {
     flex: 1,
     justifyContent: "space-between",
     padding: 18,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(0,0,0,0.12)",
   },
   live: {
     alignSelf: "flex-start",
@@ -304,12 +311,6 @@ const s = StyleSheet.create({
     marginTop: 34,
   },
   liveText: { color: C.paper, fontFamily: F.mono, fontSize: 9 },
-  heroTitle: {
-    fontFamily: F.display,
-    color: C.neon,
-    fontSize: 37,
-    lineHeight: 40,
-  },
   cta: {
     marginTop: 15,
     backgroundColor: C.green,

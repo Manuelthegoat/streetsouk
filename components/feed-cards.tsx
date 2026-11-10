@@ -28,7 +28,7 @@ export function ShopCard({
     >
       <View>
         <Image
-          source={image ? { uri: image } : require("@/assets/images/sslogo.png")}
+          source={image ? { uri: image } : require("@/assets/images/ss-logo.png")}
           contentFit={image ? "cover" : "contain"}
           style={s.image}
         />
@@ -66,7 +66,7 @@ export function NewsCard({
           source={
             post.cover_url
               ? { uri: post.cover_url }
-              : require("@/assets/images/sslogo.png")
+              : require("@/assets/images/ss-logo.png")
           }
           contentFit={post.cover_url ? "cover" : "contain"}
           style={s.image}

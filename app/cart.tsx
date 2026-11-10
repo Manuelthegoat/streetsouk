@@ -144,7 +144,7 @@ export default function CartScreen() {
                   source={
                     item.image
                       ? { uri: item.image }
-                      : require("@/assets/images/sslogo.png")
+                      : require("@/assets/images/ss-logo.png")
                   }
                   contentFit={item.image ? "cover" : "contain"}
                   style={s.image}

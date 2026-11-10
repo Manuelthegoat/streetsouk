@@ -4,7 +4,7 @@ import { useVendor } from "@/hooks/use-vendor";
 import { vendorImage } from "@/lib/vendor-assets";
 import { useLocalSearchParams } from "expo-router";
 
-const FALLBACK = require("@/assets/images/sslogo.png");
+const FALLBACK = require("@/assets/images/ss-logo.png");
 
 export default function BrandScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();

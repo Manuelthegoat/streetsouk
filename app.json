@@ -5,7 +5,7 @@
     "slug": "street-souk",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/sslogo.png",
+    "icon": "./assets/images/stret-bite.png",
     "scheme": "streetsouk",
     "userInterfaceStyle": "dark",
     "ios": {
@@ -14,9 +14,9 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#050505",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "foregroundImage": "./assets/images/stret-bite.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "monochromeImage": "./assets/images/stret-bite.png"
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
@@ -29,7 +29,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/stret-bite.png"
     },
     "plugins": [
       "expo-router",
@@ -49,7 +49,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/stret-bite.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#050505",

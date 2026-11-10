@@ -19,7 +19,7 @@ import {
   View,
 } from "react-native";
 
-const FALLBACK = require("@/assets/images/sslogo.png");
+const FALLBACK = require("@/assets/images/ss-logo.png");
 const PAGE = 24;
 
 function ProductTile({
@@ -409,10 +409,6 @@ export default function ShopScreen() {
                   </View>
                   <View style={s.brandInfo}>
                     <Text style={s.brandName}>{b.name}</Text>
-                    <Text style={s.brandType}>
-                      {b.products.length}{" "}
-                      {b.products.length === 1 ? "PIECE" : "PIECES"}
-                    </Text>
                   </View>
                   <Ionicons name="arrow-forward" size={17} color={C.muted} />
                 </Pressable>
@@ -671,7 +667,6 @@ const s = StyleSheet.create({
   brandImage: { width: 38, height: 38 },
   brandInfo: { flex: 1 },
   brandName: { color: C.neon, fontFamily: F.display, fontSize: 17 },
-  brandType: { color: C.muted, fontFamily: F.mono, fontSize: 8, marginTop: 3 },
   directory: {
     marginTop: 25,
     backgroundColor: C.green,

@@ -61,7 +61,7 @@ export default function AlertsScreen() {
         <View style={s.stackTitleWrap}>
           <Image
             accessibilityLabel="Street Souk"
-            source={require("@/assets/images/sslogo.png")}
+            source={require("@/assets/images/ss-logo.png")}
             style={s.logo}
             resizeMode="contain"
           />

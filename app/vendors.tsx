@@ -19,7 +19,7 @@ import {
   View,
 } from "react-native";
 
-const FALLBACK = require("@/assets/images/sslogo.png");
+const FALLBACK = require("@/assets/images/ss-logo.png");
 
 export default function VendorsScreen() {
   const router = useRouter();

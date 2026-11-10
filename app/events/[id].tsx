@@ -1,8 +1,8 @@
 import { C, CartBadge, F } from "@/components/street-souk-ui";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Image, ImageBackground } from "expo-image";
-import { useState } from "react";
+import { Image } from "expo-image";
+import { useEffect, useState } from "react";
 import {
   Pressable,
   SafeAreaView,
@@ -12,7 +12,6 @@ import {
   TextInput,
   View,
   ActivityIndicator,
-  Share,
 } from "react-native";
 import { useStreetSoukStore } from "@/context/street-souk-store";
 import { useVendors } from "@/hooks/use-vendors";
@@ -53,7 +52,10 @@ export default function EventDetailScreen() {
   const { event, loading: eventLoading } = useEvent(id);
   const eventId = event?.id ?? null;
   const pastEvent = !!event && isPastEvent(event);
-  const showUpcomingPreview = !!event && isUpcomingEvent(event);
+  const mapLocked = !!event && isUpcomingEvent(event);
+  const visibleTabs = mapLocked
+    ? tabs.filter((eventTab) => eventTab !== "Event Map")
+    : tabs;
   const ticketsUnavailable = eventLoading || !event || pastEvent;
   const ticketUnavailableLabel = eventLoading
     ? "CHECKING EVENT"
@@ -68,6 +70,11 @@ export default function EventDetailScreen() {
   const [activeTab, setActiveTab] = useState<EventTab>(
     tabs.find((t) => t === tab) ?? "Event Map",
   );
+
+  useEffect(() => {
+    if (mapLocked && activeTab === "Event Map") setActiveTab("Schedule");
+  }, [activeTab, mapLocked]);
+
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
@@ -81,7 +88,7 @@ export default function EventDetailScreen() {
         </Pressable>
         <Image
           accessibilityLabel="Street Souk"
-          source={require("@/assets/images/sslogo.png")}
+          source={require("@/assets/images/ss-logo.png")}
           contentFit="contain"
           style={s.logo}
         />
@@ -103,28 +110,13 @@ export default function EventDetailScreen() {
           <Text style={s.pastEventBannerText}>PAST EVENT · SALES ENDED</Text>
         </View>
       )}
-      {showUpcomingPreview && event ? (
-        <UpcomingEventPreview
-          event={event}
-          onGetTickets={() =>
-            router.push({
-              pathname: "/tickets",
-              params: {
-                eventSlug: "streetsouk-2026",
-                pastEvent: "false",
-              },
-            })
-          }
-        />
-      ) : (
-        <>
       <ScrollView
         horizontal
         style={s.tabs}
         contentContainerStyle={s.tabsContent}
         showsHorizontalScrollIndicator={false}
       >
-        {tabs.map((tab) => (
+        {visibleTabs.map((tab) => (
           <Pressable
             key={tab}
             accessibilityRole="tab"
@@ -167,7 +159,7 @@ export default function EventDetailScreen() {
             )}
           </>
         )}
-        {activeTab === "Event Map" && (
+        {activeTab === "Event Map" && !mapLocked && (
           <Feature
             icon="map-outline"
             eyebrow="PLAN YOUR VISIT"
@@ -211,124 +203,7 @@ export default function EventDetailScreen() {
           />
         )}
       </ScrollView>
-        </>
-      )}
     </SafeAreaView>
-  );
-}
-
-function UpcomingEventPreview({
-  event,
-  onGetTickets,
-}: {
-  event: NonNullable<ReturnType<typeof useEvent>["event"]>;
-  onGetTickets: () => void;
-}) {
-  const shareEvent = async () => {
-    const details = [event.date_label, event.location].filter(Boolean).join(" · ");
-    const link = `streetsouk://events/${encodeURIComponent(event.slug)}`;
-    await Share.share({
-      title: event.title,
-      message: [event.title, details, event.description, link]
-        .filter(Boolean)
-        .join("\n\n"),
-    });
-  };
-  const actionLabel = event.badge?.toLowerCase().includes("rsvp")
-    ? "RSVP NOW"
-    : "GET TICKETS";
-
-  return (
-    <>
-      <ScrollView
-        contentContainerStyle={s.previewContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <ImageBackground
-          source={
-            event.cover_url
-              ? { uri: event.cover_url }
-              : require("@/assets/brands/bolacampaign.jpg")
-          }
-          style={s.previewHero}
-        >
-          <View style={s.previewScrim} />
-          <View style={s.previewBadge}>
-            <View style={s.previewBadgeDot} />
-            <Text style={s.previewBadgeText}>
-              {event.badge?.toUpperCase() || "UPCOMING EVENT"}
-            </Text>
-          </View>
-          <View style={s.previewHeroCopy}>
-            <Text style={s.previewKicker}>
-              THE NEXT STREET SOUK
-            </Text>
-            <Text style={s.previewTitle}>{event.title}</Text>
-          </View>
-        </ImageBackground>
-
-        <View style={s.previewMetaRow}>
-          <View style={s.previewMetaCard}>
-            <Ionicons name="calendar-outline" size={18} color={C.neon} />
-            <View style={s.previewMetaCopy}>
-              <Text style={s.previewMetaLabel}>WHEN</Text>
-              <Text style={s.previewMetaValue}>
-                {event.date_label || "Date to be announced"}
-              </Text>
-            </View>
-          </View>
-          <View style={s.previewMetaCard}>
-            <Ionicons name="location-outline" size={18} color={C.neon} />
-            <View style={s.previewMetaCopy}>
-              <Text style={s.previewMetaLabel}>WHERE</Text>
-              <Text style={s.previewMetaValue}>
-                {event.location || "Location to be announced"}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={s.previewDescriptionCard}>
-          <View style={s.previewDescriptionHeading}>
-            <Text style={s.previewSectionLabel}>ABOUT THIS EVENT</Text>
-            <View style={s.previewSectionRule} />
-          </View>
-          <Text style={s.previewDescription}>
-            {event.description || "More event details will be announced soon."}
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={shareEvent}
-            style={s.shareButton}
-          >
-            <Ionicons name="share-social-outline" size={19} color={C.neon} />
-            <Text style={s.shareButtonText}>SHARE EVENT</Text>
-            <Ionicons name="arrow-up-outline" size={16} color={C.neon} />
-          </Pressable>
-        </View>
-      </ScrollView>
-
-      <View style={s.previewFooter}>
-        <View style={s.previewFooterCopy}>
-          <Text style={s.previewFooterLabel}>
-            SAVE YOUR SPOT
-          </Text>
-          <Text style={s.previewFooterHint}>
-            Be there when it goes down.
-          </Text>
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          onPress={onGetTickets}
-          style={s.previewTicketButton}
-        >
-          <Text style={s.previewTicketButtonText}>
-            {actionLabel}
-          </Text>
-          <Ionicons name="arrow-forward" size={19} color={C.ink} />
-        </Pressable>
-      </View>
-    </>
   );
 }
 
@@ -872,176 +747,6 @@ const s = StyleSheet.create({
   tabText: { color: C.muted, fontFamily: F.display, fontSize: 13 },
   tabTextActive: { color: C.neon },
   content: { padding: 18, paddingBottom: 40 },
-  previewContent: { padding: 16, paddingBottom: 18 },
-  previewHero: {
-    height: 330,
-    justifyContent: "space-between",
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: C.line,
-    borderRadius: 19,
-    backgroundColor: C.panel,
-  },
-  previewScrim: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.34)",
-  },
-  previewBadge: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    margin: 15,
-    paddingHorizontal: 11,
-    paddingVertical: 9,
-    backgroundColor: C.ink,
-    borderWidth: 1,
-    borderColor: C.neon,
-    borderRadius: 20,
-  },
-  previewBadgeDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: C.neon,
-  },
-  previewBadgeText: {
-    color: C.neon,
-    fontFamily: F.mono,
-    fontSize: 9,
-    letterSpacing: 0.8,
-  },
-  previewHeroCopy: {
-    paddingHorizontal: 17,
-    paddingBottom: 20,
-    paddingTop: 54,
-    backgroundColor: "rgba(5, 5, 5, 0.58)",
-  },
-  previewKicker: {
-    color: C.neon,
-    fontFamily: F.mono,
-    fontSize: 9,
-    letterSpacing: 1.4,
-  },
-  previewTitle: {
-    color: C.paper,
-    fontFamily: F.display,
-    fontSize: 36,
-    lineHeight: 40,
-    marginTop: 5,
-  },
-  previewMetaRow: { flexDirection: "row", gap: 10, marginTop: 12 },
-  previewMetaCard: {
-    minHeight: 76,
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 9,
-    paddingHorizontal: 11,
-    paddingVertical: 10,
-    backgroundColor: C.panel,
-    borderWidth: 1,
-    borderColor: C.line,
-    borderRadius: 13,
-  },
-  previewMetaCopy: { flex: 1 },
-  previewMetaLabel: {
-    color: C.muted,
-    fontFamily: F.mono,
-    fontSize: 8,
-    letterSpacing: 0.9,
-  },
-  previewMetaValue: {
-    color: C.paper,
-    fontFamily: F.bodyBold,
-    fontSize: 13,
-    marginTop: 4,
-  },
-  previewDescriptionCard: {
-    padding: 16,
-    marginTop: 12,
-    backgroundColor: C.panel,
-    borderWidth: 1,
-    borderColor: C.line,
-    borderRadius: 15,
-  },
-  previewDescriptionHeading: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  previewSectionLabel: {
-    color: C.neon,
-    fontFamily: F.mono,
-    fontSize: 9,
-    letterSpacing: 1,
-  },
-  previewSectionRule: { height: 1, flex: 1, backgroundColor: C.line },
-  previewDescription: {
-    color: C.paper,
-    fontFamily: F.body,
-    fontSize: 16,
-    lineHeight: 23,
-    marginTop: 13,
-  },
-  shareButton: {
-    minHeight: 46,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 9,
-    marginTop: 17,
-    borderWidth: 1,
-    borderColor: C.line,
-    borderRadius: 11,
-  },
-  shareButtonText: {
-    color: C.neon,
-    fontFamily: F.mono,
-    fontSize: 10,
-    letterSpacing: 0.7,
-  },
-  previewFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 10,
-    backgroundColor: C.panel,
-    borderTopWidth: 1,
-    borderTopColor: C.line,
-  },
-  previewFooterCopy: { flex: 1 },
-  previewFooterLabel: {
-    color: C.neon,
-    fontFamily: F.mono,
-    fontSize: 8,
-    letterSpacing: 0.8,
-  },
-  previewFooterHint: {
-    color: C.paper,
-    fontFamily: F.body,
-    fontSize: 13,
-    marginTop: 3,
-  },
-  previewTicketButton: {
-    minHeight: 50,
-    minWidth: 145,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    paddingHorizontal: 13,
-    backgroundColor: C.neon,
-    borderRadius: 11,
-  },
-  previewTicketButtonText: {
-    color: C.ink,
-    fontFamily: F.mono,
-    fontSize: 10,
-    fontWeight: "700",
-  },
   eventName: {
     color: C.neon,
     fontFamily: F.display,
