@@ -4,26 +4,39 @@ import type { Vendor } from "@/lib/types";
 
 const EMPTY: Vendor[] = [];
 
-type Row = {
+type ApprovedApplication = {
+  id: string;
+  brand_name: string;
+  description: string;
+  logo_url: string;
+  campaign_image_url: string;
   booth: string | null;
-  is_sponsor: boolean;
-  vendors: Vendor;
+  created_at: string;
 };
 
 async function fetchEventVendors(eventId: string) {
-  // vendors!inner hides vendors that are unpublished
   const { data, error } = await supabase
-    .from("event_vendors")
-    .select("booth, is_sponsor, sort_order, vendors!inner(*)")
+    .from("event_vendor_applications")
+    .select("id, brand_name, description, logo_url, campaign_image_url, booth, created_at")
     .eq("event_id", eventId)
-    .order("sort_order");
+    .eq("status", "approved")
+    .order("created_at");
   if (error) throw new Error(error.message);
-  return (data as unknown as Row[]).map((row) => ({
-    ...row.vendors,
-    // the booth and sponsor flag for THIS event win over the vendor's defaults
-    booth: row.booth ?? row.vendors.booth,
-    is_sponsor: row.is_sponsor,
-  }));
+  return (data as ApprovedApplication[]).map((application, index) => ({
+    id: application.id,
+    slug: `app-${application.id}`,
+    name: application.brand_name,
+    category: "EVENT VENDOR",
+    booth: application.booth,
+    detail: application.description,
+    about: application.description,
+    logo_url: application.logo_url,
+    campaign_url: application.campaign_image_url,
+    is_sponsor: false,
+    is_featured: false,
+    is_published: true,
+    sort_order: index,
+  } satisfies Vendor));
 }
 
 // eventId null = still waiting for the event id

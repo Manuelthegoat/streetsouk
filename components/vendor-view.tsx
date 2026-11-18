@@ -16,6 +16,7 @@ import {
 } from "react-native";
 
 type Asset = ImageSource | number;
+type ShowcaseProduct = { name: string; image_url: string };
 
 type Props = {
   label: string; // header title
@@ -26,6 +27,7 @@ type Props = {
   about?: string | null;
   favoriteSlug?: string | null; // only brands that have a brand page in Supabase can be hearted
   products: GridProduct[];
+  showcaseProducts?: ShowcaseProduct[];
   loading: boolean;
   productsLoading?: boolean;
   notFound?: boolean;
@@ -45,6 +47,7 @@ export default function VendorView({
   about,
   favoriteSlug,
   products,
+  showcaseProducts = [],
   loading,
   productsLoading = false,
   notFound = false,
@@ -152,58 +155,85 @@ export default function VendorView({
               </>
             )}
 
-            <View style={s.sectionRow}>
-              <Text style={s.section}>THE COLLECTION</Text>
-              {!productsLoading && (
-                <Text style={s.count}>
-                  {products.length} {products.length === 1 ? "PIECE" : "PIECES"}
-                </Text>
-              )}
-            </View>
-
-            {productsLoading && products.length === 0 ? (
-              <ProductGridSkeleton />
-            ) : (
-              <View style={s.grid}>
-                {products.map((p) => (
-                  <Pressable
-                    key={p.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${p.name}, ${formatNaira(p.price)}`}
-                    style={s.tile}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/product/[id]",
-                        params: { id: p.id },
-                      })
-                    }
-                  >
-                    <View>
+            {showcaseProducts.length > 0 ? (
+              <>
+                <View style={s.sectionRow}>
+                  <Text style={s.section}>AT THE SOUK</Text>
+                  <Text style={s.count}>
+                    {showcaseProducts.length} {showcaseProducts.length === 1 ? "PIECE" : "PIECES"}
+                  </Text>
+                </View>
+                <View style={s.grid}>
+                  {showcaseProducts.map((product, index) => (
+                    <View key={`${product.name}-${index}`} style={s.tile}>
                       <Image
-                        source={
-                          p.image
-                            ? { uri: p.image }
-                            : require("@/assets/images/ss-logo.png")
-                        }
-                        contentFit={p.image ? "cover" : "contain"}
+                        source={{ uri: product.image_url }}
+                        contentFit="cover"
                         style={s.tileImage}
                       />
-                      {p.soldOut && (
-                        <View style={s.soldTag}>
-                          <Text style={s.soldTagText}>SOLD OUT</Text>
-                        </View>
-                      )}
+                      <Text numberOfLines={2} style={s.tileName}>
+                        {product.name}
+                      </Text>
                     </View>
-                    <Text numberOfLines={2} style={s.tileName}>
-                      {p.name}
+                  ))}
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={s.sectionRow}>
+                  <Text style={s.section}>THE COLLECTION</Text>
+                  {!productsLoading && (
+                    <Text style={s.count}>
+                      {products.length} {products.length === 1 ? "PIECE" : "PIECES"}
                     </Text>
-                    <Text style={s.tilePrice}>{formatNaira(p.price)}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
-            {!productsLoading && products.length === 0 && (
-              <Text style={s.note}>NO PRODUCTS YET. CHECK BACK SOON.</Text>
+                  )}
+                </View>
+
+                {productsLoading && products.length === 0 ? (
+                  <ProductGridSkeleton />
+                ) : (
+                  <View style={s.grid}>
+                    {products.map((p) => (
+                      <Pressable
+                        key={p.id}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${p.name}, ${formatNaira(p.price)}`}
+                        style={s.tile}
+                        onPress={() =>
+                          router.push({
+                            pathname: "/product/[id]",
+                            params: { id: p.id },
+                          })
+                        }
+                      >
+                        <View>
+                          <Image
+                            source={
+                              p.image
+                                ? { uri: p.image }
+                                : require("@/assets/images/ss-logo.png")
+                            }
+                            contentFit={p.image ? "cover" : "contain"}
+                            style={s.tileImage}
+                          />
+                          {p.soldOut && (
+                            <View style={s.soldTag}>
+                              <Text style={s.soldTagText}>SOLD OUT</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text numberOfLines={2} style={s.tileName}>
+                          {p.name}
+                        </Text>
+                        <Text style={s.tilePrice}>{formatNaira(p.price)}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+                {!productsLoading && products.length === 0 && (
+                  <Text style={s.note}>NO PRODUCTS YET. CHECK BACK SOON.</Text>
+                )}
+              </>
             )}
 
             {convention && (

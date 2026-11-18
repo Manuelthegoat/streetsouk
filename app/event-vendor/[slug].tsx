@@ -1,7 +1,7 @@
 import VendorView from "@/components/vendor-view";
 import { useBrandProducts } from "@/hooks/use-catalog";
 import { useEvent } from "@/hooks/use-events";
-import { useEventVendors } from "@/hooks/use-event-vendors";
+import { useEventVendorApplication } from "@/hooks/use-event-vendor-application";
 import { useVendor } from "@/hooks/use-vendor";
 import { vendorImage } from "@/lib/vendor-assets";
 import { useLocalSearchParams } from "expo-router";
@@ -13,28 +13,50 @@ export default function EventVendorScreen() {
     slug: string;
     event?: string;
   }>();
-  const { vendor, loading, error, reload } = useVendor(slug);
+  const applicationId = slug?.startsWith("app-") ? slug.slice(4) : undefined;
+  const { vendor, loading: vendorLoading, error: vendorError, reload: reloadVendor } = useVendor(
+    applicationId ? undefined : slug,
+  );
   const { event } = useEvent(eventSlug);
-  const { vendors } = useEventVendors(event?.id ?? null);
-  const { products, loading: productsLoading } = useBrandProducts(vendor?.name);
-  // the booth for THIS event
-  const booth = vendors.find((v) => v.slug === slug)?.booth ?? null;
+  const {
+    application,
+    loading: applicationLoading,
+    error: applicationError,
+    reload: reloadApplication,
+  } = useEventVendorApplication(applicationId, event?.id ?? null);
+  const activeVendor = applicationId ? null : vendor;
+  const { products, loading: productsLoading } = useBrandProducts(activeVendor?.name);
+  const booth = application?.booth ?? null;
+  const loading = applicationId ? applicationLoading || !event : vendorLoading;
+  const error = applicationId ? applicationError : vendorError;
+  const reload = applicationId ? reloadApplication : reloadVendor;
 
   return (
     <VendorView
       label="VENDOR PROFILE"
-      name={vendor?.name ?? ""}
-      kicker={vendor?.category}
-      logo={vendor ? vendorImage(vendor.slug, "logo", vendor.logo_url) : FALLBACK}
-      campaign={
-        vendor ? vendorImage(vendor.slug, "campaign", vendor.campaign_url) : FALLBACK
+      name={application?.brand_name ?? activeVendor?.name ?? ""}
+      kicker={application ? "EVENT VENDOR" : activeVendor?.category}
+      logo={
+        application
+          ? { uri: application.logo_url }
+          : activeVendor
+            ? vendorImage(activeVendor.slug, "logo", activeVendor.logo_url)
+            : FALLBACK
       }
-      about={vendor?.about}
-      favoriteSlug={vendor?.slug}
-      products={products}
+      campaign={
+        application
+          ? { uri: application.campaign_image_url }
+          : activeVendor
+            ? vendorImage(activeVendor.slug, "campaign", activeVendor.campaign_url)
+            : FALLBACK
+      }
+      about={application?.description ?? activeVendor?.about}
+      favoriteSlug={application ? `app-${application.id}` : activeVendor?.slug}
+      products={application ? [] : products}
       loading={loading}
-      productsLoading={productsLoading}
-      notFound={!loading && !vendor}
+      productsLoading={application ? false : productsLoading}
+      showcaseProducts={application?.showcase_products}
+      notFound={!loading && !(applicationId ? application : activeVendor)}
       error={error}
       reload={reload}
       convention
