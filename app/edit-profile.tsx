@@ -9,7 +9,7 @@ import {
 } from "@/hooks/use-username-check";
 import { pickAndUploadAvatar } from "@/lib/avatar";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { Image } from "@/components/async-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {

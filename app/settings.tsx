@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Image as ExpoImage } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -11,7 +12,7 @@ import {
   Alert,
 } from "react-native";
 import { C, F } from "@/components/street-souk-ui";
-import { Image as CachedImage } from "expo-image";
+import { Image as CachedImage } from "@/components/async-image";
 import { clearCache } from "@/lib/cache";
 import { useAuth } from "@/context/auth-context";
 import { useProfile } from "@/context/profile-context";
@@ -104,11 +105,16 @@ export default function SettingsScreen() {
 
   async function handleClearCache() {
     setClearing(true);
-    await clearCache();
-    await CachedImage.clearDiskCache();
-    await CachedImage.clearMemoryCache();
-    setClearing(false);
-    Alert.alert("Cache cleared", "Fresh content is loading.");
+    try {
+      await clearCache();
+      await ExpoImage.clearDiskCache();
+      await ExpoImage.clearMemoryCache();
+      Alert.alert("Cache cleared", "Fresh content is loading.");
+    } catch {
+      Alert.alert("Couldn't clear cache", "Please try again.");
+    } finally {
+      setClearing(false);
+    }
   }
   return (
     <SafeAreaView style={s.safe}>

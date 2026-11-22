@@ -5,7 +5,7 @@ import { useCatalog, type CatalogProduct } from "@/hooks/use-catalog";
 import { useVendors } from "@/hooks/use-vendors";
 import { formatNaira } from "@/lib/format";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { Image } from "@/components/async-image";
 import { useRouter } from "expo-router";
 import {
   Pressable,

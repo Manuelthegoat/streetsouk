@@ -4,7 +4,7 @@ import { useTopics } from "@/hooks/use-home";
 import { useNewsPost } from "@/hooks/use-news";
 import { formatDate } from "@/lib/format";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { Image } from "@/components/async-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   Linking,
@@ -126,7 +126,7 @@ const s = StyleSheet.create({
     color: C.neon,
     fontFamily: F.display,
     fontSize: 36,
-    lineHeight: 40,
+    lineHeight: 46,
     marginTop: 12,
   },
   excerpt: {

@@ -226,7 +226,7 @@ const s = StyleSheet.create({
     color: C.neon,
     fontFamily: F.display,
     fontSize: 42,
-    lineHeight: 46,
+    lineHeight: 52,
     marginTop: 6,
   },
   copy: {

@@ -82,6 +82,7 @@ export type FestivalEvent = {
   sort_order: number;
   starts_on: string | null;
   ends_on: string | null;
+  status: "upcoming" | "live" | "past";
 };
 export type Topic = {
   id: string;

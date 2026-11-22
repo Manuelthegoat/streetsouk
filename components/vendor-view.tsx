@@ -4,7 +4,7 @@ import { useStreetSoukStore } from "@/context/street-souk-store";
 import type { GridProduct } from "@/hooks/use-catalog";
 import { formatNaira } from "@/lib/format";
 import { Ionicons } from "@expo/vector-icons";
-import { Image, ImageBackground, type ImageSource } from "expo-image";
+import { Image, ImageBackground, type ImageSource } from "@/components/async-image";
 import { useRouter } from "expo-router";
 import {
   Pressable,
@@ -322,7 +322,7 @@ const s = StyleSheet.create({
     marginBottom: 8,
   },
   logo: { width: 56, height: 56 },
-  name: { color: C.paper, fontFamily: F.display, fontSize: 40, lineHeight: 44 },
+  name: { color: C.paper, fontFamily: F.display, fontSize: 40, lineHeight: 50 },
   directions: {
     backgroundColor: C.neon,
     padding: 16,
@@ -365,7 +365,7 @@ const s = StyleSheet.create({
     paddingVertical: 4,
   },
   soldTagText: { color: C.ink, fontFamily: F.mono, fontSize: 8 },
-  tileName: { color: C.paper, fontFamily: F.display, fontSize: 17, lineHeight: 20 },
+  tileName: { color: C.paper, fontFamily: F.display, fontSize: 17, lineHeight: 26 },
   tilePrice: { color: C.neon, fontFamily: F.mono, fontSize: 12 },
   location: {
     marginTop: 34,

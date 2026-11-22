@@ -6,7 +6,7 @@ import { useVendors } from "@/hooks/use-vendors";
 import { brandKey } from "@/lib/brand";
 import { vendorImage } from "@/lib/vendor-assets";
 import { Ionicons } from "@expo/vector-icons";
-import { Image, ImageBackground } from "expo-image";
+import { Image, ImageBackground } from "@/components/async-image";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {

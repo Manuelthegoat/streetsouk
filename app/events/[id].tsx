@@ -1,7 +1,7 @@
 import { C, CartBadge, F } from "@/components/street-souk-ui";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Image } from "expo-image";
+import { Image, ImageBackground } from "@/components/async-image";
 import { useEffect, useState } from "react";
 import {
   Pressable,
@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
   ActivityIndicator,
+  Image as NativeImage,
 } from "react-native";
 import { useStreetSoukStore } from "@/context/street-souk-store";
 import { useVendors } from "@/hooks/use-vendors";
@@ -34,15 +35,19 @@ import { useEvent } from "@/hooks/use-events";
 import { useFeed } from "@/hooks/use-feed";
 import { timeAgo } from "@/lib/format";
 import { useEventVendors } from "@/hooks/use-event-vendors";
+import { useEventGallery } from "@/hooks/use-event-gallery";
+import { useAuth } from "@/context/auth-context";
+import { useTicketOwnership } from "@/context/ticket-ownership-context";
 
 const tabs = [
-  "Event Map",
   "Tickets",
+  "Event Map",
   "Live",
   "Schedule",
   "Marketplace",
   "Lineup",
   "FAQ",
+  "Gallery",
 ] as const;
 type EventTab = (typeof tabs)[number];
 
@@ -50,12 +55,17 @@ export default function EventDetailScreen() {
   const router = useRouter();
   const { id, tab } = useLocalSearchParams<{ id: string; tab?: string }>();
   const { event, loading: eventLoading } = useEvent(id);
+  const { user } = useAuth();
+  const { hasTicketsForEvent } = useTicketOwnership();
   const eventId = event?.id ?? null;
   const pastEvent = !!event && isPastEvent(event);
   const mapLocked = !!event && isUpcomingEvent(event);
-  const visibleTabs = mapLocked
-    ? tabs.filter((eventTab) => eventTab !== "Event Map")
-    : tabs;
+  const eventTicketOwnership = event?.slug ? hasTicketsForEvent(event.slug) : null;
+  const visibleTabs = pastEvent
+    ? tabs.filter((eventTab) => eventTab === "Gallery")
+    : mapLocked
+      ? tabs.filter((eventTab) => eventTab === "Tickets")
+      : tabs.filter((eventTab) => eventTab !== "Gallery");
   const ticketsUnavailable = eventLoading || !event || pastEvent;
   const ticketUnavailableLabel = eventLoading
     ? "CHECKING EVENT"
@@ -68,12 +78,21 @@ export default function EventDetailScreen() {
       ? "Ticket sales are closed because this event has ended."
       : "Ticket sales are unavailable for this event.";
   const [activeTab, setActiveTab] = useState<EventTab>(
-    tabs.find((t) => t === tab) ?? "Event Map",
+    tabs.find((t) => t === tab) ?? "Tickets",
   );
 
   useEffect(() => {
-    if (mapLocked && activeTab === "Event Map") setActiveTab("Schedule");
-  }, [activeTab, mapLocked]);
+    if (pastEvent && activeTab !== "Gallery") setActiveTab("Gallery");
+    else if (!pastEvent && activeTab === "Gallery") setActiveTab("Tickets");
+    if (mapLocked && activeTab !== "Tickets") setActiveTab("Tickets");
+  }, [activeTab, mapLocked, pastEvent]);
+
+  useEffect(() => {
+    if (!mapLocked || !event?.slug || !user?.id) return;
+    if (eventTicketOwnership === true) {
+      router.replace({ pathname: "/my-tickets", params: { eventSlug: event.slug } });
+    }
+  }, [event?.slug, eventTicketOwnership, mapLocked, router, user?.id]);
 
   return (
     <SafeAreaView style={s.safe}>
@@ -110,7 +129,7 @@ export default function EventDetailScreen() {
           <Text style={s.pastEventBannerText}>PAST EVENT · SALES ENDED</Text>
         </View>
       )}
-      <ScrollView
+      {!mapLocked && <ScrollView
         horizontal
         style={s.tabs}
         contentContainerStyle={s.tabsContent}
@@ -129,11 +148,30 @@ export default function EventDetailScreen() {
             </Text>
           </Pressable>
         ))}
-      </ScrollView>
+      </ScrollView>}
       <ScrollView
-        contentContainerStyle={s.content}
+        contentContainerStyle={mapLocked ? s.upcomingContent : s.content}
         showsVerticalScrollIndicator={false}
       >
+        {mapLocked ? (
+          user && eventTicketOwnership !== false ? (
+            <View style={s.ownershipChecking}>
+              <ActivityIndicator color={C.neon} />
+              <Text style={s.upcomingFootnote}>CHECKING YOUR TICKETS</Text>
+            </View>
+          ) : <UpcomingEventLanding
+            event={event}
+            loading={eventLoading}
+            onGetTickets={() =>
+              router.push({
+                pathname: "/tickets",
+                params: { eventSlug: event?.slug ?? "streetsouk-2026" },
+              })
+            }
+          />
+        ) : pastEvent ? (
+          <GalleryContent eventId={eventId} />
+        ) : <>
         {activeTab !== "Marketplace" && (
           <>
             {eventLoading ? (
@@ -195,15 +233,126 @@ export default function EventDetailScreen() {
               router.push({
                 pathname: "/tickets",
                 params: {
-                  eventSlug: "streetsouk-2026",
+                  eventSlug: event?.slug ?? "streetsouk-2026",
                   pastEvent: event && isPastEvent(event) ? "true" : "false",
                 },
               })
             }
           />
         )}
+        </>}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function UpcomingEventLanding({
+  event,
+  loading,
+  onGetTickets,
+}: {
+  event: ReturnType<typeof useEvent>["event"];
+  loading: boolean;
+  onGetTickets: () => void;
+}) {
+  const [coverFailed, setCoverFailed] = useState(false);
+
+  useEffect(() => {
+    setCoverFailed(false);
+  }, [event?.cover_url]);
+
+  return (
+    <View>
+      <View style={s.upcomingHero}>
+        <ImageBackground
+          source={
+            event?.cover_url && !coverFailed
+              ? { uri: event.cover_url }
+              : require("@/assets/brands/bolacampaign.jpg")
+          }
+          imageStyle={s.upcomingHeroImage}
+          blurRadius={2}
+          onError={() => setCoverFailed(true)}
+          style={[StyleSheet.absoluteFill, s.upcomingHeroBackground]}
+        />
+        <View style={s.upcomingHeroShade} />
+        <View style={s.upcomingHeroCopy}>
+          <Text style={s.upcomingEyebrow}>{event?.badge ?? "UPCOMING EVENT"}</Text>
+          <Text style={s.upcomingTitle}>{loading ? "LOADING EVENT" : event?.title ?? "EVENT"}</Text>
+        </View>
+      </View>
+
+      <View style={s.upcomingInfo}>
+        <Text style={s.upcomingSectionLabel}>THE NEXT STREET SOUK</Text>
+        <Text style={s.upcomingDescription}>
+          {event?.description || "Get ready for a day of fashion, culture, music and community. Join us at Street Souk."}
+        </Text>
+        <View style={s.upcomingMetaRow}>
+          <View style={s.upcomingMetaIcon}><Ionicons name="calendar-outline" size={19} color={C.neon} /></View>
+          <View style={s.upcomingMetaCopy}>
+            <Text style={s.upcomingMetaLabel}>DATE</Text>
+            <Text style={s.upcomingMetaValue}>{event?.date_label || "DATE TO BE ANNOUNCED"}</Text>
+          </View>
+        </View>
+        <View style={s.upcomingMetaRow}>
+          <View style={s.upcomingMetaIcon}><Ionicons name="location-outline" size={19} color={C.neon} /></View>
+          <View style={s.upcomingMetaCopy}>
+            <Text style={s.upcomingMetaLabel}>LOCATION</Text>
+            <Text style={s.upcomingMetaValue}>{event?.location || "LOCATION TO BE ANNOUNCED"}</Text>
+          </View>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Get tickets for ${event?.title ?? "this event"}`}
+          disabled={loading || !event}
+          style={[s.upcomingTicketButton, (loading || !event) && s.upcomingTicketButtonDisabled]}
+          onPress={onGetTickets}
+        >
+          <Text style={s.upcomingTicketButtonText}>GET TICKETS</Text>
+          <Ionicons name="arrow-forward" size={20} color={C.ink} />
+        </Pressable>
+        <Text style={s.upcomingFootnote}>BE THERE WHEN IT HAPPENS.</Text>
+      </View>
+    </View>
+  );
+}
+
+function GalleryContent({ eventId }: { eventId: string | null }) {
+  const { images, loading, error, reload } = useEventGallery(eventId);
+  const [failedImages, setFailedImages] = useState<string[]>([]);
+  if (loading) {
+    return <View style={s.galleryGrid}>{[0, 1, 2, 3].map((key) => <Bone key={key} width="48%" height={170} />)}</View>;
+  }
+  if (error) {
+    return (
+      <Pressable onPress={reload} accessibilityRole="button">
+        <Text style={s.galleryEmpty}>COULD NOT LOAD THE GALLERY. TAP TO RETRY.</Text>
+      </Pressable>
+    );
+  }
+  if (!images.length) {
+    return <Text style={s.galleryEmpty}>EVENT PHOTOS WILL BE ADDED HERE.</Text>;
+  }
+  return (
+    <View style={s.galleryGrid}>
+      {images.map((image, index) => (
+        failedImages.includes(image.id) ? (
+          <View key={image.id} style={[s.galleryImage, s.galleryImageFailed]}>
+            <Ionicons name="image-outline" size={25} color={C.muted} />
+            <Text style={s.galleryImageFailedText}>PHOTO UNAVAILABLE</Text>
+          </View>
+        ) : (
+          <NativeImage
+            key={image.id}
+            source={{ uri: image.image_url }}
+            resizeMode="cover"
+            accessibilityLabel={`Event gallery photo ${index + 1}`}
+            style={s.galleryImage}
+            onError={() => setFailedImages((current) => current.includes(image.id) ? current : [...current, image.id])}
+          />
+        )
+      ))}
+    </View>
   );
 }
 
@@ -747,6 +896,134 @@ const s = StyleSheet.create({
   tabText: { color: C.muted, fontFamily: F.display, fontSize: 13 },
   tabTextActive: { color: C.neon },
   content: { padding: 18, paddingBottom: 40 },
+  upcomingContent: { padding: 16, paddingBottom: 38 },
+  ownershipChecking: { minHeight: 310, alignItems: "center", justifyContent: "center", gap: 14 },
+  upcomingHero: {
+    height: 330,
+    overflow: "hidden",
+    justifyContent: "flex-end",
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  upcomingHeroBackground: { zIndex: 0 },
+  upcomingHeroImage: { ...StyleSheet.absoluteFillObject },
+  upcomingHeroFallback: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 13,
+    backgroundColor: C.panel,
+  },
+  upcomingHeroBrand: { color: C.neon, fontFamily: F.display, fontSize: 18, letterSpacing: 2 },
+  upcomingHeroShade: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.58)",
+  },
+  upcomingHeroCopy: { zIndex: 2, padding: 20 },
+  upcomingEyebrow: {
+    color: C.neon,
+    fontFamily: F.mono,
+    fontSize: 9,
+    letterSpacing: 1.1,
+    marginBottom: 7,
+  },
+  upcomingTitle: {
+    color: C.paper,
+    fontFamily: F.display,
+    fontSize: 39,
+    lineHeight: 50,
+    textShadowColor: "rgba(0,0,0,0.7)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
+  upcomingInfo: {
+    padding: 18,
+    marginTop: 14,
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  upcomingSectionLabel: { color: C.neon, fontFamily: F.mono, fontSize: 9, letterSpacing: 1 },
+  upcomingDescription: {
+    color: C.paper,
+    fontFamily: F.body,
+    fontSize: 16,
+    lineHeight: 23,
+    marginTop: 10,
+    marginBottom: 15,
+  },
+  upcomingMetaRow: {
+    minHeight: 58,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: C.line,
+  },
+  upcomingMetaIcon: {
+    width: 34,
+    height: 34,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  upcomingMetaCopy: { flex: 1, gap: 4 },
+  upcomingMetaLabel: { color: C.muted, fontFamily: F.mono, fontSize: 8, letterSpacing: 0.8 },
+  upcomingMetaValue: { color: C.paper, fontFamily: F.bodyBold, fontSize: 14 },
+  upcomingTicketButton: {
+    minHeight: 58,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 17,
+    marginTop: 15,
+    backgroundColor: C.neon,
+  },
+  upcomingTicketButtonDisabled: { opacity: 0.5 },
+  upcomingTicketButtonText: { color: C.ink, fontFamily: F.mono, fontSize: 12, letterSpacing: 0.5 },
+  upcomingFootnote: {
+    color: C.muted,
+    fontFamily: F.mono,
+    fontSize: 8,
+    textAlign: "center",
+    letterSpacing: 1,
+    marginTop: 14,
+  },
+  galleryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 10,
+    marginTop: 4,
+  },
+  galleryImage: {
+    width: "48%",
+    aspectRatio: 1,
+    backgroundColor: C.panel,
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  galleryImageFailed: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  galleryImageFailedText: { color: C.muted, fontFamily: F.mono, fontSize: 8 },
+  galleryEmpty: {
+    color: C.muted,
+    fontFamily: F.mono,
+    fontSize: 10,
+    lineHeight: 18,
+    textAlign: "center",
+    marginTop: 35,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: C.line,
+    backgroundColor: C.panel,
+  },
   eventName: {
     color: C.neon,
     fontFamily: F.display,
@@ -842,7 +1119,7 @@ const s = StyleSheet.create({
     color: C.paper,
     fontFamily: F.display,
     fontSize: 31,
-    lineHeight: 35,
+    lineHeight: 41,
     marginTop: 7,
   },
   ticketFeatureBody: {
@@ -950,7 +1227,7 @@ const s = StyleSheet.create({
     color: C.neon,
     fontFamily: F.display,
     fontSize: 22,
-    lineHeight: 26,
+    lineHeight: 32,
   },
   liveOpen: {
     marginTop: 16,
@@ -986,7 +1263,7 @@ const s = StyleSheet.create({
     color: C.neon,
     fontFamily: F.display,
     fontSize: 14,
-    lineHeight: 17,
+    lineHeight: 23,
   },
   scheduleLocation: {
     flexDirection: "row",
@@ -1119,7 +1396,7 @@ const s = StyleSheet.create({
     color: C.neon,
     fontFamily: F.display,
     fontSize: 30,
-    lineHeight: 34,
+    lineHeight: 40,
   },
   lineupDescription: {
     color: C.paper,

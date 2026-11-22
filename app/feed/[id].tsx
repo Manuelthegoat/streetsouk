@@ -138,7 +138,7 @@ const s = StyleSheet.create({
     color: C.neon,
     fontFamily: F.display,
     fontSize: 43,
-    lineHeight: 48,
+    lineHeight: 54,
     marginTop: 32,
   },
   rule: { height: 4, backgroundColor: C.neon, marginVertical: 28 },

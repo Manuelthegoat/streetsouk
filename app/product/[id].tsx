@@ -6,7 +6,7 @@ import { useCatalog } from "@/hooks/use-catalog";
 import { brandKey } from "@/lib/brand";
 import { formatNaira } from "@/lib/format";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { Image } from "@/components/async-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -351,7 +351,7 @@ const s = StyleSheet.create({
     color: C.paper,
     fontFamily: F.display,
     fontSize: 36,
-    lineHeight: 40,
+    lineHeight: 46,
     marginTop: 10,
   },
   priceRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 8 },

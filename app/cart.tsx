@@ -5,7 +5,7 @@ import { formatNaira } from "@/lib/format";
 import { zappie } from "@/lib/zappie";
 import type { ZQuote } from "@/lib/zappie-types";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { Image } from "@/components/async-image";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {

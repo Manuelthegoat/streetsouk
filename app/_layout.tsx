@@ -14,6 +14,7 @@ import { StreetSoukStore } from "@/context/street-souk-store";
 import { CartProvider } from "@/context/cart-context";
 import OnboardingGate from "@/components/onboarding-gate";
 import { ProfileProvider } from "@/context/profile-context";
+import { TicketOwnershipProvider } from "@/context/ticket-ownership-context";
 import * as Notifications from "expo-notifications";
 import { router, type Href } from "expo-router";
 import { useEffect } from "react";
@@ -63,9 +64,10 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={DarkTheme}>
       <AuthProvider>
-        <ProfileProvider>
-          <CartProvider>
-            <StreetSoukStore>
+        <TicketOwnershipProvider>
+          <ProfileProvider>
+            <CartProvider>
+              <StreetSoukStore>
               <OnboardingGate />
               <Stack>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -90,6 +92,7 @@ export default function RootLayout() {
                 />
                 <Stack.Screen name="alerts" options={{ headerShown: false }} />
                 <Stack.Screen name="my-souk" options={{ headerShown: false }} />
+                <Stack.Screen name="my-tickets" options={{ headerShown: false }} />
                 <Stack.Screen
                   name="feed/[id]"
                   options={{ headerShown: false }}
@@ -141,9 +144,10 @@ export default function RootLayout() {
                 <Stack.Screen name="zappie-debug" options={{ headerShown: false }} />
                 <Stack.Screen name="brand/[key]" options={{ headerShown: false }} />
               </Stack>
-            </StreetSoukStore>
-          </CartProvider>
-        </ProfileProvider>
+              </StreetSoukStore>
+            </CartProvider>
+          </ProfileProvider>
+        </TicketOwnershipProvider>
       </AuthProvider>
       <StatusBar style="light" />
     </ThemeProvider>

@@ -1,9 +1,10 @@
 import { EventCardSkeleton } from "@/components/skeleton";
 import { C, F, Header } from "@/components/street-souk-ui";
 import { useEvents } from "@/hooks/use-events";
-import { isPastEvent } from "@/lib/event-dates";
+import { useTicketOwnership } from "@/context/ticket-ownership-context";
+import { isPastEvent, isUpcomingEvent } from "@/lib/event-dates";
 import type { FestivalEvent } from "@/lib/types";
-import { ImageBackground } from "expo-image";
+import { ImageBackground } from "@/components/async-image";
 import { useRouter } from "expo-router";
 import {
   Pressable,
@@ -16,14 +17,23 @@ import {
 
 function EventCard({ event, past }: { event: FestivalEvent; past: boolean }) {
   const router = useRouter();
+  const { hasTicketsForEvent, loading: checkingOwnership, refresh } = useTicketOwnership();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Open ${event.title}${past ? " (past event)" : ""}`}
       style={{ marginBottom: 18 }}
-      onPress={() =>
-        router.push({ pathname: "/events/[id]", params: { id: event.slug } })
-      }
+      onPress={async () => {
+        let ownsTicket = isUpcomingEvent(event) && hasTicketsForEvent(event.slug) === true;
+        const ownershipUnknown = isUpcomingEvent(event) && hasTicketsForEvent(event.slug) === null;
+        if (isUpcomingEvent(event) && !ownsTicket && (ownershipUnknown || checkingOwnership)) {
+          const refreshedSlugs = await refresh();
+          ownsTicket = refreshedSlugs?.includes(event.slug) ?? false;
+        }
+        router.push(ownsTicket
+          ? { pathname: "/my-tickets", params: { eventSlug: event.slug } }
+          : { pathname: "/events/[id]", params: { id: event.slug } });
+      }}
     >
       <ImageBackground
         source={
@@ -149,7 +159,7 @@ const s = StyleSheet.create({
     backgroundColor: C.muted,
   },
   pastImage: { opacity: 0.3 },
-  title: { color: C.neon, fontFamily: F.display, fontSize: 36, lineHeight: 39 },
+  title: { color: C.neon, fontFamily: F.display, fontSize: 36, lineHeight: 45 },
   footer: {
     marginTop: 13,
     paddingTop: 11,

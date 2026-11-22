@@ -30,6 +30,9 @@ alter table public.ticket_attendees enable row level security;
 revoke all on table public.ticket_attendees from anon, authenticated;
 grant select on table public.ticket_attendees to authenticated;
 
+drop policy if exists "Admins can read ticket attendees"
+  on public.ticket_attendees;
+
 create policy "Admins can read ticket attendees"
   on public.ticket_attendees
   for select

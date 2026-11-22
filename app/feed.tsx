@@ -235,7 +235,7 @@ const s = StyleSheet.create({
   logo: { width: 142, height: 48 },
   content: { padding: 20, paddingBottom: 48 },
   titleBlock: { marginTop: 30, marginBottom: 28 },
-  title: { color: C.neon, fontFamily: F.display, fontSize: 48, lineHeight: 52 },
+  title: { color: C.neon, fontFamily: F.display, fontSize: 48, lineHeight: 58 },
   subtitle: {
     color: C.neon,
     fontFamily: F.mono,
@@ -293,7 +293,7 @@ const s = StyleSheet.create({
     color: C.neon,
     fontFamily: F.display,
     fontSize: 25,
-    lineHeight: 29,
+    lineHeight: 35,
     marginTop: 23,
   },
   cardDetail: {

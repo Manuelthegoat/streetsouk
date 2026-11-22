@@ -7,7 +7,7 @@ import { brandKey } from "@/lib/brand";
 import { formatNaira } from "@/lib/format";
 import { vendorImage } from "@/lib/vendor-assets";
 import { Ionicons } from "@expo/vector-icons";
-import { Image, ImageBackground } from "expo-image";
+import { Image, ImageBackground } from "@/components/async-image";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
@@ -512,7 +512,7 @@ const s = StyleSheet.create({
     color: C.neon,
     fontFamily: F.display,
     fontSize: 31,
-    lineHeight: 35,
+    lineHeight: 41,
     marginTop: 4,
   },
   featuredVendorCategory: {

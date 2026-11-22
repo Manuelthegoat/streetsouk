@@ -1,6 +1,6 @@
 const API_BASE = "https://fluid.jetronticket.com/api/v1";
 const API_KEY = process.env.EXPO_PUBLIC_JETRON_API_KEY;
-const CHECKOUT_CALLBACK_URL = "streetsouk://tickets";
+export const CHECKOUT_CALLBACK_URL = "streetsouk://tickets";
 
 export type JetronEvent = {
   slug: string;

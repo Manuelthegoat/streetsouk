@@ -2,7 +2,7 @@ import { C, F, Header } from "@/components/street-souk-ui";
 import { useAuth } from "@/context/auth-context";
 import { useProfile } from "@/context/profile-context";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { Image } from "@/components/async-image";
 import { useRouter } from "expo-router";
 import {
   Alert,
@@ -22,7 +22,7 @@ const rows = [
     "qr-code-outline",
     "/passport",
   ],
-  ["ORDERS", "Your StreetSouk purchases", "bag-outline", "/my-souk"],
+  ["MY TICKETS", "Your confirmed ticket purchases", "ticket-outline", "/my-tickets"],
   [
     "NOTIFICATIONS",
     "The latest from the Souk",
@@ -61,7 +61,6 @@ export default function ProfileScreen() {
         >
           <View style={s.identityTop}>
             <Text style={s.identityEyebrow}>YOUR STREET SOUK ID</Text>
-            <Ionicons name="arrow-up-right" size={19} color={C.neon} />
           </View>
           <View style={[s.avatar, { overflow: "hidden" }]}>
             {profile?.avatar_url ? (
@@ -159,7 +158,7 @@ const s = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     marginBottom: 17,
   },
   identityEyebrow: {
@@ -167,6 +166,7 @@ const s = StyleSheet.create({
     fontFamily: F.mono,
     fontSize: 9,
     letterSpacing: 1,
+    textAlign: "center",
   },
   avatar: {
     width: 112,

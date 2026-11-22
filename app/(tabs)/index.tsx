@@ -6,9 +6,11 @@ import { useEvents } from "@/hooks/use-events";
 import { useTopics } from "@/hooks/use-home";
 import { useNews } from "@/hooks/use-news";
 import { isPastEvent } from "@/lib/event-dates";
+import { isUpcomingEvent } from "@/lib/event-dates";
+import { useTicketOwnership } from "@/context/ticket-ownership-context";
 import type { NewsPost } from "@/lib/types";
 import { Ionicons } from "@expo/vector-icons";
-import { Image, ImageBackground } from "expo-image";
+import { Image, ImageBackground } from "@/components/async-image";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
@@ -43,6 +45,11 @@ export default function HomeScreen() {
   const [mode, setMode] = useState<Mode>("All");
   const { topics } = useTopics();
   const { events, loading: eventsLoading } = useEvents();
+  const {
+    hasTicketsForEvent,
+    loading: checkingTicketOwnership,
+    refresh: refreshTicketOwnership,
+  } = useTicketOwnership();
   const { catalog, loading: catalogLoading } = useCatalog();
   const { posts: news, loading: newsLoading } = useNews();
 
@@ -127,13 +134,18 @@ export default function HomeScreen() {
           ) : featured ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Get tickets for ${featured.title}`}
-              onPress={() =>
-                router.push({
-                  pathname: "/tickets",
-                  params: { eventSlug: featured.slug, pastEvent: "false" },
-                })
-              }
+              accessibilityLabel={`Buy tickets for ${featured.title}`}
+              onPress={async () => {
+                let ownsTicket = isUpcomingEvent(featured) && hasTicketsForEvent(featured.slug) === true;
+                const ownershipUnknown = hasTicketsForEvent(featured.slug) === null;
+                if (isUpcomingEvent(featured) && !ownsTicket && (ownershipUnknown || checkingTicketOwnership)) {
+                  const refreshedSlugs = await refreshTicketOwnership();
+                  ownsTicket = refreshedSlugs?.includes(featured.slug) ?? false;
+                }
+                router.push(ownsTicket
+                  ? { pathname: "/my-tickets", params: { eventSlug: featured.slug } }
+                  : { pathname: "/tickets", params: { eventSlug: featured.slug } });
+              }}
             >
               <ImageBackground
                 source={
@@ -252,7 +264,7 @@ const s = StyleSheet.create({
     color: C.neon,
     fontFamily: F.display,
     fontSize: 43,
-    lineHeight: 47,
+    lineHeight: 53,
     marginTop: 9,
   },
   intro: {
@@ -376,7 +388,7 @@ const s = StyleSheet.create({
     color: C.neon,
     fontFamily: F.display,
     fontSize: 16,
-    lineHeight: 19,
+    lineHeight: 25,
   },
   eventCard: {
     backgroundColor: C.panel,
@@ -390,7 +402,7 @@ const s = StyleSheet.create({
     color: C.neon,
     fontFamily: F.display,
     fontSize: 29,
-    lineHeight: 32,
+    lineHeight: 38,
     marginTop: 10,
   },
   eventDetail: {

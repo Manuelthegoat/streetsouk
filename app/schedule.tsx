@@ -16,7 +16,7 @@ import { groupByDay, useSchedule } from "@/hooks/use-schedule";
 import { formatTimeRange } from "@/lib/format";
 import { scheduleImage } from "@/lib/vendor-assets";
 import { ScheduleSkeleton } from "@/components/skeleton";
-import { Image, ImageBackground } from "expo-image";
+import { Image, ImageBackground } from "@/components/async-image";
 import { useEvents } from "@/hooks/use-events";
 import { isPastEvent } from "@/lib/event-dates";
 
@@ -207,7 +207,7 @@ const s = StyleSheet.create({
     color: C.neon,
     fontFamily: F.display,
     fontSize: 16,
-    lineHeight: 19,
+    lineHeight: 25,
   },
   liveTitle: { color: C.neon },
   location: {

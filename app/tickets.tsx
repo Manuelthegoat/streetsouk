@@ -2,21 +2,24 @@ import { C, F, Header } from "@/components/street-souk-ui";
 import { useAuth } from "@/context/auth-context";
 import { useProfile } from "@/context/profile-context";
 import {
+  CHECKOUT_CALLBACK_URL,
   createJetronOrder,
   getJetronEvent,
   listJetronEvents,
   listJetronTickets,
   reserveJetronTickets,
 } from "@/lib/jetron";
+import { buyerHasTicketsForEvent } from "@/lib/attendee-tickets";
 import type { JetronEvent, JetronTicket } from "@/lib/jetron";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   ActivityIndicator,
+  Image,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -61,6 +64,18 @@ function displayDate(event: JetronEvent) {
         month: "short",
         year: "numeric",
       });
+}
+
+async function waitForBuyerTickets(eventSlug: string) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      if (await buyerHasTicketsForEvent(eventSlug)) return true;
+    } catch {
+      // Payment can return before Jetron's ticket lookup reflects the purchase.
+    }
+  }
+  return false;
 }
 
 function ticketSku(ticket: JetronTicket) {
@@ -140,6 +155,7 @@ function Field({
 }
 
 export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
+  const router = useRouter();
   const { eventSlug: eventSlugParam, pastEvent: pastEventParam } = useLocalSearchParams<{
     eventSlug?: string | string[];
     pastEvent?: string | string[];
@@ -158,9 +174,11 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
   const [tickets, setTickets] = useState<JetronTicket[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [deviceId, setDeviceId] = useState("");
+  const [resolvedEventLookup, setResolvedEventLookup] = useState<string | null>(null);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [loadingTickets, setLoadingTickets] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [checkingExistingTickets, setCheckingExistingTickets] = useState(false);
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [firstName, setFirstName] = useState(profile?.first_name ?? "");
@@ -196,6 +214,7 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
 
   const loadEvents = useCallback(async () => {
     setLoadingEvents(true);
+    setResolvedEventLookup(null);
     setError(null);
     try {
       const result = await listJetronEvents().catch(() => []);
@@ -233,6 +252,7 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
       );
     } finally {
       setLoadingEvents(false);
+      setResolvedEventLookup(preferredSlug);
     }
   }, [preferredSlug]);
 
@@ -255,8 +275,18 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
   }, [loadEvents]);
 
   useEffect(() => {
+    // The route slug may be valid for the app but not yet loaded from Jetron.
+    // Wait for the event lookup before requesting ticket types, or Jetron can
+    // briefly return a misleading "Not Found" while the event is still loading.
+    if (loadingEvents || resolvedEventLookup !== preferredSlug) return;
+    if (!events.some((event) => event.slug === selectedSlug)) {
+      setTickets([]);
+      setLoadingTickets(false);
+      return;
+    }
     if (!selectedSlug) {
       setTickets([]);
+      setLoadingTickets(false);
       return;
     }
     let active = true;
@@ -284,7 +314,7 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
     return () => {
       active = false;
     };
-  }, [selectedSlug]);
+  }, [events, loadingEvents, preferredSlug, resolvedEventLookup, selectedSlug]);
 
   useEffect(() => {
     if (profile?.first_name) {
@@ -322,7 +352,53 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
     setStep(1);
   }
 
-  function continueToReview() {
+  async function ensureNoExistingTickets() {
+    if (!selectedEvent) return false;
+    const accountEmail = user?.email?.trim().toLowerCase();
+    if (!accountEmail || !user?.email_confirmed_at) {
+      Alert.alert(
+        "Sign in to continue",
+        "Sign in with the verified email address you’ll use for your ticket. This lets us check for existing tickets first.",
+        [
+          { text: "CANCEL", style: "cancel" },
+          { text: "SIGN IN", onPress: () => router.push("/sign-in") },
+        ],
+      );
+      return false;
+    }
+    if (email.trim().toLowerCase() !== accountEmail) {
+      setError("Use your verified account email so we can check for tickets already bought for this event.");
+      return false;
+    }
+
+    setCheckingExistingTickets(true);
+    setError(null);
+    try {
+      const alreadyOwnsTicket = await buyerHasTicketsForEvent(selectedEvent.slug);
+      if (alreadyOwnsTicket) {
+        Alert.alert(
+          "You already have tickets",
+          `This account already has a ticket for ${selectedEvent.name}. Open My Tickets to view it.`,
+          [
+            { text: "CLOSE", style: "cancel" },
+            {
+              text: "MY TICKETS",
+              onPress: () => router.push({ pathname: "/my-tickets", params: { eventSlug: selectedEvent.slug } }),
+            },
+          ],
+        );
+        return false;
+      }
+      return true;
+    } catch {
+      setError("We couldn’t check for tickets already bought for this event. Please try again.");
+      return false;
+    } finally {
+      setCheckingExistingTickets(false);
+    }
+  }
+
+  async function continueToReview() {
     if (!firstName.trim() || !lastName.trim() || !email.trim()) {
       setError("Add the ticket holder’s name and email to continue.");
       return;
@@ -331,6 +407,7 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
       setError("Enter a valid email address for your tickets.");
       return;
     }
+    if (!(await ensureNoExistingTickets())) return;
     setError(null);
     setStep(2);
   }
@@ -341,6 +418,7 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
       return;
     }
     if (!selectedEvent || !deviceId || selectedItems.length === 0) return;
+    if (!(await ensureNoExistingTickets())) return;
     setCheckingOut(true);
     setError(null);
     setNotice("");
@@ -365,16 +443,17 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
         },
       );
       if (order.status === "pending_payment" && order.checkoutUrl) {
-        await WebBrowser.openBrowserAsync(order.checkoutUrl);
-        setStep(0);
+        const browserResult = await WebBrowser.openAuthSessionAsync(order.checkoutUrl, CHECKOUT_CALLBACK_URL);
+        if (browserResult.type === "success") {
+          setNotice("Payment received. Confirming your ticket...");
+          if (await waitForBuyerTickets(selectedEvent.slug)) {
+            router.replace({ pathname: "/my-tickets", params: { eventSlug: selectedEvent.slug } });
+          } else {
+            setNotice("Your payment is still being confirmed. We’ll keep this order open to prevent another purchase. Check My Tickets again shortly.");
+          }
+        }
       } else if (order.status === "confirmed") {
-        Alert.alert(
-          "You’re all set!",
-          order.reference
-            ? `Your ticket order is confirmed.\nReference: ${order.reference}\nCheck email for confirmation.`
-            : "Your free ticket order is confirmed. Check email for confirmation.",
-          [{ text: "DONE", onPress: () => setStep(0) }],
-        );
+        router.replace({ pathname: "/my-tickets", params: { eventSlug: selectedEvent.slug } });
       } else {
         setNotice("Your order was created. Check your email for ticket updates.");
       }
@@ -426,10 +505,12 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
               {step === 0 ? "PICK YOUR\nPASS." : step === 1 ? "WHO’S\nCOMING?" : "LOCK IT\nIN."}
             </Text>
           </View>
-          <View style={s.ticketMark}>
-            <Ionicons name="ticket" size={30} color={C.ink} />
-            <Text style={s.ticketMarkText}>SS / 26</Text>
-          </View>
+          <Image
+            source={require("../assets/images/stret-bite.png")}
+            accessibilityLabel="Street Souk mascot"
+            resizeMode="contain"
+            style={s.introImage}
+          />
         </View>
 
         {routeMarksEventPast && (
@@ -445,87 +526,27 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
           <>
             <View style={s.sectionHeading}>
               <View>
-                <Text style={s.sectionKicker}>STEP 01</Text>
-                <Text style={s.sectionTitle}>Choose your event</Text>
+                <Text style={s.sectionKicker}>{selectedEvent?.name ?? "YOUR EVENT"}</Text>
+                <Text style={s.sectionTitle}>Select your tickets</Text>
               </View>
-              {loadingEvents && <ActivityIndicator color={C.neon} />}
+              {(loadingEvents || loadingTickets) && <ActivityIndicator color={C.neon} />}
             </View>
-            {loadingEvents ? (
+            {loadingEvents || resolvedEventLookup !== preferredSlug ? (
               <View style={s.loadingCard}>
                 <ActivityIndicator color={C.neon} />
-                <Text style={s.bodyCopy}>Finding your next day out…</Text>
+                <Text style={s.bodyCopy}>Loading your event...</Text>
               </View>
-            ) : events.length === 0 ? (
+            ) : !selectedEvent ? (
               <View style={s.emptyCard}>
                 <Ionicons name="ticket-outline" size={26} color={C.neon} />
-                <Text style={s.ticketName}>No events available</Text>
-                <Text style={s.bodyCopy}>
-                  Events will appear here when tickets are published on Jetron.
-                </Text>
+                <Text style={s.ticketName}>Event unavailable</Text>
+                <Text style={s.bodyCopy}>We could not find ticket details for this event.</Text>
                 <Pressable onPress={loadEvents} style={s.retryButton}>
                   <Text style={s.retryText}>TRY AGAIN</Text>
                 </Pressable>
               </View>
             ) : (
-              <View style={s.eventList}>
-                {events.map((event) => {
-                  const selected = selectedSlug === event.slug;
-                  const date = displayDate(event);
-                  const place = event.location ?? event.venue;
-                  return (
-                    <Pressable
-                      key={event.slug}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected }}
-                      onPress={() => {
-                        if (selectedSlug !== event.slug) {
-                          setSelectedSlug(event.slug);
-                          setStep(0);
-                          setError(null);
-                        }
-                      }}
-                      style={[s.eventCard, selected && s.eventCardSelected]}
-                    >
-                      <View style={[s.eventIcon, selected && s.eventIconSelected]}>
-                        <Ionicons
-                          name="sparkles-outline"
-                          size={21}
-                          color={selected ? C.ink : C.neon}
-                        />
-                      </View>
-                      <View style={s.eventCopy}>
-                        <Text style={s.eventEyebrow}>
-                          {selected ? "YOU’RE HERE FOR" : "UP NEXT"}
-                        </Text>
-                        <Text style={[s.eventName, selected && s.eventNameSelected]}>
-                          {event.name}
-                        </Text>
-                        {!!(date || place) && (
-                          <Text style={s.eventDetail}>
-                            {[date, place].filter(Boolean).join("  ·  ")}
-                          </Text>
-                        )}
-                      </View>
-                      <Ionicons
-                        name={selected ? "checkmark-circle" : "ellipse-outline"}
-                        size={23}
-                        color={selected ? C.ink : C.muted}
-                      />
-                    </Pressable>
-                  );
-                })}
-              </View>
-            )}
-
-            {selectedEvent && (
               <>
-                <View style={[s.sectionHeading, s.ticketHeading]}>
-                  <View>
-                    <Text style={s.sectionKicker}>MAKE IT YOURS</Text>
-                    <Text style={s.sectionTitle}>Select your tickets</Text>
-                  </View>
-                  {loadingTickets && <ActivityIndicator color={C.neon} />}
-                </View>
                 {loadingTickets ? (
                   <View style={s.loadingCard}>
                     <ActivityIndicator color={C.neon} />
@@ -752,7 +773,7 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
           </>
         )}
 
-        {!!error && (
+        {!!error && !loadingEvents && !loadingTickets && (
           <View style={s.errorBox}>
             <Ionicons name="alert-circle-outline" size={19} color="#FF8D82" />
             <Text style={s.errorText}>{error}</Text>
@@ -793,6 +814,7 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Go to previous step"
+              disabled={checkingExistingTickets || checkingOut}
               onPress={() => {
                 setError(null);
                 setStep((current) => current - 1);
@@ -806,6 +828,7 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
             accessibilityRole="button"
             disabled={
               checkingOut ||
+              checkingExistingTickets ||
               !deviceId ||
               routeMarksEventPast ||
               (step === 0 && (selectedCount === 0 || loadingTickets || !selectedEvent))
@@ -820,6 +843,11 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
           >
             {checkingOut ? (
               <ActivityIndicator color={C.ink} />
+            ) : checkingExistingTickets ? (
+              <>
+                <ActivityIndicator color={C.ink} />
+                <Text style={s.continueText}>CHECKING FOR EXISTING TICKETS...</Text>
+              </>
             ) : (
               <>
                 <Text style={s.continueText}>{buttonLabel}</Text>
@@ -895,16 +923,8 @@ const s = StyleSheet.create({
   },
   pastEventNoticeText: { flex: 1, color: C.paper, fontFamily: F.body, fontSize: 14 },
   eyebrow: { color: C.paper, fontFamily: F.mono, fontSize: 8, letterSpacing: 0.4 },
-  title: { color: C.neon, fontFamily: F.display, fontSize: 34, lineHeight: 36, marginTop: 5 },
-  ticketMark: {
-    width: 69,
-    height: 76,
-    backgroundColor: C.neon,
-    alignItems: "center",
-    justifyContent: "center",
-    transform: [{ rotate: "5deg" }],
-  },
-  ticketMarkText: { color: C.ink, fontFamily: F.mono, fontSize: 8, marginTop: 5 },
+  title: { color: C.neon, fontFamily: F.display, fontSize: 34, lineHeight: 42, marginTop: 5 },
+  introImage: { width: 94, height: 94 },
   sectionHeading: {
     flexDirection: "row",
     alignItems: "center",

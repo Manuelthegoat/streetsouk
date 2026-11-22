@@ -1,4 +1,5 @@
 import { C, F, Header } from "@/components/street-souk-ui";
+import { useTicketOwnership } from "@/context/ticket-ownership-context";
 import { useCatalog, type CatalogProduct } from "@/hooks/use-catalog";
 import { useEvents } from "@/hooks/use-events";
 import { useNews } from "@/hooks/use-news";
@@ -7,8 +8,9 @@ import { brandKey } from "@/lib/brand";
 import { formatNaira } from "@/lib/format";
 import { vendorImage } from "@/lib/vendor-assets";
 import { Ionicons } from "@expo/vector-icons";
-import { Image, type ImageSource } from "expo-image";
+import { Image, type ImageSource } from "@/components/async-image";
 import { useRouter } from "expo-router";
+import { isUpcomingEvent } from "@/lib/event-dates";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -40,6 +42,7 @@ export default function SearchScreen() {
   const { catalog, loading: productsLoading } = useCatalog();
   const { vendors, loading: vendorsLoading } = useVendors();
   const { events, loading: eventsLoading } = useEvents();
+  const { hasTicketsForEvent } = useTicketOwnership();
   const { posts, loading: newsLoading } = useNews();
   const searching = query.trim().length > 0;
 
@@ -62,8 +65,12 @@ export default function SearchScreen() {
     router.push({ pathname: "/product/[id]", params: { id: product.id } });
   const openBrand = (key: string) =>
     router.push({ pathname: "/brand/[key]", params: { key } });
-  const openEvent = (slug: string) =>
-    router.push({ pathname: "/events/[id]", params: { id: slug } });
+  const openEvent = (event: (typeof events)[number]) => {
+    const ownsTicket = isUpcomingEvent(event) && hasTicketsForEvent(event.slug) === true;
+    router.push(ownsTicket
+      ? { pathname: "/my-tickets", params: { eventSlug: event.slug } }
+      : { pathname: "/events/[id]", params: { id: event.slug } });
+  };
   const openStory = (id: string) =>
     router.push({ pathname: "/news/[id]", params: { id } });
 
@@ -116,7 +123,7 @@ export default function SearchScreen() {
             {loading && <View style={s.loading}><ActivityIndicator color={C.neon} /><Text style={s.detail}>Searching Street Souk…</Text></View>}
             {results.products.length > 0 && <><Text style={s.section}>PRODUCTS</Text>{results.products.map((p) => <ResultRow key={`product-${p.id}`} icon="bag-outline" image={p.images[0]} title={p.name} detail={`${p.brand} · ${formatNaira(p.price)}`} onPress={() => openProduct(p)} />)}</>}
             {(results.brands.length + results.directoryBrands.length) > 0 && <><Text style={s.section}>BRANDS</Text>{results.brands.map((brand) => <ResultRow key={`brand-${brand.key}`} icon="storefront-outline" image={brand.vendor ? vendorImage(brand.vendor.slug, "logo", brand.vendor.logo_url) : brand.products[0]?.images[0]} title={brand.name} detail={`${brand.products.length} ${brand.products.length === 1 ? "product" : "products"}`} onPress={() => openBrand(brand.key)} />)}{results.directoryBrands.map((vendor) => <ResultRow key={`vendor-${vendor.id}`} icon="storefront-outline" image={vendorImage(vendor.slug, "logo", vendor.logo_url)} title={vendor.name} detail={vendor.detail ?? vendor.category} onPress={() => openBrand(brandKey(vendor.name))} />)}</>}
-            {results.events.length > 0 && <><Text style={s.section}>EVENTS</Text>{results.events.map((event) => <ResultRow key={`event-${event.id}`} icon="ticket-outline" image={event.cover_url ?? require("@/assets/brands/bolacampaign.jpg")} title={event.title} detail={[event.location, event.date_label].filter(Boolean).join(" · ") || event.badge || "Street Souk event"} onPress={() => openEvent(event.slug)} />)}</>}
+            {results.events.length > 0 && <><Text style={s.section}>EVENTS</Text>{results.events.map((event) => <ResultRow key={`event-${event.id}`} icon="ticket-outline" image={event.cover_url ?? require("@/assets/brands/bolacampaign.jpg")} title={event.title} detail={[event.location, event.date_label].filter(Boolean).join(" · ") || event.badge || "Street Souk event"} onPress={() => openEvent(event)} />)}</>}
             {results.stories.length > 0 && <><Text style={s.section}>SS TV</Text>{results.stories.map((post) => <ResultRow key={`story-${post.id}`} icon="play-circle-outline" image={post.cover_url ?? require("@/assets/images/ss-logo.png")} title={post.title} detail={post.excerpt ?? "SS TV story"} onPress={() => openStory(post.id)} />)}</>}
             {!loading && totalResults === 0 && <Text style={s.empty}>NO MATCHES YET. TRY A DIFFERENT SEARCH.</Text>}
           </>
@@ -129,7 +136,7 @@ export default function SearchScreen() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   content: { padding: 20, paddingBottom: 42 },
-  title: { color: C.neon, fontFamily: F.display, fontSize: 37, lineHeight: 40, marginTop: 27, marginBottom: 20 },
+  title: { color: C.neon, fontFamily: F.display, fontSize: 37, lineHeight: 46, marginTop: 27, marginBottom: 20 },
   search: { height: 53, borderWidth: 1, borderColor: C.line, backgroundColor: C.panel, flexDirection: "row", alignItems: "center", paddingHorizontal: 13, gap: 10 },
   input: { flex: 1, color: C.paper, fontFamily: F.mono, fontSize: 11 },
   label: { color: C.neon, fontFamily: F.mono, fontSize: 9, marginTop: 28, marginBottom: 7 },

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Image } from "expo-image";
+import { Image } from "@/components/async-image";
 import { useCart } from "@/context/cart-context";
 
 export const C = {

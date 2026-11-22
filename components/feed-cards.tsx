@@ -1,7 +1,7 @@
 import { C, F } from "@/components/street-souk-ui";
 import { formatDate, formatNaira } from "@/lib/format";
 import type { NewsPost } from "@/lib/types";
-import { Image } from "expo-image";
+import { Image } from "@/components/async-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export function ShopCard({

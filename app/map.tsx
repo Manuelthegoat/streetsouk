@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { Image } from "@/components/async-image";
 import { useEffect, useMemo, useState } from "react";
 import {
   Pressable,
@@ -472,7 +472,7 @@ const s = StyleSheet.create({
   },
   directionsTitles: { flex: 1, gap: 4 },
   directionEyebrow: { color: C.neon, fontFamily: F.mono, fontSize: 9, letterSpacing: 1 },
-  directionTitle: { color: C.paper, fontFamily: F.display, fontSize: 21, lineHeight: 24 },
+  directionTitle: { color: C.paper, fontFamily: F.display, fontSize: 21, lineHeight: 30 },
   directionFrom: { color: C.muted, fontFamily: F.mono, fontSize: 8 },
   setStartButton: {
     minHeight: 38,
