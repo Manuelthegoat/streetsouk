@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "@/components/async-image";
 import { useCart } from "@/context/cart-context";
 
@@ -45,17 +44,8 @@ export function Header({
   back?: boolean;
 }) {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   return (
-    <View
-      style={[
-        ui.header,
-        Platform.OS === "android" && {
-          height: 58 + insets.top,
-          paddingTop: insets.top,
-        },
-      ]}
-    >
+    <View style={ui.header}>
       {back ? (
         <Pressable
           accessibilityRole="button"

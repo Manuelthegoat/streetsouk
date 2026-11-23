@@ -8,6 +8,8 @@ import {
 } from "@expo-google-fonts/archivo-narrow";
 import { JetBrainsMono_700Bold } from "@expo-google-fonts/jetbrains-mono";
 import { StatusBar } from "expo-status-bar";
+import { Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import "react-native-reanimated";
 import { AuthProvider } from "@/context/auth-context";
 import { StreetSoukStore } from "@/context/street-souk-store";
@@ -69,6 +71,10 @@ export default function RootLayout() {
             <CartProvider>
               <StreetSoukStore>
               <OnboardingGate />
+              <SafeAreaView
+                edges={Platform.OS === "android" ? ["top"] : []}
+                style={{ flex: 1 }}
+              >
               <Stack>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="map" options={{ headerShown: false }} />
@@ -144,6 +150,7 @@ export default function RootLayout() {
                 <Stack.Screen name="zappie-debug" options={{ headerShown: false }} />
                 <Stack.Screen name="brand/[key]" options={{ headerShown: false }} />
               </Stack>
+              </SafeAreaView>
               </StreetSoukStore>
             </CartProvider>
           </ProfileProvider>
