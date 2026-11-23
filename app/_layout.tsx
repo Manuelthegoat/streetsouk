@@ -75,7 +75,12 @@ export default function RootLayout() {
                 edges={Platform.OS === "android" ? ["top"] : []}
                 style={{ flex: 1, backgroundColor: "#050505" }}
               >
-              <Stack>
+              <Stack
+                screenOptions={{
+                  statusBarHidden: false,
+                  statusBarStyle: "light",
+                }}
+              >
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="map" options={{ headerShown: false }} />
                 <Stack.Screen
@@ -156,7 +161,7 @@ export default function RootLayout() {
           </ProfileProvider>
         </TicketOwnershipProvider>
       </AuthProvider>
-      <StatusBar style="light" />
+      <StatusBar style="light" hidden={false} />
     </ThemeProvider>
   );
 }
