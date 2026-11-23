@@ -73,7 +73,7 @@ export default function RootLayout() {
               <OnboardingGate />
               <SafeAreaView
                 edges={Platform.OS === "android" ? ["top"] : []}
-                style={{ flex: 1 }}
+                style={{ flex: 1, backgroundColor: "#050505" }}
               >
               <Stack>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
