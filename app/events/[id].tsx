@@ -162,12 +162,16 @@ export default function EventDetailScreen() {
           ) : <UpcomingEventLanding
             event={event}
             loading={eventLoading}
-            onGetTickets={() =>
+            onGetTickets={() => {
+              if (!user) {
+                router.push("/sign-in");
+                return;
+              }
               router.push({
                 pathname: "/tickets",
                 params: { eventSlug: event?.slug ?? "streetsouk-2026" },
-              })
-            }
+              });
+            }}
           />
         ) : pastEvent ? (
           <GalleryContent eventId={eventId} />
@@ -229,15 +233,19 @@ export default function EventDetailScreen() {
             unavailable={ticketsUnavailable}
             unavailableLabel={ticketUnavailableLabel}
             unavailableMessage={ticketUnavailableMessage}
-            onPress={() =>
+            onPress={() => {
+              if (!user) {
+                router.push("/sign-in");
+                return;
+              }
               router.push({
                 pathname: "/tickets",
                 params: {
                   eventSlug: event?.slug ?? "streetsouk-2026",
                   pastEvent: event && isPastEvent(event) ? "true" : "false",
                 },
-              })
-            }
+              });
+            }}
           />
         )}
         </>}

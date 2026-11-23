@@ -167,7 +167,7 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
   const routeMarksEventPast = (Array.isArray(pastEventParam)
     ? pastEventParam[0]
     : pastEventParam) === "true";
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { profile } = useProfile();
   const [events, setEvents] = useState<JetronEvent[]>([]);
   const [selectedSlug, setSelectedSlug] = useState(preferredSlug);
@@ -186,6 +186,10 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
   const [email, setEmail] = useState(user?.email ?? "");
   const [promoCode, setPromoCode] = useState("");
   const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    if (!authLoading && !user) router.replace("/sign-in");
+  }, [authLoading, router, user]);
 
   const selectedEvent = events.find((event) => event.slug === selectedSlug);
   const selectedItems = useMemo(
@@ -354,6 +358,10 @@ export function TicketsScreen({ inTab = false }: { inTab?: boolean }) {
 
   async function ensureNoExistingTickets() {
     if (!selectedEvent) return false;
+    if (!user) {
+      router.push("/sign-in");
+      return false;
+    }
     const accountEmail = user?.email?.trim().toLowerCase();
     if (!accountEmail || !user?.email_confirmed_at) {
       Alert.alert(

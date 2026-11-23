@@ -8,6 +8,7 @@ import { useNews } from "@/hooks/use-news";
 import { isPastEvent } from "@/lib/event-dates";
 import { isUpcomingEvent } from "@/lib/event-dates";
 import { useTicketOwnership } from "@/context/ticket-ownership-context";
+import { useAuth } from "@/context/auth-context";
 import type { NewsPost } from "@/lib/types";
 import { Ionicons } from "@expo/vector-icons";
 import { Image, ImageBackground } from "@/components/async-image";
@@ -44,6 +45,7 @@ export default function HomeScreen() {
   const [topicId, setTopicId] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("All");
   const { topics } = useTopics();
+  const { user } = useAuth();
   const { events, loading: eventsLoading } = useEvents();
   const {
     hasTicketsForEvent,
@@ -136,6 +138,10 @@ export default function HomeScreen() {
               accessibilityRole="button"
               accessibilityLabel={`Buy tickets for ${featured.title}`}
               onPress={async () => {
+                if (!user) {
+                  router.push("/sign-in");
+                  return;
+                }
                 let ownsTicket = isUpcomingEvent(featured) && hasTicketsForEvent(featured.slug) === true;
                 const ownershipUnknown = hasTicketsForEvent(featured.slug) === null;
                 if (isUpcomingEvent(featured) && !ownsTicket && (ownershipUnknown || checkingTicketOwnership)) {
