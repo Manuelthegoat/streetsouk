@@ -9,6 +9,7 @@
     "scheme": "streetsouk",
     "userInterfaceStyle": "dark",
     "ios": {
+      "icon": "./assets/images/app-icon-1024.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.streetsouk.streetsouk"
     },
