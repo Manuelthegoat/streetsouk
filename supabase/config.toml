@@ -3,3 +3,6 @@ verify_jwt = false
 
 [functions.jetron-attendee-tickets]
 verify_jwt = true
+
+[functions.send-feed-push]
+verify_jwt = false

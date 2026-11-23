@@ -1,7 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import {
   Image,
   Pressable,
@@ -12,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { C, F, PageTitle } from "@/components/street-souk-ui";
+import { useProfile } from "@/context/profile-context";
 
 const notices = [
   [
@@ -36,16 +35,8 @@ const notices = [
 
 export default function AlertsScreen() {
   const router = useRouter();
-  const [enabled, setEnabled] = useState(true);
-
-  const toggleNotifications = async () => {
-    if (!enabled) {
-      const permission = await Notifications.requestPermissionsAsync();
-      setEnabled(permission.granted);
-      return;
-    }
-    setEnabled(false);
-  };
+  const { profile } = useProfile();
+  const enabled = profile?.push_updates ?? false;
 
   return (
     <SafeAreaView style={s.safe}>
@@ -75,9 +66,9 @@ export default function AlertsScreen() {
       <ScrollView contentContainerStyle={s.content}>
         <PageTitle eyebrow="LIVE UPDATES // ON SITE" title="ALERTS" />
         <Pressable
-          accessibilityRole="switch"
-          accessibilityState={{ checked: enabled }}
-          onPress={toggleNotifications}
+          accessibilityRole="button"
+          accessibilityLabel="Manage push notification settings"
+          onPress={() => router.push("/settings")}
           style={[s.status, !enabled && s.statusOff]}
         >
           <View style={[s.statusDot, !enabled && s.statusDotOff]} />
