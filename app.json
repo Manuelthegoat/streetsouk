@@ -5,7 +5,7 @@
     "slug": "street-souk",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/stret-bite.png",
+    "icon": "./assets/images/app-icon-1024.png",
     "scheme": "streetsouk",
     "userInterfaceStyle": "dark",
     "ios": {
