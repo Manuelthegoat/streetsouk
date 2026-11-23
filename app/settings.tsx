@@ -172,7 +172,7 @@ export default function SettingsScreen() {
         <SettingRow
           icon="notifications-outline"
           title="FESTIVAL ALERTS"
-          detail={savingNotifications ? "Updating notification permission…" : "Get live updates about drops and stages."}
+          detail={savingNotifications ? "Updating notification permission…" : "Get push alerts when new live feed posts are published."}
           value={profile?.push_updates ?? false}
           onPress={togglePushUpdates}
         />
