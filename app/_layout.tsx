@@ -17,6 +17,7 @@ import { CartProvider } from "@/context/cart-context";
 import OnboardingGate from "@/components/onboarding-gate";
 import { ProfileProvider } from "@/context/profile-context";
 import { TicketOwnershipProvider } from "@/context/ticket-ownership-context";
+import LiveFeedLocalNotifications from "@/components/live-feed-local-notifications";
 import * as Notifications from "expo-notifications";
 import { router, type Href } from "expo-router";
 import { useEffect } from "react";
@@ -70,6 +71,7 @@ export default function RootLayout() {
           <ProfileProvider>
             <CartProvider>
               <StreetSoukStore>
+              <LiveFeedLocalNotifications />
               <OnboardingGate />
               <SafeAreaView
                 edges={Platform.OS === "android" ? ["top"] : []}
